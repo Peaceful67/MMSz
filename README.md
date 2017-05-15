@@ -1,0 +1,2 @@
+# MMSz
+Adatbázis kezelő
