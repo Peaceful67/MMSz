@@ -131,12 +131,8 @@ if (isset($_GET['simplepay'])) {
     }
 }
 $output .= '</div >';
-
-
-
 $output .= '</body>
-            </html>';
-
+           </html>';
 theEnd($output);
 ?>
 
