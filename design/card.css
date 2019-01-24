@@ -1,0 +1,51 @@
+@page {
+    sheet-size: 85mm 53mm;
+}
+
+
+body {
+    background: transparent url("images/card.jpg");
+    background-repeat: no-repeat;
+    background-size: 1093px 678px;
+    margin: 0px;
+    padding: 0px;
+}
+
+.mmsz_hun {
+    margin: 0px;
+    position:  fixed;
+    top:5mm;
+    left:25mm;
+    font-size: 36px;
+}
+.mmsz_eng {
+    position:  fixed;
+    top:10mm;
+    left:27mm;
+    font-size: 28px;
+}
+
+.avatar {
+    position:  fixed;
+    top:3mm;
+    left:3mm;
+    margin: 0px;
+}
+.name {
+    position: fixed;
+    top:30mm;
+    left:5mm;
+    font-size: 48px;  
+}
+.data {
+    position: fixed;
+    top:36mm;
+    left:5mm;
+    font-size: 28px;
+}
+.year {
+    position: fixed;
+    top:22mm;
+    left:25mm;
+    font-size: 48px;
+}
