@@ -1,2 +1,2 @@
 # MMSz
-Adatbázis kezelő
+Magyar Modellező Szövetség tagnyilvántartó 
