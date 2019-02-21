@@ -1,6 +1,6 @@
 <?php
 
-if (isset($delete_last)) {    
+if (isset($delete_last)) {
     $sql = 'DELETE FROM `' . FEE_TABLE . '` WHERE `' . FEE_ID . '`="' . $delete_last . '"';
     $mysqliLink->query($sql);
     logger($member_id, -1, LOGGER_FEE_EDIT, 'A ' . $delete_last . ' azonosítójú díjtétel törlése.');
@@ -83,14 +83,22 @@ if ($editing_fee_id < 0) {
             $fee_from = max($fee_from, $first_undefined);
         }
         $output .= '<br><label>Új időszak: </label>';
+        $continues_period = true;
+        if ($fee_type[$edited_type][FEE_TYPE_PERIOD] == FEE_PERIOD_DAY) {
+            $free_from = $today;
+            $continues_period = false;
+        }
         if ($first_undefined == VERY_FIRST_DATE) {
+            $continues_period = false;
+        }
+        if (!$continues_period) {
             $output .= '<input type="date" name="fee_from" value="' . $fee_from . '" onChange="submit();">';
         } else {
             $output .= $fee_from;
             $output .= '<input type="hidden" name="fee_from" value="' . $fee_from . '" >';
         }
         $output .= ' : ' . addPeriodToDate($fee_from, $fee_type[$edited_type][FEE_TYPE_PERIOD]) . '<br>';
-        $output .= '<label>Új' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj : </label>'
+        $output .= '<label>Új ' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj : </label>'
                 . '<input type="number" name="fee_sum" size="5" value="' . $fee_sum . '"> Ft';
         $output .= '&nbsp;&nbsp;&nbsp;<input type="submit" name="submit_fee" value="Rögzít">';
     }

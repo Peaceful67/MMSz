@@ -1,6 +1,6 @@
 <?php
 
-if (isset($gdpr_submit) AND $gdpr_accept == "on") {
+if (isset($gdpr_submit) AND isset($gdpr_accept) AND $gdpr_accept == "on") {
     logger($member_id, $member_id, LOGGER_GPDR, "GDPR elfogadva");
     setGdpr($member_id);
     redirect("profile");

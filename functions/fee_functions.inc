@@ -308,8 +308,45 @@ function getFeeById($fee_id) {
     return $ret;
 }
 
+function get_list_fee_name($type) {
+    global $member_types, $member_insurances, $organizations;
+    global $club_categories, $associations, $associations, $administrations, $licences, $occasions;
+    switch ($type) {
+        case FEE_TYPE_MEMBERSHIP:
+            return $member_types;
+        case FEE_TYPE_INSURANCE:
+            return $member_insurances;
+        case FEE_TYPE_ORGANIZATION:
+            return $organizations;
+        case FEE_TYPE_CLUB:
+            return $club_categories;
+        case FEE_TYPE_ASSOCIATION:
+            return $associations;
+        case FEE_TYPE_ADMINISTRATION:
+            return $administrations;
+        case FEE_TYPE_LICENCES:
+            return $licences;
+        case FEE_TYPE_OCCASION:
+            return $occasions;
+        default:
+            return array();
+    }
+}
+
+function get_fee_name($type, $name) {
+    $ret = '---';
+    $list = get_list_fee_name($type);
+    if(empty($list)) {
+        return $ret;
+    }
+    if (isset($list[$name])) {
+        $ret = $list[$name];
+    }
+    return $ret;
+}
+
 function printFeeName($fee) {
-    global $club_categories, $member_types, $organizations, $member_insurances, $administrations, $associations;
+    global $club_categories, $member_types, $organizations, $member_insurances, $administrations, $associations, $occasions;
     switch ($fee[FEE_TYPE]) {
         case FEE_TYPE_CLUB:
             return $club_categories[$fee[FEE_NAME]];
@@ -323,6 +360,8 @@ function printFeeName($fee) {
             return $administrations[$fee[FEE_NAME]];
         case FEE_TYPE_ASSOCIATION:
             return $associations[$fee[FEE_NAME]];
+        case FEE_TYPE_OCCASION:
+            return $occasions[$fee[FEE_NAME]];
         default:
             return "---";
     }

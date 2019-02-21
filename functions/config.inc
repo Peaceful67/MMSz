@@ -15,7 +15,7 @@ $neverEnding = '2099-12-31';
 $today = date('Y-m-d');
 
 define('SECRET', '%/{)9A!#@');
-define("VERSION", "2.1");
+define("VERSION", "2.2");
 
 define("CSV_DELIMITER", ";");
 define("CSV_DECODE", "utf8_decode");
@@ -79,7 +79,7 @@ define("INCLUDES", "./includes/");
 define("DOCUMENTS", "./documents/");
 define("SIMPLEPAY", "./simplepay/");
 define("CLASSES", "./classes/");
-define("MPDF", "./mpdf/");
+define("MPDF", CLASSES . "");
 
 
 define("PROGI", URL . "/index.php");
@@ -121,6 +121,7 @@ define("FEE_TYPE_CLUB", 3);
 define("FEE_TYPE_ADMINISTRATION", 4);
 define("FEE_TYPE_ASSOCIATION", 5);
 define("FEE_TYPE_LICENCES", 6);
+define("FEE_TYPE_OCCASION", 7);
 
 define("FEE_TYPE_NAME", 0);
 define("FEE_TYPE_PERIOD", 1);
@@ -183,6 +184,8 @@ $default_club_categories = array(
 $default_administrations = array(
     0 => "Adatkezelés"
 );
+$default_occasions = array();
+
 $default_member_types = array(
     MEMBER_TYPE_ADULT => "Felnőtt",
     MEMBER_TYPE_JUNIOR => "Ifjúsági",
@@ -205,14 +208,14 @@ $default_licences = array(
 );
 
 $fee_periods = array(
-    FEE_PERIOD_YEAR => "Éves",
-    FEE_PERIOD_HALF => "Féléves",
-    FEE_PERIOD_QUATER => "Negyedéves",
-    FEE_PERIOD_MONTH => "Havi",
-    FEE_PERIOD_WEEK => "Heti",
-    FEE_PERIOD_DAY => "Napi",
-    FEE_PERIOD_2YEARS => "Két éves",
-    FEE_PERIOD_3YEARS => "Három éves",
+    FEE_PERIOD_YEAR => "éves",
+    FEE_PERIOD_HALF => "féléves",
+    FEE_PERIOD_QUATER => "negyedéves",
+    FEE_PERIOD_MONTH => "havi",
+    FEE_PERIOD_WEEK => "heti",
+    FEE_PERIOD_DAY => "napi",
+    FEE_PERIOD_2YEARS => "két éves",
+    FEE_PERIOD_3YEARS => "három éves",
 );
 
 
@@ -244,6 +247,8 @@ define("LOGGER_SETUP", 26);
 define("LOGGER_ORGANIZATION", 27);
 define("LOGGER_ASSOCCIATION", 28);
 define("LOGGER_LICENCES", 29);
+define("LOGGER_SZAMLAZZ", 30);
+define("LOGGER_OPTIONS", 31);
 
 
 
@@ -268,5 +273,7 @@ $logger_categories = array(
     LOGGER_ORGANIZATION => "Szervezeti tagság szerkesztése",
     LOGGER_ASSOCCIATION => "Szövetségi tagság szerkesztése",
     LOGGER_LICENCES => "Jogosítások szerkesztése",
+    LOGGER_SZAMLAZZ => "Online számlakezelés",
+    LOGGER_OPTIONS => "Beállítások módosítása",
 );
 ?>

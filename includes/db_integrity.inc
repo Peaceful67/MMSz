@@ -86,6 +86,24 @@ while ($res AND $row = $res->fetch_assoc()) {
                     $fee_error = true;
                 }
                 break;
+            case FEE_TYPE_ASSOCIATION:
+                if (!isset($associations[$row[FEE_NAME]])) {
+                    $output .= 'Nem létező association: ' . $row[FEE_ID] . '<br>';
+                    $fee_error = true;
+                }
+                break;
+            case FEE_TYPE_LICENCES:
+                if (!isset($licences[$row[FEE_NAME]])) {
+                    $output .= 'Nem létező licence: ' . $row[FEE_ID] . '<br>';
+                    $fee_error = true;
+                }
+                break;
+            case FEE_TYPE_OCCASION:
+                if (!isset($occasions[$row[FEE_NAME]])) {
+                    $output .= 'Nem létező occasion: ' . $row[FEE_ID] . '<br>';
+                    $fee_error = true;
+                }
+                break;
 
             default:
                 $output .= 'Nem kezelt FEE_TYPE: ' . $row[FEE_ID] . '<br>';
@@ -93,6 +111,7 @@ while ($res AND $row = $res->fetch_assoc()) {
         }
     }
 }
+
 if ($fee_error) {
     $output .= '<img src="' . IMAGES . 'delete.jpg">Hiba `fees` táblában<br>';
     logger($member_id, -1, LOGGER_DATABASE, "Hiba `fees` táblában");

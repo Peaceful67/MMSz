@@ -1,4 +1,5 @@
 <?php
+
 $main_menu_group_default = array(
     array(
         SETUP_GROUP_ID => 0,
@@ -155,6 +156,17 @@ $admin_menu_default = array(
         SETUP_MOD_WEIGHT => 10,
         SETUP_MOD_ENABLED => 1,
     ),
+    "options" => array(
+        SETUP_MOD_GROUP => 4,
+        SETUP_MOD_TITLE => "Beállítások kezelése",
+        SETUP_MOD_MENU => "Beállítások",
+        SETUP_MOD_ID => "options",
+        SETUP_MOD_MODULE => "options.inc",
+        SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ,
+        SETUP_MOD_DEPENDENCY => "",
+        SETUP_MOD_WEIGHT => 10,
+        SETUP_MOD_ENABLED => 1,
+    ),
     "database" => array(
         SETUP_MOD_GROUP => 4,
         SETUP_MOD_TITLE => "Adatbázis rendezés",
@@ -162,6 +174,17 @@ $admin_menu_default = array(
         SETUP_MOD_ID => "database",
         SETUP_MOD_MODULE => "database.inc",
         SETUP_MOD_ACCESS => ACCESS_ADMIN,
+        SETUP_MOD_DEPENDENCY => "",
+        SETUP_MOD_WEIGHT => 11,
+        SETUP_MOD_ENABLED => 1,
+    ),
+    "szamlazz" => array(
+        SETUP_MOD_GROUP => 4,
+        SETUP_MOD_TITLE => "Online számlázás",
+        SETUP_MOD_MENU => "Számlázz.hu",
+        SETUP_MOD_ID => "szamlazz",
+        SETUP_MOD_MODULE => "szamlazz_management.inc",
+        SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ,
         SETUP_MOD_DEPENDENCY => "",
         SETUP_MOD_WEIGHT => 11,
         SETUP_MOD_ENABLED => 1,
@@ -216,6 +239,17 @@ $admin_menu_default = array(
         SETUP_MOD_MENU => "Tisztek",
         SETUP_MOD_ID => "list_roles",
         SETUP_MOD_MODULE => "list_roles.inc",
+        SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ + ACCESS_MMSZ_PRESIDENT,
+        SETUP_MOD_DEPENDENCY => "",
+        SETUP_MOD_WEIGHT => 16,
+        SETUP_MOD_ENABLED => 1,
+    ),
+    "inactive" => array(
+        SETUP_MOD_GROUP => 0,
+        SETUP_MOD_TITLE => "Sem idén, sem tavaly nem fizető aktív tagok",
+        SETUP_MOD_MENU => "Inaktívak",
+        SETUP_MOD_ID => "inactive",
+        SETUP_MOD_MODULE => "inactive.inc",
         SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ + ACCESS_MMSZ_PRESIDENT,
         SETUP_MOD_DEPENDENCY => "",
         SETUP_MOD_WEIGHT => 16,
@@ -344,8 +378,8 @@ $admin_menu_default = array(
     ),
     "card" => array(
         SETUP_MOD_GROUP => 5,
-        SETUP_MOD_TITLE => COMPANY_NAME." kártya lekérdezés",
-        SETUP_MOD_MENU => COMPANY_NAME." kártya",
+        SETUP_MOD_TITLE => COMPANY_NAME . " kártya lekérdezés",
+        SETUP_MOD_MENU => COMPANY_NAME . " kártya",
         SETUP_MOD_ID => "card",
         SETUP_MOD_MODULE => "show_card.inc",
         SETUP_MOD_ACCESS => ACCESS_USER,
@@ -361,6 +395,17 @@ $admin_menu_default = array(
         SETUP_MOD_MODULE => "statistic.inc",
         SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ + ACCESS_MMSZ_PRESIDENT,
         SETUP_MOD_DEPENDENCY => "",
+        SETUP_MOD_WEIGHT => 29,
+        SETUP_MOD_ENABLED => 1,
+    ),
+    "list_fee_members" => array(
+        SETUP_MOD_GROUP => 5,
+        SETUP_MOD_TITLE => "Díjankénti taglista",
+        SETUP_MOD_MENU => "Tagok díjanként",
+        SETUP_MOD_ID => "list_fee_members",
+        SETUP_MOD_MODULE => "list_fee_members.inc",
+        SETUP_MOD_ACCESS => ACCESS_ADMIN + ACCESS_MMSZ + ACCESS_MMSZ_PRESIDENT,
+        SETUP_MOD_DEPENDENCY => "list_edit_members",
         SETUP_MOD_WEIGHT => 29,
         SETUP_MOD_ENABLED => 1,
     ),
@@ -408,7 +453,7 @@ $admin_menu_default = array(
         SETUP_MOD_WEIGHT => 33,
         SETUP_MOD_ENABLED => 1,
     ),
-        "edit_types" => array(
+    "edit_types" => array(
         SETUP_MOD_GROUP => 3,
         SETUP_MOD_TITLE => "Tipusok szerkesztése",
         SETUP_MOD_MENU => "Típus listák",
@@ -419,6 +464,5 @@ $admin_menu_default = array(
         SETUP_MOD_WEIGHT => 34,
         SETUP_MOD_ENABLED => 1,
     ),
-
 );
 

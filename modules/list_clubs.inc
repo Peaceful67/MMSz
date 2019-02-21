@@ -19,8 +19,15 @@ if (!isset($act_club)) {
     $act_club = "off";
 }
 $col_width = array(5, 40,40, 10, 5);
+$del_act = $del_max = 0;
+foreach(getClubNameList() as $cl_id => $cl_name ) {
+    $del_act += getNumberOfDelegateClub($cl_id);
+    $del_max += getMaxNumberOfDelegateClub($cl_id);
+}
+    
 $res = $mysqliLink->query('SELECT * FROM `' . CLUB_TABLE . '` WHERE ' . ($act_club == "on" ? ('`' . CLUB_ACT . '`="1"') : '1') . ' ORDER BY `' . $order_by . '`');
 $output .= '<br><div class="scrolled_lists"><form method="post"> '
+        . 'Aktív egyesületek küldöttei: '.$del_act.'/'.$del_max.'<br><br>'
         . '<input type="submit" name="new_club" value="Új felvitele">'
         . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
         . ' <input type="checkbox" name="act_club" ' . ($act_club == "on" ? "checked" : "") . ' onchange="submit();">'
@@ -39,8 +46,11 @@ while ($res AND $row = $res->fetch_assoc()) {
     $output .= '</td>';
     $output .= '<td style="width:' . $col_width[1] . '%;">' . $row[CLUB_NAME] . '</td>';
     $output .= '<td  style="width:' . $col_width[2] . '%;">' . $row[CLUB_ADDR_POST] . ' ' . $row[CLUB_ADDR_CITY] . ', ' . $row[CLUB_ADDR_STREET] . '</td>';
-    $num_members = getNumMemberOfClub($row[CLUB_ID]);
-    $output .= '<td style="width:' . $col_width[3] . '%;">' . $num_members . '</td>';
+    $num_members = getNumMemberOfClub($row[CLUB_ID]);    
+    $output .= '<td style="width:' . $col_width[3] . '%;">'  
+            . $num_members 
+            . delegatesNumberToString($row[CLUB_ID])
+            . '</td>';
     $output .= '<td  style="width:' . $col_width[4] . '%;">';
     $output .= '<button  type="submit" name="edit_club" value="' . $row[CLUB_ID] . '"><img src="' . IMAGES . 'edit.jpg" title="Szerkesztés"></button>';
     if (!isClubUsed($row[CLUB_ID])) {

@@ -46,7 +46,7 @@ if (isset($_GET["init"]) AND $_GET["init"] == 'create') {
 
 retriveSession();
 
-if (isset($mod)) {    
+if (isset($mod)) {
     reset_mod();
 }
 
@@ -66,10 +66,12 @@ if (isset($mod)) {
 if ($mod == $admin_menu["gdpr"][SETUP_MOD_ID]) {
     $permission = ACCESS_PUBLIC;
 }
-if (!isset($sel_group)) {
+push_mod($mod);
+if (isset($sel_group)) {
+    $mod = "";
+} else {
     $sel_group = -3;
 }
-push_mod($mod);
 
 $output .= '<form method="post">';
 $output .= '<div class="control">';
@@ -131,8 +133,12 @@ if (isset($_GET['simplepay'])) {
     }
 }
 $output .= '</div >';
+
+
+
 $output .= '</body>
-           </html>';
+            </html>';
+
 theEnd($output);
 ?>
 

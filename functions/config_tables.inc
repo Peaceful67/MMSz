@@ -93,7 +93,11 @@ define("ROLE_CLUB", "club_id");
 define("ROLE_CATEGORY_LEADER", ROLE_CLUB);
 
 define("CONGRESS_TABLE", "congress");
+define("CONGRESS_ID", 'id');
 define("CONGRESS_MEMBER_ID", "member_id");
+define("CONGRESS_ENTER", "enter");
+define("CONGRESS_QUIT", "quit");
+
 
 define("FMS2BILL_TABLE", "fms2bill");
 define("FMS2BILL_BILL_NUMBER", "bill_number");
@@ -134,6 +138,26 @@ define("SZAMLAZZ_BILL_NUMBER", "bill_number");
 define("SZAMLAZZ_NAME", "name");
 define("SZAMLAZZ_EMAIL", "email");
 define("SZAMLAZZ_ADDR_POST", "addr_post");
-define("SZAMLAZZ_ADDR_CIYT", "addr_city");
+define("SZAMLAZZ_ADDR_CITY", "addr_city");
 define("SZAMLAZZ_ADDR_STREET", "addr_street");
 define("SZAMLAZZ_TAX", "tax");
+define("SZAMLAZZ_PREPARED", "prepared");
+define("SZAMLAZZ_DONE", "done");
+
+define("OPTIONS_TABLE", 'options');
+define("OPTIONS_ID", 'id');
+define("OPTIONS_NAME", 'name');
+define("OPTIONS_VALUE", 'value');
+
+define("NEWSLETTER_TABLE", "newsletter");
+define("NEWSLETTER_ID", 'id');
+define("NEWSLETTER_SUBJECT", 'subject');
+define("NEWSLETTER_BODY", 'body');
+define("NEWSLETTER_CREATOR", 'creator_id');
+define("NEWSLETTER_TIME", 'creator_time');
+
+define("NLM_TABLE", 'nl_member');
+define("NLM_ID", 'id');
+define("NLM_MEMBER", 'member_id');
+define("NLM_NEWSLETTER_ID", 'nl_id');
+define("NLM_SENT", 'sent');

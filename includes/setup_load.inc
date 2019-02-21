@@ -1,5 +1,6 @@
 <?php
 
+
 $sql = 'SELECT * FROM `' . SETUP_GROUP_TABLE . '`  ORDER BY `' . SETUP_GROUP_WEIGHT . '` ASC;';
 $main_menu_group = array();
 $result = $mysqliLink->query($sql);
@@ -8,7 +9,6 @@ if ($result) {
         $main_menu_group[] = $row;
     }
 }
-
 
 $sql = 'SELECT * FROM `' . SETUP_MOD_TABLE . '`     WHERE 1 ORDER BY `' . SETUP_MOD_WEIGHT . '` ;';
 $admin_menu = array();
@@ -27,6 +27,7 @@ $member_types = array();
 $administrations = array();
 $club_categories = array();
 $licences = array();
+$occasions = array();
 
 $res = $mysqliLink->query($sql);
 if ($res && $res->num_rows > 0) {
@@ -47,11 +48,14 @@ if ($res && $res->num_rows > 0) {
             case FEE_TYPE_ADMINISTRATION:
                 $administrations[$row[TYPES_TYPE_ID]] = $row[TYPES_TYPE_NAME];
                 break;
+            case FEE_TYPE_OCCASION:
+                $occasions[$row[TYPES_TYPE_ID]] = $row[TYPES_TYPE_NAME];
+                break;
             case FEE_TYPE_ASSOCIATION:
                 $associations[$row[TYPES_TYPE_ID]] = $row[TYPES_TYPE_NAME];
                 break;
             case FEE_TYPE_LICENCES:
-                $licences[$row[TYPES_TYPE_ID]]= $row[TYPES_TYPE_NAME];
+                $licences[$row[TYPES_TYPE_ID]] = $row[TYPES_TYPE_NAME];
                 break;
         }
     }
@@ -73,10 +77,13 @@ if (empty($associations)) {
 if (empty($administrations)) {
     $administrations = fill_type($default_administrations, FEE_TYPE_ADMINISTRATION);
 }
+if (empty($occasions)) {
+    $occasions = fill_type($default_occasions, FEE_TYPE_OCCASION);
+}
 if (empty($club_categories)) {
     $club_categories = fill_type($default_club_categories, FEE_TYPE_CLUB);
 }
-if(empty($licences)) {
+if (empty($licences)) {
     $licences = fill_type($default_licences, FEE_TYPE_LICENCES);
 }
 

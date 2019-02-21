@@ -7,16 +7,25 @@ function mail_create_bill($msg) {
 function mail_system_error($error) {
     global $member_id;
     logger($member_id, '---', LOGGER_SYSTEM_ERROR, $error);
-    send_mail_to(ADMIN_EMAIL, 'Rendszerüzenet', $error);
+    send_mail_to(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL), 'Rendszerüzenet', $error);
 }
 
 function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
-
-    require_once CLASSES . 'PHPMailer/SMTP.php';
     require_once CLASSES . 'PHPMailer/PHPMailer.php';
+    require_once CLASSES . 'PHPMailer/SMTP.php';
+    require_once CLASSES . 'PHPMailer/Exception.php';
 
-    $my_mail = new \PHPMailer\PHPMailer\PHPMailer(false);
+    $my_mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    // $my_mail->SMTPDebug = 4;
     $my_mail->IsSMTP();
+    $my_mail->SMTPOptions = array(
+        'ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true
+        )
+    );
+    //$my_mail->isSendmail();
     $my_mail->Host = "localhost";
     $my_mail->Port = 25;
     $my_mail->CharSet = 'utf-8';
@@ -27,8 +36,8 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
     } else {
         $my_mail->SMTPAuth = true;
     }
-    $my_mail->AddReplyTo('', '');
-    $my_mail->SetFrom(EMAIL_SENDER, EMAIL_SIGNATURE);
+    $my_mail->AddReplyTo(getOptionValue(OPTIONS_NAME_EMAIL_REPLY), getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE));
+    $my_mail->SetFrom(getOptionValue(OPTIONS_NAME_EMAIL_SENDER), getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE));
     $my_mail->Subject = $subject;
     $my_mail->AltBody = 'Az üzenet megtekintéséhez használj HTML kompatibilis email klienst !';
     $my_mail->MsgHTML($body);
@@ -38,16 +47,18 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
         $my_mail->AddAttachment($filename);
     }
     if (DEVELOPMENT) {
-        $my_mail->AddAddress(ADMIN_EMAIL);
+        $my_mail->AddAddress(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL));
     }
-    $my_mail->Send();
+    if (!$my_mail->Send()) {
+        error_log('Error occurred during sending the email: ' . $my_mail->ErrorInfo);
+    }
 }
 
 function send_mail_to($addr, $subject, $body, $filename = "") {
     global $member_id;
     $email_body = '<html><body style=\"font-family:Verdana, Verdana, Geneva, sans-serif; font-size:12px;\">';
     $email_body .= $body;
-    $email_body .= "<br><br>Üdvözlettel:<br>" . EMAIL_SIGNATURE;
+    $email_body .= "<br><br>Üdvözlettel:<br>" . getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE);
     $email_body .= "</body></html>\n";
     if (!isset($addr) OR empty($addr)) {
         mail_system_error('Nem létező emailcím !\r\nTárgy: ' . $subject . '\r\nTartalom: ' . $body);
@@ -55,7 +66,7 @@ function send_mail_to($addr, $subject, $body, $filename = "") {
     }
     $addr = trim($addr);
     send_mail_via_phpmailer($addr, $subject, $email_body, $filename);
-    logger($member_id, $addr, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
+    logger($member_id, -1, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
 }
 
 function send_mail($subject, $body) {
@@ -69,7 +80,6 @@ function send_mail($subject, $body) {
 }
 
 function send_newsletter($id, $subject, $body) {
-    global $member_id;
     $person_body = str_replace(REPLACE_NAME, getMemberName($id), $body);
     $formated_body = str_replace(NEWLINE, '<br>', $person_body);
     $addr = getMemberEmail($id);
@@ -89,4 +99,48 @@ function send_notification($id, $subject, $body) {
         return;
     }
     send_mail_to($addr, $subject, $formated_body);
+}
+
+function push_newsletter($mem_id, $news_id) {
+    global $mysqliLink;
+    $sql = 'INSERT INTO `' . NLM_TABLE . '` '
+            . '(`' . NLM_MEMBER . '`, `' . NLM_NEWSLETTER_ID . '`, `' . NLM_SENT . '`)'
+            . ' VALUES (' . $mem_id . ', ' . $news_id . ', "0") ;';
+    $mysqliLink->query($sql);
+}
+
+function create_newsletter($subject, $body) {
+    global $mysqliLink, $member_id;
+    $sql = 'INSERT INTO `' . NEWSLETTER_TABLE . '` '
+            . '(`' . NEWSLETTER_CREATOR . '`, `' . NEWSLETTER_SUBJECT . '`, `' . NEWSLETTER_BODY . '`)'
+            . ' VALUES ("' . $member_id . '", "' . $subject . '", "' . $body . '")';
+    $mysqliLink->query($sql);
+    return $mysqliLink->insert_id;
+}
+
+function start_sending_newsletters() {
+    global $options;
+    global $mysqliLink;
+    $max = $options[OPTIONS_NAME_MAX_NEWSLETTERS];
+    updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
+    $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `' . NLM_SENT . '`= 0 '
+            . 'LIMIT ' . $max . ';';
+    $res = $mysqliLink->query($sql);
+    if ($res AND $res->num_rows > 0) {
+        while ($row = $res->fetch_assoc()) {
+            $sql = 'SELECT *  FROM `' . NEWSLETTER_TABLE . '` WHERE `' . NEWSLETTER_ID . '`=' . $row[NLM_NEWSLETTER_ID] . ' ;';
+            $nl_res = $mysqliLink->query($sql);
+            if ($nl_res AND $nl_res->num_rows > 0) {
+                $nl_row = $nl_res->fetch_assoc();
+                $subject = $nl_row[NEWSLETTER_SUBJECT];
+                $body = $nl_row[NEWSLETTER_BODY];
+                send_newsletter($row[NLM_MEMBER], $subject, $body);
+//                error_log('Sending an email to: '.$row[NLM_MEMBER]);
+                $sql = 'UPDATE `' . NLM_TABLE . '` ' //Mark as sent                        
+                        . 'SET `' . NLM_SENT . '`=CURRENT_TIMESTAMP '
+                        . ' WHERE `' . NLM_ID . '`=' . $row[NLM_ID] . ';';
+                $mysqliLink->query($sql);
+            }
+        }
+    }
 }

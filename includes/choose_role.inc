@@ -32,7 +32,7 @@ if (isset($roles_save)) {
         logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_MMSZ] . ') jogosultáságnak törlése');
         $mysqliLink->query($sql);
     }
-    
+
     if (!isset($mmszpres_role_id)) {
         $mmszpres_role_id = -2;
     }
@@ -201,11 +201,16 @@ if (isControllable(ACCESS_MMSZ)) {
             break;
         }
     }
+    $output .= '<label></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kezdet'
+            . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vég<br>';
     $output .= '<label>' . $access[ACCESS_MMSZ] . '</label>';
     $output .= '<input type="checkbox" name="check_access_mmsz" ' . ($role_on ? 'checked' : '') . '>'
             . '<input type="date" name="access_mmsz_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_mmsz_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="mmsz_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 if (isControllable(ACCESS_MMSZ_PRESIDENT)) {
@@ -227,6 +232,9 @@ if (isControllable(ACCESS_MMSZ_PRESIDENT)) {
             . '<input type="date" name="access_mmszpres_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_mmszpres_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="mmszpres_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 if (isControllable(ACCESS_MMSZ) || isControllable(ACCESS_MMSZ_PRESIDENT)) {
@@ -275,6 +283,9 @@ if (isControllable(ACCESS_USER)) {
             . '<input type="date" name="access_user_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_user_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="user_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 if (isControllable(ACCESS_CLUBLEADER)) {
@@ -296,6 +307,9 @@ if (isControllable(ACCESS_CLUBLEADER)) {
             . '<input type="date" name="access_clubleader_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_clubleader_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="clubleader_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 if (isControllable(ACCESS_CLUB_PRESIDENT)) {
@@ -317,6 +331,9 @@ if (isControllable(ACCESS_CLUB_PRESIDENT)) {
             . '<input type="date" name="access_clubpresident_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_clubpresident_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="clubpresident_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 if (isControllable(ACCESS_CLUB_DELEGATE)) {
@@ -338,6 +355,9 @@ if (isControllable(ACCESS_CLUB_DELEGATE)) {
             . '<input type="date" name="access_clubdelegate_from" size="10" value="' . $role_from . '">'
             . '<input type="date" name="access_clubdelegate_to" size="10" value="' . $role_to . '">'
             . '<input type="hidden" name="clubdelegate_role_id" value="' . $role_id . '">';
+    if ($role_on AND $today > $role_to) {
+        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+    }
     $output .= '<br>';
 }
 

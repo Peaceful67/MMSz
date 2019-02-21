@@ -64,6 +64,9 @@ switch ($select_edit_fee_type) {
     case FEE_TYPE_ADMINISTRATION:
         $et_list = $administrations;
         break;
+    case FEE_TYPE_OCCASION:
+        $et_list = $occasions;
+        break;
     case FEE_TYPE_LICENCES:
         $et_list = $licences;
         break;
@@ -85,13 +88,13 @@ if ($et_type >= 0) {
                 if (isLicenceDeleteable($key)) {
                     $output .= '&nbsp;&nbsp;&nbsp;<button  type="submit" name="delete" value="' . $key . '" >'
                             . '<img src="' . IMAGES . 'delete.jpg" title="Töröl"></button>';
-                } 
+                }
                 break;
             default:
                 if (isFeeTypeDeleteable($et_type, $key)) {
                     $output .= '&nbsp;&nbsp;&nbsp;<button  type="submit" name="delete" value="' . $key . '" >'
                             . '<img src="' . IMAGES . 'delete.jpg" title="Töröl"></button>';
-                } 
+                }
                 break;
         }
         $output .= '<br>';

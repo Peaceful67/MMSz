@@ -22,6 +22,7 @@ $output .= '&nbsp;&nbsp;' . $fee_type[FEE_TYPE_ORGANIZATION][FEE_TYPE_NAME] . ':
 $output .= '&nbsp;&nbsp;' . $fee_type[FEE_TYPE_CLUB][FEE_TYPE_NAME] . ':<input type="radio" name="radio_edit_fee" value="club"  onChange="submit();" ' . (($radio_edit_fee == "club") ? " checked " : "") . '>';
 $output .= '&nbsp;&nbsp;' . $fee_type[FEE_TYPE_ASSOCIATION][FEE_TYPE_NAME] . ':<input type="radio" name="radio_edit_fee" value="assoc"  onChange="submit();" ' . (($radio_edit_fee == "assoc") ? " checked " : "") . '>';
 $output .= '&nbsp;&nbsp;' . $fee_type[FEE_TYPE_ADMINISTRATION][FEE_TYPE_NAME] . ':<input type="radio" name="radio_edit_fee" value="admin"  onChange="submit();" ' . (($radio_edit_fee == "admin") ? " checked " : "") . '>';
+$output .= '&nbsp;&nbsp;' . $fee_type[FEE_TYPE_OCCASION][FEE_TYPE_NAME] . ':<input type="radio" name="radio_edit_fee" value="occasion"  onChange="submit();" ' . (($radio_edit_fee == "occasion") ? " checked " : "") . '>';
 $output .= '</form>';
 
 switch ($radio_edit_fee) {
@@ -51,7 +52,11 @@ switch ($radio_edit_fee) {
         $edited_names = $associations;
         include_once INCLUDES . 'edit_general_fees.inc';
         break;
-
+   case "occasion":
+        $edited_type = FEE_TYPE_OCCASION;
+        $edited_names = $occasions;
+        include_once INCLUDES . 'edit_general_fees.inc';
+        break;
     case "club":
         include_once INCLUDES . 'edit_club_fees.inc';
         break;
@@ -69,7 +74,7 @@ for ($y = YEAR_FROM; $y <= YEAR_TO; $y++) {
 $output .= '</select> évre<br><br>';
 foreach ($fee_type as $ft => $fn) {
     if($ft==FEE_TYPE_LICENCES) {
-        break;
+        continue;
     }
     $output .= '<table><caption>' . $fn[FEE_TYPE_NAME] . '</caption>'
             . '<tr><th>Id</th><th>Egyesület</th><th>Név</th>'

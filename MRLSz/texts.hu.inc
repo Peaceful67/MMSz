@@ -33,9 +33,10 @@ $fee_type = array(
     FEE_TYPE_INSURANCE => array("Biztosítási forma", FEE_PERIOD_HALF),
     FEE_TYPE_ORGANIZATION => array("Nezetközi Szervezet", FEE_PERIOD_YEAR),
     FEE_TYPE_CLUB => array("Egyesületi tagdíj", FEE_PERIOD_YEAR),
-    FEE_TYPE_ADMINISTRATION => array("Adatkezelés díj", FEE_PERIOD_YEAR),
+    FEE_TYPE_ADMINISTRATION => array("Egyéb", FEE_PERIOD_YEAR),
     FEE_TYPE_ASSOCIATION => array("Szövetségi tagság", FEE_PERIOD_YEAR),
     FEE_TYPE_LICENCES => array("Jogosítások", FEE_PERIOD_3YEARS),
+    FEE_TYPE_OCCASION => array("Alkalom", FEE_PERIOD_DAY),
 );
 $member_types = array(
     MEMBER_TYPE_ADULT => "Felnőtt",

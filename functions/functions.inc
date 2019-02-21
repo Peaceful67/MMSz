@@ -416,7 +416,6 @@ function get_back() {
 
 function downloadCardOfMember($mem_id) {
     global $this_year;
-    require_once (MPDF . "mpdf.php");
     $file = '.' . AVATAR . $mem_id . '.jpg';
     $mem = retriveMember($mem_id);
     if (!is_file($file)) {
@@ -427,14 +426,14 @@ function downloadCardOfMember($mem_id) {
 
     $avatar = imagecreatetruecolor(CARD_AVATAR_WIDTH, CARD_AVATAR_HEIGHT);
     $source = imagecreatefromjpeg($file);
-    $temp_file = tempnam(sys_get_temp_dir(), "_") . ".jpg";
+    $temp_file = tempnam(TMP_DIR, "_") . ".jpg";
     $check = getimagesize($file);
     list($width, $height) = $check;
     imagecopyresized($avatar, $source, 0, 0, 0, 0, CARD_AVATAR_WIDTH, CARD_AVATAR_HEIGHT, $width, $height);
     imagejpeg($avatar, $temp_file, 100);
 
     $stylesheet = file_get_contents('design/card.css');
-    $body = '';
+    $body = '<body>';
     $body .= '<div class="avatar">';
     $body .= '<img src="' . $temp_file . '"></div>';
 
@@ -449,104 +448,122 @@ function downloadCardOfMember($mem_id) {
         $body .= '&nbsp;&nbsp;&nbsp;FAI:&nbsp;' . $mem[MEMBER_LICENCE];
     }
     $body .= '</div><div class="year">' . $this_year . '</div>';
+    $body .= '</body>';
 
-    $pdf = new mPDF($mode = 'utf-8', $format = 'A4', $default_font_size = 0, $default_font = '', $mgl = 1, $mgr = 1, $mgt = 1, $mgb = 1, $mgh = 1, $mgf = 1, $orientation = 'L');
+    require_once MPDF . 'vendor/autoload.php';
+    $pdf = new \Mpdf\Mpdf(
+            [
+        'tempDir' => TMP_DIR,
+        'mode' => '+aCJK',
+        'margin_left' => 1,
+        'margin_right' => 1,
+        'margin_top' => 1,
+        'margin_bottom' => 1,
+        'margin_header' => 1,
+        'margin_footer' => 1
+            ]
+    );
     $pdf->img_dpi = $pdf->dpi = CARD_IMG_DPI;
     $pdf->nonPrintMargin = '0';
     $pdf->WriteHTML($stylesheet, 1);
-    $pdf->WriteHTML($body, 2);
+    $pdf->WriteHTML($body);
     $pdf->Output('card_' . $mem_id . '_' . date("Y-m-d_H-i-s") . '.pdf', 'D');
     unlink($temp_file);
 }
 
-function notificationFAI($fm_id) {
+function emailExcelMember($mem_id, $addr, $body) {
     global $this_year;
+    $mem = getMemberById($mem_id);
+    $filename = TMP_DIR . 'FAI_' . $mem_id . '.xlsx';
+
+    include_once CLASSES . 'PHPExcel.php';
+    include_once CLASSES . 'PHPExcel/Writer/Excel2007.php';
+    $objPHPExcel = new PHPExcel();
+    $objPHPExcel->getProperties()->setCreator(COMPANY_NAME . ' Tagnyilvántartó');
+
+
+    $objPHPExcel->setActiveSheetIndex(0);
+    $objPHPExcel->getActiveSheet()->setTitle($mem[MEMBER_KERNEV] . ' ' . $mem[MEMBER_VEZNEV] . ' ' . $this_year);
+
+
+    $objPHPExcel->getActiveSheet()->setCellValue('A1', 'FAI ID');
+    $objPHPExcel->getActiveSheet()->setCellValue('A2', $mem[MEMBER_LICENCE]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('B1', 'Licence Number');
+    $objPHPExcel->getActiveSheet()->setCellValue('B2', 'HUN-' . $mem_id);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('C1', 'Validity From');
+    $objPHPExcel->getActiveSheet()->setCellValue('C2', date('d.m.Y'));
+
+    $objPHPExcel->getActiveSheet()->setCellValue('D1', 'Validity To');
+    $objPHPExcel->getActiveSheet()->setCellValue('D2', '31.12.' . date('Y', time()));
+
+    $objPHPExcel->getActiveSheet()->setCellValue('E1', 'Air Sport Discipline');
+    $objPHPExcel->getActiveSheet()->setCellValue('E2', 'Aeromodelling and Spacemodelling');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('F1', 'First Name');
+    $objPHPExcel->getActiveSheet()->setCellValue('F2', $mem[MEMBER_KERNEV]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('G1', 'Last Name');
+    $objPHPExcel->getActiveSheet()->setCellValue('G2', $mem[MEMBER_VEZNEV]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('H1', 'Gender');
+    $objPHPExcel->getActiveSheet()->setCellValue('H2', $mem[MEMBER_SEX]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('I1', 'Date of Birth');
+    $objPHPExcel->getActiveSheet()->setCellValue('I2', date('d.m.Y', strtotime($mem[MEMBER_BORN])));
+
+    $objPHPExcel->getActiveSheet()->setCellValue('J1', 'Nationality');
+    $objPHPExcel->getActiveSheet()->setCellValue('J2', 'HUN');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('K1', 'Country of Residence');
+    $objPHPExcel->getActiveSheet()->setCellValue('K2', 'HUN');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('L1', 'Address1');
+    $objPHPExcel->getActiveSheet()->setCellValue('L2', $mem[MEMBER_ADDR_STREET]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('M1', 'Address2');
+    $objPHPExcel->getActiveSheet()->setCellValue('M2', $mem[MEMBER_ADDR_POST]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('N1', 'Address3');
+    $objPHPExcel->getActiveSheet()->setCellValue('N2', $mem[MEMBER_ADDR_CITY]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('O1', 'Country of addresse');
+    $objPHPExcel->getActiveSheet()->setCellValue('O2', 'Hungary');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('P1', 'E-mail address');
+    $objPHPExcel->getActiveSheet()->setCellValue('P2', $mem[MEMBER_EMAIL]);
+
+    $objPHPExcel->getActiveSheet()->setCellValue('Q1', 'Phone (home)');
+    $objPHPExcel->getActiveSheet()->setCellValue('Q2', '');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('R1', 'Phone (office)');
+    $objPHPExcel->getActiveSheet()->setCellValue('R2', '');
+
+    $objPHPExcel->getActiveSheet()->setCellValue('S1', 'Phone (mobile)');
+    $objPHPExcel->getActiveSheet()->setCellValue('S2', '');
+
+    $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+
+    $objWriter->save($filename);
+    send_mail_to($addr, "FAI befizetés érkezett (" . $mem_id . ")", $body, $filename);
+}
+
+function notificationFAI($fm_id) {
+    global $today;
     $fm = getFmById($fm_id);
     $mem_id = $fm[FM_MEMEBER_ID];
-    $mem = getMemberById($mem_id);
     $fee = getFeeById($fm[FM_FEE_ID]);
     if ($fee[FEE_TYPE] == FEE_TYPE_ORGANIZATION AND
             $fee[FEE_NAME] == FEE_ORG_NAME_FAI) { // Valaki egy FAI díjat fizetett be éppen
         $body = 'A ' . $mem_id . ' azonosítójú tag befizette FAI díját a '
-                . $fm[FM_FROM] . '-' . $fm[FM_TO] . ' időszakra.<br>'
+                . $today . '-' . $fm[FM_TO] . ' időszakra.<br>'
                 . 'A tag részletes adatai a mellékletben';
-        $filename = TMP_DIR . 'FAI_' . $mem_id . '.xlsx';
-        include_once CLASSES . 'PHPExcel.php';
-        include_once CLASSES . 'PHPExcel/Writer/Excel2007.php';
-        $objPHPExcel = new PHPExcel();
-        $objPHPExcel->getProperties()->setCreator(COMPANY_NAME . ' Tagnyilvántartó');
 
-
-        $objPHPExcel->setActiveSheetIndex(0);
-        $objPHPExcel->getActiveSheet()->setTitle($mem[MEMBER_KERNEV] . ' ' . $mem[MEMBER_VEZNEV] . ' ' . $this_year);
-
-
-        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'FAI ID');
-        $objPHPExcel->getActiveSheet()->setCellValue('A2', $mem[MEMBER_LICENCE]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'Licence Number');
-        $objPHPExcel->getActiveSheet()->setCellValue('B2', 'HUN-' . $mem_id);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'Validity From');
-        $objPHPExcel->getActiveSheet()->setCellValue('C2', date('d.m.Y'));
-
-        $objPHPExcel->getActiveSheet()->setCellValue('D1', 'Validity To');
-        $objPHPExcel->getActiveSheet()->setCellValue('D2', '31.12.' . date('Y', time()));
-
-        $objPHPExcel->getActiveSheet()->setCellValue('E1', 'Air Sport Discipline');
-        $objPHPExcel->getActiveSheet()->setCellValue('E2', 'Aeromodelling and Spacemodelling');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('F1', 'First Name');
-        $objPHPExcel->getActiveSheet()->setCellValue('F2', $mem[MEMBER_KERNEV]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('G1', 'Last Name');
-        $objPHPExcel->getActiveSheet()->setCellValue('G2', $mem[MEMBER_VEZNEV]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('H1', 'Gender');
-        $objPHPExcel->getActiveSheet()->setCellValue('H2', $mem[MEMBER_SEX]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('I1', 'Date of Birth');
-        $objPHPExcel->getActiveSheet()->setCellValue('I2', date('d.m.Y', strtotime($mem[MEMBER_BORN])));
-
-        $objPHPExcel->getActiveSheet()->setCellValue('J1', 'Nationality');
-        $objPHPExcel->getActiveSheet()->setCellValue('J2', 'HUN');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('K1', 'Country of Residence');
-        $objPHPExcel->getActiveSheet()->setCellValue('K2', 'HUN');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('L1', 'Address1');
-        $objPHPExcel->getActiveSheet()->setCellValue('L2', $mem[MEMBER_ADDR_STREET]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('M1', 'Address2');
-        $objPHPExcel->getActiveSheet()->setCellValue('M2', $mem[MEMBER_ADDR_POST]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('N1', 'Address3');
-        $objPHPExcel->getActiveSheet()->setCellValue('N2', $mem[MEMBER_ADDR_CITY]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('O1', 'Country of addresse');
-        $objPHPExcel->getActiveSheet()->setCellValue('O2', 'Hungary');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('P1', 'E-mail address');
-        $objPHPExcel->getActiveSheet()->setCellValue('P2', $mem[MEMBER_EMAIL]);
-
-        $objPHPExcel->getActiveSheet()->setCellValue('Q1', 'Phone (home)');
-        $objPHPExcel->getActiveSheet()->setCellValue('Q2', '');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('R1', 'Phone (office)');
-        $objPHPExcel->getActiveSheet()->setCellValue('R2', '');
-
-        $objPHPExcel->getActiveSheet()->setCellValue('S1', 'Phone (mobile)');
-        $objPHPExcel->getActiveSheet()->setCellValue('S2', '');
-
-        $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
-//        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-
-        $objWriter->save($filename);
-        error_log('FAI Notif filename:' . $filename);
         if (DEVELOPMENT) {
-            send_mail_to("postafiok@emg.hu", "FAI befizetés érkezett (" . $mem_id . ")", $body, $filename);
+            emailExcelMember($mem_id, getOptionValue(OPTIONS_NAME_ADMIN_EMAIL) , $body);
         } else {
-            send_mail_to(FAI_NOTIF_EMAIL, "FAI befizetés érkezett (" . $mem_id . ")", $body, $filename);
+            emailExcelMember($mem_id, getOptionValue(OPTIONS_NAME_FAI_NOTIF_EMAIL), $body);
         }
     }
 }
@@ -606,41 +623,6 @@ function addDatePeriod($begin, $period) {
     }
     $final = date("Y-m-d", strtotime($begin . $diff));
     return $final;
-}
-
-function get_name($type, $name) {
-    global $member_types, $member_insurances, $organizations;
-    global $club_categories, $associations, $associations, $administrations, $licences;
-    $ret = '---';
-    switch ($type) {
-        case FEE_TYPE_MEMBERSHIP:
-            $list = $member_types;
-            break;
-        case FEE_TYPE_INSURANCE:
-            $list = $member_insurances;
-            break;
-        case FEE_TYPE_ORGANIZATION:
-            $list = $organizations;
-            break;
-        case FEE_TYPE_CLUB:
-            $list = $club_categories;
-            break;
-        case FEE_TYPE_ASSOCIATION:
-            $list = $associations;
-            break;
-        case FEE_TYPE_ADMINISTRATION:
-            $list = $administrations;
-            break;
-        case FEE_TYPE_LICENCES:
-            $list = $licences;
-            break;
-        default:
-            return $ret;
-    }
-    if (isset($list[$name])) {
-        $ret = $list[$name];
-    }
-    return $ret;
 }
 
 function getMemberIdByEmail($email_addr) {

@@ -1,16 +1,19 @@
 <?php
 
 define("ADDR_CHK", "addr_chk_");
-$options = array(
+$selected_group = array(
     -1 => array("Válassz", "Kiknek az email címeit kéred"),
     0 => array("Egyesületi tisztek", "Vezetők, küldöttek, elnökök"),
     1 => array("Egyesületi küldöttek", "Csak küldöttek"),
-    2 => array("Elnökségi tagok", COMPANY_NAME." elnökségi tagok"),
+    2 => array("Elnökségi tagok", COMPANY_NAME . " elnökségi tagok"),
     3 => array("Aktív tagok", "Akiknek van valamilyen szerepük bármely egyesületben"),
     4 => array("Rendezetlen tagok", "Aktív tagok, akiknek van előírt, de ki nem fizetett díjtételük, és van emailcímük"),
 );
 if (!isset($selected_addr)) {
     $selected_addr = -1;
+}
+if (!isset($selected_newsletter)) {
+    $selected_newsletter = -1;
 }
 if (!isset($old_selected_addr)) {
     $old_selected_addr = $selected_addr;
@@ -24,94 +27,123 @@ if (!isset($email_subject)) {
 if (!isset($email_body)) {
     $email_body = 'Tisztelt   ' . REPLACE_NAME . ' !';
 }
-
-$output .= '<form method="post">';
-$output .= '<label>Címzettek: </label><select name="selected_addr" onChange="submit();">';
-foreach ($options as $key => $opt) {
-    $output .= '<option value="' . $key . '" ' . ($selected_addr == $key ? "selected" : "") . '>' . $opt[0] . '</option>';
-}
-$output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp;' . $options[$selected_addr][1] . '</br>';
-$output .= 'Csak címek:<input type="radio" name="radio_news_letter" value="addresses" onChange="submit();" ' . (($radio_news_letter == "addresses") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Email:<input type="radio" name="radio_news_letter" value="email" onChange="submit();" ' . (($radio_news_letter == "email") ? " checked " : "") . '><br>';
-$output .= '<br>';
-
-$sql = 'SELECT * FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_EMAIL . '`!="" ORDER BY `' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '`';
+$sql = 'SELECT * FROM `' . NEWSLETTER_TABLE . '` ;';
 $res = $mysqliLink->query($sql);
-$all = array();
+$newsletters = array();
 while ($res AND $row = $res->fetch_assoc()) {
-    $all[] = $row[MEMBER_ID];
+    $newsletters[$row[NEWSLETTER_ID]] = $row;
 }
-if ($old_selected_addr == $selected_addr) {
-    
-} else {
-    foreach ($all as $id) {
-        $chk = ADDR_CHK . $id;
-        unset($$chk);
-    }
-    $old_selected_addr = $selected_addr;
-    if ($res = retriveAddresses($selected_addr)) {
-        while ($row = $res->fetch_assoc()) {
-            $chk = ADDR_CHK . $row[MEMBER_ID];
-            $$chk = 'on';
-        }
-    }
+$output .= '<form method="post">';
+$output .= '<label>Hírlevelek: </label><select name="selected_newsletter" onChange="submit();">';
+$output .= '<option value=-1 ' . (-1 == $selected_newsletter ? 'selected' : '') . '>Új hírlevél készítése</option>';
+foreach ($newsletters as $key => $letter) {
+    $output .= '<option value="' . $key . '" ' . ($selected_newsletter == $key ? "selected" : "") . '>'
+            . $letter[NEWSLETTER_TIME] . ' / ' . $letter[NEWSLETTER_SUBJECT] . '</option>';
 }
-$output .= '<div class="email_address">';
-$output .= '<ul>';
-$selected_num = 0;
-foreach ($all as $id) {
-    $mem = retriveMember($id);
-    $chk = ADDR_CHK . $id;
-    if (isset($$chk) AND $$chk == 'on') {
-        $checked = 'checked';
-        $selected_num++;
-    } else {
-        $checked = '';
+$output .= '</select></br></br>';
+if ($selected_newsletter < 0) 
+    {
+    $output .= '<label>Címzettek: </label><select name="selected_addr" onChange="submit();">';
+    foreach ($selected_group as $key => $opt) {
+        $output .= '<option value="' . $key . '" ' . ($selected_addr == $key ? "selected" : "") . '>' . $opt[0] . '</option>';
     }
-    $output .= '<li><input type="checkbox" name="' . $chk . '" ' . $checked . ' "  onChange="submit();">'
-            . '<a title="(' . $mem[MEMBER_ID] . ')  ' . $mem[MEMBER_EMAIL] . '" '
-            . 'href="' . CARD_LINK . $mem[MEMBER_ID] . '" target="_blank">'
-            . $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . '</a></li>';
-}
-$output .= '</ul>';
-$output .= '</div><div = class="email_body">';
-$output .= 'Címzettek száma: ' . $selected_num . '<br><br>';
-if ($radio_news_letter == "addresses") {
-    foreach ($all as $id) {
-        $chk = ADDR_CHK . $id;
-        if (isset($$chk) AND $$chk == 'on') {
-            $mem = retriveMember($id);
-            $output .= $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . ' < ' . trim($mem[MEMBER_EMAIL]) . ' >;';
-        }
-    }
-    $output .= '<input type="hidden" name="email_body" value="' . $email_body . '">';
-    $output .= '<input type="hidden" name="email_subject" value="' . $email_subject . '">';
-} else {
-    $output .= '<input placeholder="Tárgy..." size="64" max_length="128" type="text" name="email_subject" value="' . $email_subject . '">&nbsp;&nbsp;&nbsp;&nbsp;';
-    if ($selected_num > 0) {
-        $output .= '<input type="submit" name="send_letter" value="Küldés" '
-                . 'onClick="return confirm(\'Biztosan ki akarsz küldeni  ' . $selected_num . ' darab emailt ?\')">';
-    }
-    $output .= '<br><br><textarea name="email_body" rows="36" cols="100">' . $email_body . '</textarea>';
-}
-$output .= '</div>';
-$output .= '<input type="hidden" name="old_selected_addr" value="' . $old_selected_addr . '">';
-$output .= '</form>';
+    $output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp;' . $selected_group[$selected_addr][1] . '</br>';
+    $output .= 'Csak címek:<input type="radio" name="radio_news_letter" value="addresses" onChange="submit();" ' . (($radio_news_letter == "addresses") ? " checked " : "") . '>';
+    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;Email:<input type="radio" name="radio_news_letter" value="email" onChange="submit();" ' . (($radio_news_letter == "email") ? " checked " : "") . '><br>';
+    $output .= '<br>';
 
-if (isset($send_letter)) {
-    unset($send_letter);
-    if (empty($email_subject)) {
-        warning("Nem adtad meg a körlevél tárgyát !");
+    $sql = 'SELECT * FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_EMAIL . '`!="" ORDER BY `' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '`';
+    $res = $mysqliLink->query($sql);
+    $all = array();
+    while ($res AND $row = $res->fetch_assoc()) {
+        $all[] = $row[MEMBER_ID];
+    }
+    if ($old_selected_addr == $selected_addr) {
+        
     } else {
-        $sent_num = 0;
         foreach ($all as $id) {
             $chk = ADDR_CHK . $id;
-            if (isset($$chk) AND $$chk == 'on') {
-                send_newsletter($id, $email_subject, $email_body);
-                $sent_num++;
+            unset($$chk);
+        }
+        $old_selected_addr = $selected_addr;
+        if ($res = retriveAddresses($selected_addr)) {
+            while ($row = $res->fetch_assoc()) {
+                $chk = ADDR_CHK . $row[MEMBER_ID];
+                $$chk = 'on';
             }
         }
-        warning($sent_num . ' darab körlevél kiküldve !');
+    }
+    $output .= '<div class="email_address">';
+    $output .= '<ul>';
+    $selected_num = 0;
+    foreach ($all as $id) {
+        $mem = retriveMember($id);
+        $chk = ADDR_CHK . $id;
+        if (isset($$chk) AND $ $chk == 'on') {
+            $checked = 'checked';
+            $selected_num++;
+        } else {
+            $checked = '';
+        }
+        $output .= '<li><input type="checkbox" name="' . $chk . '" ' . $checked . ' "  onChange="submit();">'
+                . '<a title="(' . $mem[MEMBER_ID] . ')  ' . $mem[MEMBER_EMAIL] . '" '
+                . 'href="' . CARD_LINK . $mem[MEMBER_ID] . '" target="_blank">'
+                . $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . '</a></li>';
+    }
+    $output .= '</ul>';
+    $output .= '</div><div = class="email_body">';
+    $output .= 'Címzettek száma: ' . $selected_num . '<br><br>';
+    if ($radio_news_letter == "addresses") {
+        foreach ($all as $id) {
+            $chk = ADDR_CHK . $id;
+            if (isset($$chk) AND $ $chk == 'on') {
+                $mem = retriveMember($id);
+                $output .= $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . ' < ' . trim($mem[MEMBER_EMAIL]) . ' >;';
+            }
+        }
+        $output .= '<input type="hidden" name="email_body" value="' . $email_body . '">';
+        $output .= '<input type="hidden" name="email_subject" value="' . $email_subject . '">';
+    } else {
+        $output .= '<input placeholder="Tárgy..." size="64" max_length="128" type="text" name="email_subject" value="' . $email_subject . '">&nbsp;&nbsp;&nbsp;&nbsp;';
+        if ($selected_num > 0) {
+            $output .= '<input type="submit" name="send_letter" value="Küldés" '
+                    . 'onClick="return confirm(\'Biztosan ki akarsz küldeni  ' . $selected_num . ' darab emailt ?\')">';
+        }
+        $output .= '<br><br><textarea name="email_body" rows="36" cols="100">' . $email_body . '</textarea>';
+    }
+    $output .= '</div>';
+    $output .= '<input type="hidden" name="old_selected_addr" value="' . $old_selected_addr . '">';
+    $output .= '</form>';
+
+    if (isset($send_letter)) {
+        unset($send_letter);
+        if (empty($email_subject)) {
+            warning("Nem adtad meg a körlevél tárgyát !");
+        } else {
+            $sent_num = 0;
+            $news_id = create_newsletter($email_subject, $email_body);
+            foreach ($all as $id) {
+                $chk = ADDR_CHK . $id;
+                if (isset($$chk) AND $ $chk == 'on') {
+                    push_newsletter($id, $news_id);
+                    // send_newsletter($id, $email_subject, $email_body);
+                    $sent_num++;
+                }
+            }
+            start_sending_newsletters();
+            warning($sent_num . ' darab körlevél kiküldése elindítva !');
+        }
+    }
+} else { // List newsletters
+    $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `'.NLM_NEWSLETTER_ID.'`='.$selected_newsletter.' ;';
+    $res = $mysqliLink->query($sql);
+    $output .= '<label>Küldő:</label>' . getMemberName($newsletters[$selected_newsletter][NEWSLETTER_CREATOR]) . '<br><br>';
+    $output .= '<label>Tárgy:</label>' . $newsletters[$selected_newsletter][NEWSLETTER_SUBJECT] . '<br><br>';
+    $output .= '<label>Tartalom:</label>' . $newsletters[$selected_newsletter][NEWSLETTER_BODY] . '<br><br>';
+    $output .= '<label>Címzettek:</label><br>';
+    while ($res AND $row = $res->fetch_assoc()) {
+        $mem_id = $row[NLM_MEMBER];
+        $output .= getMemberName($row[NLM_MEMBER]) . ' / ' . getMemberEmail($row[NLM_MEMBER]) . ' : ' . (0== strtotime($row[NLM_SENT]) ? 'Várakozik' : $row[NLM_SENT]) . '<br>';
     }
 }
 

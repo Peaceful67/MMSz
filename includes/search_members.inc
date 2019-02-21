@@ -14,44 +14,121 @@ define("LICENCE_WITHOUT", 8);
 define("LICENCE_PAID", 9);
 define("LICENCE_ALL", 10);
 
+// Search fields
+define("SEARCH_LISTED_MEMBER", 'listed_member');
+define("SEARCH_SEARCH", 'search');
+define("SEARCH_SELECTED_ACTIVE", 'active');
+define("SEARCH_SELECTED_PAID", 'paid');
+define("SEARCH_SELECTED_LICENCE", 'licence');
+define("SEARCH_SEARCH_BY_ID", 'search_by_id');
+define("SEARCH_ORDER_BY", 'order_by');
+define("SEARCH_SELECTED_CLUB", 'club');
+
+define("SEARCH_FEE_YEAR", 'search_fee_year');
+define("SEARCH_FEE_TYPE", 'search_fee_type');
+define("SEARCH_FEE_NAME", 'search_fee_name');
+define("SEARCH_FEE_CLUB", 'search_fee_club');
+
+
+if (!isset($searchByFees)) {
+    $searchByFees = false;
+}
+
 if (isset($_SESSION[SESSION_SEARCH_VALUES])) {
-    
+    $search_values = unserialize($_SESSION[SESSION_SEARCH_VALUES]);
+    $reload = true;
 } else {
-    
+    $reload = false;
 }
 
 if (!isset($listed_member)) {
-    $listed_member = 0;
-}
-if (!isset($search)) {
-    $search = '';
-}
-if (!isset($selected_active)) {
-    $selected_active = ACTIVE_ONLY;
+    $listed_member = $reload ? $search_values[SEARCH_LISTED_MEMBER] : 0;
 }
 
+if (!isset($search)) {
+    $search = $reload ? $search_values[SEARCH_SEARCH] : '';
+} else {
+    isNewSearch($search, SEARCH_SEARCH);
+}
+
+if (!$searchByFees) {
+    $selected_fee_id = -1;
+}
+
+if (!isset($selected_active)) {
+    $selected_active = $reload ? $search_values[SEARCH_SELECTED_ACTIVE] : ACTIVE_ONLY;
+} else {
+    isNewSearch($selected_active, SEARCH_SELECTED_ACTIVE);
+}
+
+
 if (!isset($selected_paid)) {
-    $selected_paid = PAID_ALL;
+    $selected_paid = $reload ? $search_values[SEARCH_SELECTED_PAID] : PAID_ALL;
+} else {
+    isNewSearch($selected_paid, SEARCH_SELECTED_PAID);
 }
 
 if (!isset($selected_licence)) {
-    $selected_licence = LICENCE_ALL;
+    $selected_licence = $reload ? $search_values[SEARCH_SELECTED_LICENCE] : LICENCE_ALL;
+} else {
+    isNewSearch($selected_licence, SEARCH_SELECTED_LICENCE);
 }
 
 if (!isset($search_by_id)) {
-    $search_by_id = '';
+    $search_by_id = $reload ? $search_values[SEARCH_SEARCH_BY_ID] : '';
+} else {
+    isNewSearch($search_by_id, SEARCH_SEARCH_BY_ID);
 }
 
 if (!isset($order_by)) {
-    $order_by = MEMBER_VEZNEV;
+    $order_by = $reload ? $search_values[SEARCH_ORDER_BY] : MEMBER_VEZNEV;
+} else {
+    isNewSearch($order_by, SEARCH_ORDER_BY);
 }
 if (!isset($selected_club)) {
-    if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
-        $selected_club = 0;
-    } else {
-        $selected_club = isClubLeader();
-    }
+    $selected_club = $reload ? $search_values[SEARCH_SELECTED_CLUB] :
+            ((isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) ?
+            0 : isClubLeader());
+} else {
+    isNewSearch($selected_club, SEARCH_SELECTED_CLUB);
 }
+
+if (!isset($search_fee_year)) {
+    $search_fee_year = $reload ? $search_values[SEARCH_FEE_YEAR] : $this_year;
+} else {
+    isNewSearch($search_fee_year, SEARCH_FEE_YEAR);
+}
+if (!isset($search_fee_type)) {
+    $search_fee_type = $reload ? $search_values[SEARCH_FEE_TYPE] : -1;
+} else {
+    isNewSearch($search_fee_type, SEARCH_FEE_TYPE);
+}
+if (!isset($search_fee_name)) {
+    $search_fee_name = $reload ? $search_values[SEARCH_FEE_NAME] : -1;
+} else {
+    isNewSearch($search_fee_name, SEARCH_FEE_NAME);
+}
+if (!isset($search_fee_club)) {
+    $search_fee_club = $reload ? $search_values[SEARCH_FEE_CLUB] : -1;
+} else {
+    isNewSearch($search_fee_club, SEARCH_FEE_CLUB);
+}
+
+$_SESSION[SESSION_SEARCH_VALUES] = serialize(array(
+    SEARCH_LISTED_MEMBER => $listed_member,
+    SEARCH_SEARCH => $search,
+    SEARCH_SELECTED_ACTIVE => $selected_active,
+    SEARCH_SELECTED_PAID => $selected_paid,
+    SEARCH_SELECTED_LICENCE => $selected_licence,
+    SEARCH_SEARCH_BY_ID => $search_by_id,
+    SEARCH_ORDER_BY => $order_by,
+    SEARCH_SELECTED_CLUB => $selected_club,   
+    SEARCH_FEE_YEAR => $search_fee_year,
+    SEARCH_FEE_TYPE => $search_fee_type,
+    SEARCH_FEE_NAME => $search_fee_name,
+    SEARCH_FEE_CLUB => $search_fee_club,
+        ));
+
 $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM `' . MEMBER_TABLE . '` ';
 if ($search_by_id > 0) {
     $search = '';
@@ -69,22 +146,23 @@ if ($search_by_id > 0) {
     switch ($selected_active) {
         case ACTIVE_ONLY:
             $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
-                    . ' `active`.`' . ROLE_PERMISSION . '`!="0" '
+                    . ' `active`.`' . ROLE_PERMISSION . '`!=0 '
                     . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . (($selected_club > 0) ? ' AND `active`.`' . ROLE_CLUB . '`=' . $selected_club . ' ' : '')
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             break;
         case ACTIVE_NOT:
             $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
-                    . ' `active`.`' . ROLE_PERMISSION . '`="0" '
+                    . ' `active`.`' . ROLE_PERMISSION . '`=0 '
+                    . (($selected_club > 0) ? ' AND `active`.`' . ROLE_CLUB . '`=' . $selected_club . ' ' : '')
                     . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             break;
         default:
-            /*
-              $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
-              . ' `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` )) ';
-             */
-            $sql .= ' )';
+            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . '`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . (($selected_club > 0) ? ' AND `active`.`' . ROLE_CLUB . '`=' . $selected_club . ' ' : '')
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             break;
     }
     switch ($selected_paid) {
@@ -164,8 +242,14 @@ if ($search_by_id > 0) {
 
 $res = $mysqliLink->query($sql);
 $total_member = $res ? $res->num_rows : 0;
-$output .= '<div class="keret"><form  method="post"><div class="search"> 
+$output .= '<div class="search"><form  method="post">';
 
+if ($searchByFees) {
+    include_once INCLUDES . 'search_fee.inc';
+} else {
+    $output .= '<input type="hidden" name="selected_fee_id" value="' . $selected_fee_id . '">';
+}
+$output .= '<div class="keret">
 <label for="search">Név: </label>
 <input type="text" name="search"  id="search" value="' . $search . '"  size="10">'
         . '&nbsp;&nbsp;&nbsp;
@@ -259,3 +343,12 @@ foreach ($all_columns as $view_chkindex => $view_chkname) {
 }
 $output .= '</div></form>';
 $output .= '</div>';
+
+function isNewSearch($field, $id) {
+    global $search_values, $listed_member;
+    if (!isset($search_values))
+        return;
+    if ($field != $search_values[$id]) {
+        $listed_member = 0;
+    }
+}

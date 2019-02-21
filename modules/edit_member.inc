@@ -69,6 +69,8 @@ switch ($radio_edit_member) {
         break;
     case "fees":
         $fee_member_id = $edit_member;
+        $editable_fees = array(FEE_TYPE_MEMBERSHIP, FEE_TYPE_INSURANCE, FEE_TYPE_ORGANIZATION, FEE_TYPE_CLUB, 
+            FEE_TYPE_ADMINISTRATION, FEE_TYPE_ASSOCIATION, FEE_TYPE_LICENCES, FEE_TYPE_OCCASION);
         include_once INCLUDES . 'choose_fee_type.inc';
         break;
     case "roles":

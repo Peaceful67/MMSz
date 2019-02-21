@@ -39,22 +39,32 @@ foreach (array(ACCESS_ADMIN, ACCESS_MMSZ, ACCESS_MMSZ_PRESIDENT) as $ac) {
     $output .= '<br>';
 }
 $output .= '</div>';
-$output .= '<h2>Egyesületek: </h2>';
+if (!isset($selected_club)) {
+    $selected_club = 0;
+}
+$output .= '<div class="keret"><br>';
+$output .= 'Egyesület: <select  name="selected_club" onChange="submit();">';
+$output .= '<option value="0">Válassz egyesületet !</option>';
 $clubs = getClubNameList();
 foreach ($clubs as $club_id => $club_name) {
-    $output .= '<div class="keret"><b>' . $club_name . '</b><br>';
+    $output .= '<option value="' . $club_id . '" ' . (($club_id == $selected_club) ? "selected" : "") . '>' . $club_name . '</option>';
+}
+$output .= '</select>';
+
+
+if ($selected_club > 0) {
     foreach (array(ACCESS_CLUBLEADER, ACCESS_CLUB_PRESIDENT, ACCESS_CLUB_DELEGATE) as $ac) {
         $first_line = true;
-        $output .= '<b><label>' . $access[$ac] . ': </label></b>';
+        $output .= '<br><b><label>' . $access[$ac] . ': </label></b>';
         $sql = 'SELECT * FROM `' . ROLE_TABLE . '` WHERE `' . ROLE_PERMISSION . '`="' . $ac . '" '
-                . ' AND `' . ROLE_CLUB . '`=' . $club_id . ';';
+                . ' AND `' . ROLE_CLUB . '`=' . $selected_club . ';';
         $res = $mysqliLink->query($sql);
         if ($res AND ( $res->num_rows > 0)) {
             while ($row = $res->fetch_assoc()) {
                 if ($first_line) {
                     $first_line = false;
                 } else {
-                    $output .= '<label> </label>';
+                    $output .= '<br><label> </label>';
                 }
                 if ($today > $row[ROLE_FROM] AND $today < $row[ROLE_TO]) {
                     $output .= '<button style="color:green";';
@@ -64,14 +74,15 @@ foreach ($clubs as $club_id => $club_name) {
                 $output .= ' name="modify_role" value="' . $row[ROLE_MEMBER] . '" >' . getMemberName($row[ROLE_MEMBER]);
                 $output .= '</button>&nbsp;&nbsp;';
                 $output .= $row[ROLE_FROM] . ' - ' . $row[ROLE_TO];
-                $output .= '<br>';
             }
         } else {
-            $output .= 'Jelenleg senki nem tölt be ilyen funkciót !<br>';
+            $output .= 'Jelenleg senki nem tölt be ilyen funkciót !';
         }
     }
-    $output .= '</div><br>';
+    $output .= '<br>';
 }
+$output .= '</div><br>';
+
 $output .= '</div>';
 $output .= '</form>';
 

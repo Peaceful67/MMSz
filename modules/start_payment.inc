@@ -12,17 +12,23 @@ if (isset($simplepay_number) AND isBillPaied($simplepay_number)) {
 
 if (isset($generate_bill)) {
     $number = generateBillingId();
-    $mysqliLink->query('INSERT INTO `' . SZAMLAZZ_TABLE . '` '
-            . '(`'.SZAMLAZZ_BILL_NUMBER.'`, `'.SZAMLAZZ_NAME.'`, `'.SZAMLAZZ_ADDR.'`,`'.SZAMLAZZ_TAX.'`) '
-            . 'VALUES ("'.$number.'","'.$invoice_name.'","'.$invoice_addr.'","'.$invoice_tax.'");');
-
+    if (SZAMLAZZ_ENABLED) {
+        $mysqliLink->query('INSERT INTO `' . SZAMLAZZ_TABLE . '` '
+                . '(`' . SZAMLAZZ_BILL_NUMBER . '`, `' . SZAMLAZZ_NAME . '`,'
+                . ' `' . SZAMLAZZ_ADDR_POST . '`,`' . SZAMLAZZ_ADDR_CITY . '`,`' . SZAMLAZZ_ADDR_STREET . '`,'
+                . '`' . SZAMLAZZ_TAX . '`) '
+                . 'VALUES ("' . $number . '","' . $invoice_name . '","'
+                . $invoice_addr_post . '","' . $invoice_addr_city . '","' . $invoice_addr_street
+                . '","' . $invoice_tax . '");');
+        logger($member_id, -1, LOGGER_SZAMLAZZ, $number . ' számla előkészítése');
+    }
     if ($generate_bill == PAY_METHOD_TRANSFER) {
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $fee2bill_sum = 0;
         $email_msg = "Tisztelt " . getMemberName($member_id) . "!<br><br>Utalásos fizetést indítottál. ";
         $email_msg .= '<br>Az összeget a ' . COMPANY_LONG_NAME . BANK_ACCOUNT . ' számú számlájára utald!<br>';
         $email_msg .= 'A közlemény rovatba a ' . $number . ' azonosítót add meg !<br>'
-                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az ' . COMPANY_NAME . '-szel ' . MMSZ_EMAIL . ' címen!<br>'
+                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az ' . COMPANY_NAME . '-szel ' . getOptionValue(OPTIONS_NAME_MMSZ_EMAIL) . ' címen!<br>'
                 . 'A befizetésed lekönyvelésekor értesítést fog a rendszer küldeni a ' . getMemberEmail($member_id) . ' email címre.<br><br>';
         foreach ($fms2bill as $fm2bill) {
             $email_msg .= '<hr>Tétel: <br>' . FM_to_String($fm2bill[0]) . '<br>';
@@ -97,10 +103,8 @@ if (isset($_SESSION[SESSION_FEE_TO_BILL])) {
     $output .= '<div class="editor">';
     $submit_enabled = true;
     if (SZAMLAZZ_ENABLED) {
-        include INCLUDES . 'getInvoiceCustomer.inc';
-        if (empty($invoice_name) OR empty($invoice_addr)) {
-            $submit_enabled = false;
-        }
+        include INCLUDES . 'get_invoice_customer.inc';
+        $submit_enabled = !(empty($invoice_name) OR empty($invoice_addr_post) OR empty($invoice_addr_city) OR empty($invoice_addr_street));
     }
     if ($submit_enabled) {
         $output .= 'Az alábbi módokon indíthatod el a <b>' . $fee2bill_sum . ' Ft </b>összegű fizetést:<br>';

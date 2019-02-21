@@ -26,7 +26,7 @@ function getMemberClubId($id) {
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
             . 'GROUP BY `' . ROLE_CLUB . '`;';
     $res = $mysqliLink->query($sql);
-    if ($res AND $res->num_rows() > 0) {
+    if ($res AND $res->num_rows > 0) {
         $ret = $res->fetch_assoc()[ROLE_CLUB];
     }
     return $ret;

@@ -26,6 +26,7 @@ function billItems($number) {
     }
     return $ret;
 }
+
 function generateBillingId() {
     $alphabet = "ABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
     $len = mb_strlen($alphabet) - 1;
@@ -175,6 +176,24 @@ function pay_bills($number, $bank_ref = 0) {
     $bills = getBillsByNumber($number);
     if (!empty($bills)) {
         notificationOfPayment($number);
+        if (SZAMLAZZ_ENABLED) {
+            $sql = 'SELECT * FROM `' . SZAMLAZZ_TABLE . '` '
+                    . '`'.SZAMLAZZ_TABLE.'` WHERE `'.SZAMLAZZ_BILL_NUMBER.'`="'.$number.'" '
+                    . ' AND `' . SZAMLAZZ_DONE . '`=0 LIMIT 1;';
+            $res = $mysqliLink->query($sql);
+            if ($res AND ( $res->num_rows > 0)) {
+                $szamla = $res->fetch_assoc();
+                include_once INCLUDES.'szamla_agent.inc';
+                $mysqliLink->query('UPDATE `' . SZAMLAZZ_TABLE . '` '
+                        . ' SET `' . SZAMLAZZ_DONE . '`=CURRENT_TIMESTAMP '
+                        . ' WHERE `' . SZAMLAZZ_BILL_NUMBER . '`="' . $row[SZAMLAZZ_BILL_NUMBER] . '"'
+                        . ' AND `' . SZAMLAZZ_DONE . '`=0;');
+                logger($member_id, -1, LOGGER_SZAMLAZZ, 'A '.$number.' azonosítójú számla kiállítva !');
+            } else {
+                error_log("Kellene szamlazni, de nincs kinek");
+                mail_system_error("Kellene szamlazni, de nincs kinek");
+            }
+        }
     }
     foreach ($bills as $bill) {
         $fm_id = $bill[BILLING_FM_ID];
@@ -234,9 +253,6 @@ function getPaymentByBillNumber($number) {
 
 function downloadPdfOfBill($number) {
     $payment = getPaymentByBillNumber($number);
-
-    include ("mpdf/mpdf.php");
-
     $body = '<img style="vertical-align: top" src="' . COMPANY_LOGO . '">';
     $body .= '<B>' . $number . '</B>';
     $creator = getCreatorOfBill($number);
@@ -255,7 +271,8 @@ function downloadPdfOfBill($number) {
         $body .= '<hr>';
     }
     $body .= '</div>';
-    $pdf = new mPDF('c', 'A4', '', '', 0, 0, 0, 0, 0, 0);
+    require_once CLASSES . '/vendor/autoload.php';
+    $pdf = new \Mpdf\Mpdf(['tempDir' => TMP_DIR], ['mode' => '+aCJK'], ['format' => 'A4'], ['orientation' => 'L']);
     $pdf->WriteHTML(iconv("UTF-8", "UTF-8", $body));
     $pdf->SetFooter('{PAGENO}');
     $pdf->Output($number . '_' . date("Y-m-d_H-i-s") . '.pdf', 'D');
@@ -314,6 +331,3 @@ function getLastCustomer($mem_id) {
         return false;
     }
 }
-
-
-

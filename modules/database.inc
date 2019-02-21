@@ -1,7 +1,9 @@
 <?php
 
 $mime = "application/x-gzip";
-
+if(!isset($fai_mem_id)) {
+    $fai_mem_id = 1508;
+}
 
 if (isset($integrity)) {
     $error = false;
@@ -113,7 +115,7 @@ if (isset($new_year)) {  // Letrehozza az uj evben is a tavalyi dijtetel rekordo
                                 . ' "' . $fee_current[FEE_FROM] . '", "' . $fee_current[FEE_TO] . '");';
 
                         logger($member_id, $fm_member_id, LOGGER_FM_EDIT, 'Évnytás keretében '
-                                . $fee_type[$fee_current[FEE_TYPE]][0] . '/ ' . get_name($fee_current[FEE_TYPE], $fee_current[FEE_NAME]) .
+                                . $fee_type[$fee_current[FEE_TYPE]][0] . '/ ' . get_fee_name($fee_current[FEE_TYPE], $fee_current[FEE_NAME]) .
                                 ' díjtétel beállítva');
                         $mysqliLink->query($sql);
                     } else {
@@ -142,7 +144,7 @@ if (isset($new_year)) {  // Letrehozza az uj evben is a tavalyi dijtetel rekordo
                     if($type==FEE_TYPE_CLUB) {
                         $output .= '('.getClubName($club).')';
                     }
-                    $output .= ' / ' . get_name($type, $name) . ': ' . $fm_res->num_rows . ' db&nbsp;&nbsp;&nbsp;&nbsp;';
+                    $output .= ' / ' . get_fee_name($type, $name) . ': ' . $fm_res->num_rows . ' db&nbsp;&nbsp;&nbsp;&nbsp;';
                     $sql = 'SELECT * FROM `' . FEE_TABLE . '` WHERE '
                             . '`' . FEE_TYPE . '`="' . $type . '" AND '
                             . '`' . FEE_CLUB . '`="' . $club . '" AND '
@@ -161,7 +163,8 @@ if (isset($new_year)) {  // Letrehozza az uj evben is a tavalyi dijtetel rekordo
     }
 }
 if (isset($test)) {
-    notificationFAI(2089);
+    emailExcelMember($fai_mem_id, getOptionValue(OPTIONS_NAME_ADMIN_EMAIL), 'Teszt email');
+    $output .= 'Test email elküldve';
 }
 if (isset($script)) {
     /*
@@ -199,7 +202,8 @@ if (isset($_FILES["database_upload"]) AND isset($load_database)) {
     }
 }
 $output .= '<div class="editor"><form method="post" enctype="multipart/form-data">';
-$output .= '<label>Test:</label><input type="submit" value="FAI Email" name="test"><br>';
+$output .= '<label>Test:</label><input type="submit" value="FAI Email" name="test">'
+        . '&nbsp;&nbsp;&nbsp;&nbsp;Id:<input type="number" name="fai_mem_id" value="'.$fai_mem_id.'"><br>';
 $output .= '<label>Importálás:</label><input type="submit" value="Import" name="import"><br>';
 $output .= '<label>Integritás:</label><input type="submit" value="Ellenőrzés" name="integrity"><br>';
 $output .= '<label>Rendszer hiba küldés:</label><input type="submit" value="Rendszer hiba" name="system_error"><br>';
