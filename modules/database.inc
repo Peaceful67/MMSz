@@ -4,7 +4,10 @@ $mime = "application/x-gzip";
 if(!isset($fai_mem_id)) {
     $fai_mem_id = 1508;
 }
-
+if(isset($cron_daily)) {
+    $output .= 'Napi rutin lefuttatva';
+    include_once INCLUDES.'cron_daily.inc';
+}
 if (isset($integrity)) {
     $error = false;
     $output .= '<div class="keret">';
@@ -209,6 +212,7 @@ $output .= '<label>Integritás:</label><input type="submit" value="Ellenőrzés"
 $output .= '<label>Rendszer hiba küldés:</label><input type="submit" value="Rendszer hiba" name="system_error"><br>';
 $output .= '<label>PHP Info:</label><input type="submit" value="PHP Info" name="phpinfo"><br>';
 $output .= '<label>Konverzió:</label><input type="submit" value="Futtatás" name="script"><br>';
+$output .= '<label>Napi rutin:</label><input type="submit" value="Futtatás" name="cron_daily"><br>';
 /* $output .= '<label>Fizetés teszt:</label>';
   $output .= '<label>Licence áthelyezés:</label>';
   $output .= '<input type="submit" value="Indít"  name="licence">';

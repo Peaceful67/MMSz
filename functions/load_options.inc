@@ -18,6 +18,8 @@ define("OPTIONS_NAME_COMPANY_ADDR", "company_addr");
 define("OPTIONS_NAME_COMPANY_BANK", "company_bank");
 define("OPTIONS_NAME_COMPANY_TELEFON", "company_telefon");
 
+define("OPTIONS_NAME_LAST_CRON_DAILY", 'cron_daily');
+
 
 $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_MAX_NEWSLETTERS => 300,
@@ -33,6 +35,7 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_COMPANY_LONG_NAME => 'Magyar Modelező Szövetség',
     OPTIONS_NAME_COMPANY_BANK => '12345678-12345678-12345678',
     OPTIONS_NAME_COMPANY_TELEFON => '70-1234567',
+    OPTIONS_NAME_LAST_CRON_DAILY => 0,
    ];
 
 $db_options = array();
@@ -61,9 +64,21 @@ function updateOption($name, $value) {
     }
     $mysqliLink->query($sql);
     $options[$name] = $value;
+    return $value;
 }
 
 function getOptionValue($key) {
     global $options;
     return isset($options[$key]) ? $options[$key] : '';
+}
+
+function retrieveOptionValue($key) {
+    global $mysqliLink;
+    $sql = 'SELECT * FROM `'.OPTIONS_TABLE.'` WHERE `'.OPTIONS_NAME.'`="'.$key.'" LIMIT 1; ';
+    $res = $mysqliLink->query($sql);
+    if($res AND $res->num_rows > 0) {
+        return $res->fetch_assoc()[OPTIONS_NAME];
+    } else {
+        return '';
+    }
 }

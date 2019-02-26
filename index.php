@@ -3,10 +3,16 @@
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';
 
+
 $output = '<!DOCTYPE  html>
-<head>        <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
-      <link type="text/css" rel="stylesheet" media="screen" href="design/horizontal.css">
+<head>        
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="' . COMPANY_NAME . ' Tagnyilvántartó">
+    <meta name="author" content="Baksa Zsolt (peaceful.app@gmail.com)">';
+
+$output .= '<link type="text/css" rel="stylesheet" media="screen" href="design/horizontal.css">
         </script>';
+
 if (CHAPTCHA_METHOD_GOOGLE == $chaptcha) {
     $output .= '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
 }

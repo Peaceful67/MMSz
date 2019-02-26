@@ -521,6 +521,21 @@ function getFeesOfClub($club, $category) {
     return $ret;
 }
 
+function getFeesOfClubInYear($club, $year) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . FEE_TABLE . '` WHERE '
+            . '`' . FEE_TYPE . '`="' . FEE_TYPE_CLUB . '" AND '
+            . '("'.$year.'-01-01" BETWEEN `' . FEE_FROM . '` AND `' . FEE_TO . '`) AND '
+            . '`' . FEE_CLUB . '`="' . $club . '" ;';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $ret[$row[FEE_ID]] = $row;
+    }
+    return $ret;
+}
+
+
 function addPeriodToDate($last, $period_type) {
     $ret = $last;
     switch ($period_type) {
@@ -587,6 +602,22 @@ function isClubMembership($cl_id) {
     $res = $mysqliLink->query($sql);
     if ($res) {
         $ret = $res->num_rows;
+    }
+    return $ret;
+}
+
+function getClubsWithFeeInYear($year) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT `' . CLUB_ID . '`, `' . CLUB_NAME . '` FROM (`' . CLUB_TABLE . '` '
+            . ' INNER JOIN `'.FEE_TABLE.'` AS `fee_club` ON ('
+            . ' `fee_club`.`'.FEE_CLUB.'` = `' . CLUB_TABLE . '`.`'.CLUB_ID.'`'
+            . ' AND `fee_club`.`'.FEE_TYPE.'` = '.FEE_TYPE_CLUB.' '
+            . ' AND ("'.$year.'-01-01" BETWEEN `fee_club`.`'.FEE_FROM.'` AND `fee_club`.`'.FEE_TO.'`)))'
+            . ' GROUP BY `'.CLUB_ID.'` ORDER BY `' . CLUB_NAME.'`;';   
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $ret[$row[CLUB_ID]] = $row[CLUB_NAME];        
     }
     return $ret;
 }

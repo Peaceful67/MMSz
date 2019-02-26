@@ -249,6 +249,7 @@ define("LOGGER_ASSOCCIATION", 28);
 define("LOGGER_LICENCES", 29);
 define("LOGGER_SZAMLAZZ", 30);
 define("LOGGER_OPTIONS", 31);
+define("LOGGER_CRONTAB", 32);
 
 
 
@@ -275,5 +276,6 @@ $logger_categories = array(
     LOGGER_LICENCES => "Jogosítások szerkesztése",
     LOGGER_SZAMLAZZ => "Online számlakezelés",
     LOGGER_OPTIONS => "Beállítások módosítása",
+    LOGGER_CRONTAB => "Crontab",
 );
 ?>

@@ -11,7 +11,7 @@ define("ACTIVE_ALL", 6);
 
 define("LICENCE_WITH", 7);
 define("LICENCE_WITHOUT", 8);
-define("LICENCE_PAID", 9);
+// define("LICENCE_PAID", 9);
 define("LICENCE_ALL", 10);
 
 // Search fields
@@ -122,7 +122,7 @@ $_SESSION[SESSION_SEARCH_VALUES] = serialize(array(
     SEARCH_SELECTED_LICENCE => $selected_licence,
     SEARCH_SEARCH_BY_ID => $search_by_id,
     SEARCH_ORDER_BY => $order_by,
-    SEARCH_SELECTED_CLUB => $selected_club,   
+    SEARCH_SELECTED_CLUB => $selected_club,
     SEARCH_FEE_YEAR => $search_fee_year,
     SEARCH_FEE_TYPE => $search_fee_type,
     SEARCH_FEE_NAME => $search_fee_name,
@@ -134,7 +134,7 @@ if ($search_by_id > 0) {
     $search = '';
     $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_ID . '`="' . $search_by_id . '" LIMIT 1';
 } else {
-    $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM ((((`' . MEMBER_TABLE . '`';
+    $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (((`' . MEMBER_TABLE . '`';
 
     if ($selected_club > 0) {
         $sql .= ' INNER JOIN `' . ROLE_TABLE . '` ON (`' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`="' . $selected_club . '" '
@@ -159,11 +159,12 @@ if ($search_by_id > 0) {
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             break;
         default:
-            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+            $sql .= ')';
+/*            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
                     . '`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
                     . (($selected_club > 0) ? ' AND `active`.`' . ROLE_CLUB . '`=' . $selected_club . ' ' : '')
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
-            break;
+*/            break;
     }
     switch ($selected_paid) {
         case PAID_NOT:
@@ -174,7 +175,7 @@ if ($search_by_id > 0) {
                     . ' INNER JOIN `' . FEE_TABLE . '` AS `paid_fee` ON ('
                     . ' `paid_fm`.`' . FM_FEE_ID . '`=`paid_fee`.`' . FEE_ID . '` '
                     . ' AND `paid_fee`.`' . FEE_TYPE . '`="' . FEE_TYPE_MEMBERSHIP . '" '
-                    . ' )) ';
+                    . ' ))';
             break;
         case PAID_ONLY:
             $sql .= ' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON ('
@@ -184,35 +185,8 @@ if ($search_by_id > 0) {
                     . ' INNER JOIN `' . FEE_TABLE . '` AS `paid_fee` ON ('
                     . ' `paid_fm`.`' . FM_FEE_ID . '`=`paid_fee`.`' . FEE_ID . '` '
                     . ' AND `paid_fee`.`' . FEE_TYPE . '`="' . FEE_TYPE_MEMBERSHIP . '" '
-                    . ' )) ';
+                    . ' ))';
             break;
-        default:
-            $sql .= ' ) ';
-            break;
-    }
-    switch ($selected_licence) {
-        /* WHER feltetelbe ment, mert a MEMBER tablaban kell nezni
-          case LICENCE_WITH:
-          $sql .= ' INNER JOIN `' . MEMBER_TABLE . '` AS `mem_lic` ON ('
-          . ' `mem_lic`.`' . MEMBER_LICENCE . '`!=" " )) ';
-          break;
-          case LICENCE_WITHOUT:
-          $sql .= ' INNER JOIN `' . MEMBER_TABLE . '` AS `mem_lic` ON ('
-          . ' `mem_lic`.`' . MEMBER_LICENCE . '`=" " )) ';
-          break;
-         */
-        case LICENCE_PAID:
-            $sql .= ' INNER JOIN `' . FM_TABLE . '` AS `licence_fm` ON ('
-                    . ' `licence_fm`.`' . FM_PAY_ID . '`!="0" '
-                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`licence_fm`.`' . FM_MEMEBER_ID . '` '
-                    . ' AND (CURDATE() BETWEEN `licence_fm`.`' . FM_FROM . '` AND `licence_fm`.`' . FM_TO . '`))'
-                    . ' INNER JOIN `' . FEE_TABLE . '` AS `licence_fee` ON ('
-                    . ' `licence_fm`.`' . FM_FEE_ID . '`=`licence_fee`.`' . FEE_ID . '` '
-                    . ' AND `licence_fee`.`' . FEE_TYPE . '`="' . FEE_TYPE_ORGANIZATION . '" '
-                    . ' AND `licence_fee`.`' . FEE_NAME . '`="0" ' // FAI
-                    . ' )) ';
-            break;
-        case LICENCE_ALL:
         default:
             $sql .= ' ) ';
             break;
@@ -226,46 +200,58 @@ if ($search_by_id > 0) {
     } else {
         $sql .= ' WHERE 1 ';
     }
-    if ($selected_licence == LICENCE_WITH OR $selected_licence == LICENCE_WITHOUT) {
-        $sql .= ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_LICENCE . '`' . (($selected_licence == LICENCE_WITH) ? "!" : "") . '="" ';
+    switch ($selected_licence) {
+        case LICENCE_WITH:
+            $sql .= ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_LICENCE . '`>"" ';
+            break;
+        case LICENCE_WITHOUT:
+            $sql .= ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_LICENCE . '`="" ';
+            break;
+        default:
+            break;
     }
     $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` ';
     switch ($order_by) {
-        case MEMBER_ID: $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` ASC ';
+        case MEMBER_ID: $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` ASC ;';
             break;
         case MEMBER_VEZNEV:
         default:
-            $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '` ASC ';
+            $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '` ASC ;';
             break;
     }
 }
-
+error_log($sql);
 $res = $mysqliLink->query($sql);
-$total_member = $res ? $res->num_rows : 0;
-$output .= '<div class="search"><form  method="post">';
+if ($res) {
+    $total_member = $res->num_rows;
+} else {
+    $total_member = 0;
+    error_log("Search error: " . $sql);
+}
+$output .= '<div class="search"><form  method="post"><div class="keret">';
 
 if ($searchByFees) {
     include_once INCLUDES . 'search_fee.inc';
 } else {
     $output .= '<input type="hidden" name="selected_fee_id" value="' . $selected_fee_id . '">';
-}
-$output .= '<div class="keret">
+    $output .= '
 <label for="search">Név: </label>
 <input type="text" name="search"  id="search" value="' . $search . '"  size="10">'
-        . '&nbsp;&nbsp;&nbsp;
+            . '&nbsp;&nbsp;&nbsp;
             <label for="search">Azonosító : </label>
-<input type="text" name="search_by_id"  id="search_by_id" value="' . $search_by_id . '" size="10">';
-$output .= '&nbsp;&nbsp;&nbsp;Rendezés:';
+<input type="text" name="search_by_id"  id="search_by_id" value="' . $search_by_id . '" size="10">&nbsp;&nbsp;&nbsp;';
+}
+$output .= 'Rendezés:';
 $output .= '<input type="radio" name="order_by" value="' . MEMBER_ID . '" onChange="submit();" ';
 if ($order_by == MEMBER_ID) {
     $output .= 'checked="checked"';
 }
-$output .= '>sorszám&nbsp;&nbsp;&nbsp;&nbsp;';
+$output .= '>azonosító&nbsp;&nbsp;&nbsp;&nbsp;';
 $output .= '<input type="radio" name="order_by" value="' . MEMBER_VEZNEV . '" onChange="submit();" ';
 if ($order_by == MEMBER_VEZNEV) {
     $output .= 'checked="checked"';
 }
-$output .= '>név&nbsp;&nbsp;&nbsp;&nbsp;Találat :' . $total_member . ' tag';
+$output .= '>Név&nbsp;&nbsp;&nbsp;&nbsp;<b>Találat :' . $total_member . ' tag</b>';
 
 if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
     $output .= '<br><br>';
@@ -283,19 +269,24 @@ $output .= '<option value="' . ACTIVE_ALL . '" ' . ($selected_active == ACTIVE_A
 $output .= '<option value="' . ACTIVE_ONLY . ' " ' . ($selected_active == ACTIVE_ONLY ? "selected" : "") . '>Aktívak</option>';
 $output .= '<option value="' . ACTIVE_NOT . '" ' . ($selected_active == ACTIVE_NOT ? "selected" : "") . '>Nem aktívak</option>';
 $output .= '</select>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fizetett: ';
-$output .= '<select name="selected_paid" onChange="submit();">';
-$output .= '<option value="' . PAID_ALL . '" ' . ($selected_paid == PAID_ALL ? "selected" : "") . '>Összes</option>';
-$output .= '<option value="' . PAID_ONLY . '" ' . ($selected_paid == PAID_ONLY ? "selected" : "") . '>Rendezett</option>';
-$output .= '<option value="' . PAID_NOT . '"  ' . ($selected_paid == PAID_NOT ? "selected" : "") . '>Nem rendezett</option>';
-$output .= '</select>';
+
+if (!$searchByFees) {
+    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fizetett: ';
+    $output .= '<select name="selected_paid" onChange="submit();">';
+    $output .= '<option value="' . PAID_ALL . '" ' . ($selected_paid == PAID_ALL ? "selected" : "") . '>Összes</option>';
+    $output .= '<option value="' . PAID_ONLY . '" ' . ($selected_paid == PAID_ONLY ? "selected" : "") . '>Rendezett</option>';
+    $output .= '<option value="' . PAID_NOT . '"  ' . ($selected_paid == PAID_NOT ? "selected" : "") . '>Nem rendezett</option>';
+    $output .= '</select>';
+} else {
+    $selected_paid = PAID_ALL;
+    $output .= '<input type="hidden" name="selected_paid" value="' . PAID_ALL . '">';
+}
 
 $output .= '&nbsp;&nbsp;&nbsp;&nbsp;FAI licensz: ';
 $output .= '<select name="selected_licence" onChange="submit();">';
 $output .= '<option value="' . LICENCE_ALL . '" ' . ($selected_licence == LICENCE_ALL ? "selected" : "") . '>Összes</option>';
 $output .= '<option value="' . LICENCE_WITH . '" ' . ($selected_licence == LICENCE_WITH ? "selected" : "") . '>Van</option>';
 $output .= '<option value="' . LICENCE_WITHOUT . '" ' . ($selected_licence == LICENCE_WITHOUT ? "selected" : "") . '>Nincs</option>';
-$output .= '<option value="' . LICENCE_PAID . '" ' . ($selected_licence == LICENCE_PAID ? "selected" : "") . '>Fizetve</option>';
 $output .= '</select>';
 
 if (isset($pager)) {
