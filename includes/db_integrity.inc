@@ -5,14 +5,24 @@ $sql = 'SELECT * FROM `' . MEMBER_TABLE . '` ';
 $res = $mysqliLink->query($sql);
 $mem_error = false;
 $num = 0;
+$ins_role = 0;
 while ($res AND $row = $res->fetch_assoc()) {
+    $role_res = $mysqliLink->query('SELECT * FROM `'.ROLE_TABLE.'` WHERE `'.ROLE_MEMBER.'`='.$row[MEMBER_ID]);
+    if($role_res AND $role_res->num_rows==0) {
+        $mysqliLink->query('INSERT INTO `'.ROLE_TABLE.'` '
+                . '(`permission`, `member_id`, `date_from`, `date_to`, `club_id`) '
+                . 'VALUES (0, '.$row[MEMBER_ID].',"'.$today.'","2099-12-31",0)');
+        $ins_role++;
+    }
     $num++;
 }
 if ($mem_error) {
     $output .= '<img src="' . IMAGES . 'delete.jpg">Hiba members táblában<br>';
     logger($member_id, -1, LOGGER_DATABASE, "Hiba `members` táblában");
 } else {
-    $output .= '<img src="' . IMAGES . 'ok.jpg">members tábla ' . $num . ' eleme rendben<br>';
+    
+    $output .= '<img src="' . IMAGES . 'ok.jpg">members tábla ' . $num . ' eleme rendben '
+            . $ins_role.' elemet létrehoztunk a ROLE táblában.<br>';
 }
 $error |= $mem_error;
 

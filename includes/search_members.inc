@@ -220,7 +220,6 @@ if ($search_by_id > 0) {
             break;
     }
 }
-error_log($sql);
 $res = $mysqliLink->query($sql);
 if ($res) {
     $total_member = $res->num_rows;
