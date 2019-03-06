@@ -12,6 +12,7 @@ include_once FUNCTIONS . 'config.inc';
 include_once FUNCTIONS . 'menus.inc';
 include_once 'texts.hu.inc';
 include_once FUNCTIONS . 'functions.inc';
+include_once FUNCTIONS . 'create_elements.inc';
 include_once FUNCTIONS . 'load_options.inc';
 include_once FUNCTIONS . 'email_functions.inc';
 include_once FUNCTIONS . 'role_functions.inc';
@@ -21,5 +22,6 @@ include_once FUNCTIONS . 'bill_functions.inc';
 include_once FUNCTIONS . 'lm_functions.inc';
 include_once INCLUDES . 'setup_load.inc';
 include_once INCLUDES . 'crontab.inc';
+
 
 

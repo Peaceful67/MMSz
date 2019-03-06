@@ -18,6 +18,10 @@ define("OPTIONS_NAME_COMPANY_ADDR", "company_addr");
 define("OPTIONS_NAME_COMPANY_BANK", "company_bank");
 define("OPTIONS_NAME_COMPANY_TELEFON", "company_telefon");
 
+define("OPTIONS_NAME_DEVELOPMENT", 'development');
+define("OPTIONS_NAME_PASSWORD_LINK", 'password_link');
+
+
 define("OPTIONS_NAME_LAST_CRON_DAILY", 'cron_daily');
 
 
@@ -36,7 +40,10 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_COMPANY_BANK => '12345678-12345678-12345678',
     OPTIONS_NAME_COMPANY_TELEFON => '70-1234567',
     OPTIONS_NAME_LAST_CRON_DAILY => 0,
+    OPTIONS_NAME_DEVELOPMENT => 0,
+    OPTIONS_NAME_PASSWORD_LINK => 1,
    ];
+
 
 $db_options = array();
 $sql = 'SELECT * FROM `' . OPTIONS_TABLE . '` ';

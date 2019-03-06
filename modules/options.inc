@@ -9,7 +9,9 @@ if (!isset($expand_emails)) {
 if (!isset($expand_company)) {
     $expand_company = 0;
 }
-
+if (!isset($expand_general)) {
+    $expand_general = 0;
+}
 if (isset($save_options)) {
     if ($expand_newsletter != 0) {
         changeValue($max_newsletter, OPTIONS_NAME_MAX_NEWSLETTERS);
@@ -24,12 +26,24 @@ if (isset($save_options)) {
         changeValue($email_signature, OPTIONS_NAME_EMAIL_SIGNATURE);
         changeValue($email_reply, OPTIONS_NAME_EMAIL_REPLY);
     }
+    if ($expand_general != 0) {
+        if (!isset($development)) {
+            $development = 'off';
+        }
+        if (!isset($password_link)) {
+            $password_link = 'off';
+        }
+
+        changeValue($development, OPTIONS_NAME_DEVELOPMENT);
+        changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
+    }
 }
 
 $output .= '<div class="editor"><form method="POST">';
 $output .= '<input type="hidden" name="expand_newsletter" value="' . $expand_newsletter . '">';
 $output .= '<input type="hidden" name="expand_emails" value="' . $expand_emails . '">';
 $output .= '<input type="hidden" name="expand_company" value="' . $expand_company . '">';
+$output .= '<input type="hidden" name="expand_general" value="' . $expand_general . '">';
 $output .= '<label>Körlevél beállítások: </label>';
 if (0 == $expand_newsletter) {
     $output .= '<button name="expand_newsletter" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
@@ -72,6 +86,17 @@ if (0 == $expand_company) {
     $output .= '</div>';
 }
 
+$output .= '<label>Általános beállítások: </label>';
+if (0 == $expand_general) {
+    $output .= '<button name="expand_general" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
+} else {
+    $output .= '<button name="expand_general" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
+    $output .= '<div class="keret">';
+    $output .= '<label>Fejlesztői:</label><input type="checkbox" name="development" ' . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
+    $output .= '<label>Belépő link jelszó kérésnél:</label><input type="checkbox" name="password_link" '
+            . (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0 ? "checked" : "") . '><br>';
+    $output .= '</div>';
+}
 
 
 $output .= '<br><input type="submit" name="save_options" value="Mentés">';
@@ -79,6 +104,13 @@ $output .= '</form></div>';
 
 function changeValue($var, $key) {
     global $options, $member_id;
+    if (isset($var) AND $var == 'on') {
+        $var = 1;
+    }
+    if (isset($var) AND $var == 'off') {
+        $var = 0;
+    }
+
     if (isset($var) AND $var != $options[$key]) {
         updateOption($key, $var);
         logger($member_id, -1, LOGGER_OPTIONS, $key . ' új értéke: ' . $var);

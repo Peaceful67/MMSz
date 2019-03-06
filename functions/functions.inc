@@ -11,11 +11,20 @@ function retriveSession() {
 
 function conv_array($in_data) {
     $ret = array();
-    foreach ($in_data as $data) {
-        $ret[] = iconv("utf-8", "iso-8859-2", $data);
+    foreach ($in_data as  $value) {
+        $ret[] = iconv("utf-8", "iso-8859-2", $value);
     }
     return $ret;
 }
+
+function conv_array_walk($in_data) {
+    $ret = array();
+    foreach ($in_data as  $key => $value) {
+        $ret[$key] = iconv("utf-8", "iso-8859-2", $value);
+    }
+    return $ret;
+}
+
 
 function redirect($id) {
     global $admin_menu;
@@ -187,12 +196,15 @@ function searchById($id) {
 }
 
 function logger($id, $related, $category, $action) {
-    global $mysqliLink;
+    global $mysqliLink, $logger_categories;
     $sql = 'INSERT INTO `logs`(`member`, `related_id`, `log_category`, `activity`) '
             . 'VALUES ("' . $id . '","' . $related . '","' . $category . '","' . $action . '")';
     $mysqliLink->query($sql);
     $sql = 'DELETE FROM `logs` WHERE `time_stamp` < DATE_SUB(NOW(), INTERVAL 2 YEAR);';
     $mysqliLink->query($sql);
+    if(DEVELOPMENT) {
+        error_log(iconv("utf-8", "iso-8859-2", 'Logger:'.$logger_categories[$category].'/'.$action));
+    }
 }
 
 function createNewMember() {

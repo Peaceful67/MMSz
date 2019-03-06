@@ -1,6 +1,8 @@
 <?php
 
 $now = time();
+
+// Utemezett korlevel kuldes 
 if (!isset($options[OPTIONS_NAME_LAST_NEWSLETTER]) OR 0 == $options[OPTIONS_NAME_LAST_NEWSLETTER]) {
     start_sending_newsletters();
 }
@@ -12,11 +14,13 @@ if ($next < $now) {
     }
 }
 
+
+// Napi rutin (havi)
 if (!isset($options[OPTIONS_NAME_LAST_CRON_DAILY]) OR 0 == $options[OPTIONS_NAME_LAST_CRON_DAILY]) {
     updateOption(OPTIONS_NAME_LAST_CRON_DAILY, $now);
     include_once INCLUDES . 'cron_daily.inc';
 } else {
-    $next = (60 * 60 * 24) + $options[OPTIONS_NAME_LAST_CRON_DAILY] ;
+    $next = (60 * 60 * 24 * 30) + $options[OPTIONS_NAME_LAST_CRON_DAILY] ;
     if ($next < $now) {
         $lock = updateOption(OPTIONS_NAME_LAST_CRON_DAILY, $now);
         if (retrieveOptionValue(OPTIONS_NAME_LAST_CRON_DAILY) == $lock) {

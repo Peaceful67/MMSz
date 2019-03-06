@@ -621,3 +621,13 @@ function getClubsWithFeeInYear($year) {
     }
     return $ret;
 }
+
+function isFeeToday($fee_id) {
+    global $today;    
+    $fee = getFeeById($fee_id);
+    if($fee) {
+        return (($today <= $fee[FEE_TO])  AND ($today >= $fee[FEE_FROM])) ? true : false;
+    } else {
+        return false;
+    }
+}

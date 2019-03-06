@@ -51,7 +51,7 @@ if (isset($download)) {
             $fh = fopen('php://output', 'w');
             fputcsv($fh, conv_array(array("Kategória", "Szakág", COMPANY_NAME . " azonosító", "Név", "Született", "Egyesület", "Tagdíj", "Rendezve")), CSV_DELIMITER);
             $cat_res = $mysqliLink->query('SELECT * FROM `' . CATEGORIES_TABLE . '` ORDER BY `' . CATEGORIES_SHORT . '`');
-            while ($cat_res AND $cat_row = $cat_res->fetch_assoc) {
+            while ($cat_res AND $cat_row = $cat_res->fetch_assoc()) {
                 $mem_res = $mysqliLink->query('SELECT * FROM `' . CM_TABLE . '` WHERE `' . CM_CATEGORY . '`=' . $cat_row[CATEGORIES_ID]);
                 while ($mem_res AND $mem_row = $mem_res->fetch_assoc()) {
                     $mem = retriveMember($mem_row[CM_MEMBER_ID]);

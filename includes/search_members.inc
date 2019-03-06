@@ -8,11 +8,11 @@ define("PAID_ALL", 3);
 define("ACTIVE_ONLY", 4);
 define("ACTIVE_NOT", 5);
 define("ACTIVE_ALL", 6);
+define("ACTIVE_DELETED", 7);
 
-define("LICENCE_WITH", 7);
-define("LICENCE_WITHOUT", 8);
-// define("LICENCE_PAID", 9);
-define("LICENCE_ALL", 10);
+define("LICENCE_WITH", 10);
+define("LICENCE_WITHOUT", 11);
+define("LICENCE_ALL", 12);
 
 // Search fields
 define("SEARCH_LISTED_MEMBER", 'listed_member');
@@ -50,8 +50,7 @@ if (!isset($search)) {
 } else {
     isNewSearch($search, SEARCH_SEARCH);
 }
-
-if (!$searchByFees) {
+if (!isset($selected_fee_id)) {
     $selected_fee_id = -1;
 }
 
@@ -158,18 +157,22 @@ if ($search_by_id > 0) {
                     . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             break;
+        case ACTIVE_DELETED:
+            $sql .= ' LEFT JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . '`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` )) ';
+            $selected_paid = PAID_ALL;
+            break;
+
         default:
             $sql .= ')';
-/*            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
-                    . '`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
-                    . (($selected_club > 0) ? ' AND `active`.`' . ROLE_CLUB . '`=' . $selected_club . ' ' : '')
-                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
-*/            break;
+            break;
     }
     switch ($selected_paid) {
         case PAID_NOT:
             $sql .= ' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON ('
                     . ' `paid_fm`.`' . FM_PAY_ID . '`="0" '
+                    . (($searchByFees AND $selected_fee_id > 0) ?
+                    (' AND `paid_fm`.`' . FM_FEE_ID . '`=' . $selected_fee_id . ' ') : '')
                     . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`paid_fm`.`' . FM_MEMEBER_ID . '` '
                     . ' AND (CURDATE() BETWEEN `paid_fm`.`' . FM_FROM . '` AND `paid_fm`.`' . FM_TO . '`))'
                     . ' INNER JOIN `' . FEE_TABLE . '` AS `paid_fee` ON ('
@@ -180,6 +183,8 @@ if ($search_by_id > 0) {
         case PAID_ONLY:
             $sql .= ' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON ('
                     . ' `paid_fm`.`' . FM_PAY_ID . '`!="0" '
+                    . (($searchByFees AND $selected_fee_id > 0) ?
+                    (' AND `paid_fm`.`' . FM_FEE_ID . '`=' . $selected_fee_id . ' ') : '')
                     . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`paid_fm`.`' . FM_MEMEBER_ID . '` '
                     . ' AND (CURDATE() BETWEEN `paid_fm`.`' . FM_FROM . '` AND `paid_fm`.`' . FM_TO . '`))'
                     . ' INNER JOIN `' . FEE_TABLE . '` AS `paid_fee` ON ('
@@ -187,8 +192,11 @@ if ($search_by_id > 0) {
                     . ' AND `paid_fee`.`' . FEE_TYPE . '`="' . FEE_TYPE_MEMBERSHIP . '" '
                     . ' ))';
             break;
+        case PAID_ALL:
         default:
-            $sql .= ' ) ';
+            $sql .= (($searchByFees AND $selected_fee_id > 0) ?
+                    (' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON (`paid_fm`.`' . FM_FEE_ID . '`=' . $selected_fee_id . ' )') : '')
+                    . ' ) ';
             break;
     }
     if (strlen($search) < 3 AND ! empty($search)) {
@@ -225,7 +233,11 @@ if ($res) {
     $total_member = $res->num_rows;
 } else {
     $total_member = 0;
-    error_log("Search error: " . $sql);
+    mail_system_error('Hiba a lekérdezésben: '.$sql);
+
+}
+if ($searchByFees AND $selected_fee_id < 0) {
+    $total_member = 0;
 }
 $output .= '<div class="search"><form  method="post"><div class="keret">';
 
@@ -264,22 +276,19 @@ if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_
 }
 $output .= '&nbsp;&nbsp;&nbsp;&nbsp;Tagság: ';
 $output .= '<select name="selected_active" onChange="submit();">';
-$output .= '<option value="' . ACTIVE_ALL . '" ' . ($selected_active == ACTIVE_ALL ? "selected" : "") . '>Összes</option>';
+$output .= '<option value="' . ACTIVE_ALL . '" ' . ($selected_active == ACTIVE_ALL ? "selected" : "") . '>Nincs szűrés</option>';
 $output .= '<option value="' . ACTIVE_ONLY . ' " ' . ($selected_active == ACTIVE_ONLY ? "selected" : "") . '>Aktívak</option>';
 $output .= '<option value="' . ACTIVE_NOT . '" ' . ($selected_active == ACTIVE_NOT ? "selected" : "") . '>Nem aktívak</option>';
+//$output .= '<option value="' . ACTIVE_DELETED . '" ' . ($selected_active == ACTIVE_DELETED ? "selected" : "") . '>Töröltek</option>';
 $output .= '</select>';
 
-if (!$searchByFees) {
-    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fizetett: ';
-    $output .= '<select name="selected_paid" onChange="submit();">';
-    $output .= '<option value="' . PAID_ALL . '" ' . ($selected_paid == PAID_ALL ? "selected" : "") . '>Összes</option>';
-    $output .= '<option value="' . PAID_ONLY . '" ' . ($selected_paid == PAID_ONLY ? "selected" : "") . '>Rendezett</option>';
-    $output .= '<option value="' . PAID_NOT . '"  ' . ($selected_paid == PAID_NOT ? "selected" : "") . '>Nem rendezett</option>';
-    $output .= '</select>';
-} else {
-    $selected_paid = PAID_ALL;
-    $output .= '<input type="hidden" name="selected_paid" value="' . PAID_ALL . '">';
-}
+
+$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fizetett: ';
+$output .= '<select name="selected_paid" onChange="submit();">';
+$output .= '<option value="' . PAID_ALL . '" ' . ($selected_paid == PAID_ALL ? "selected" : "") . '>Nincs szűrés</option>';
+$output .= '<option value="' . PAID_ONLY . '" ' . ($selected_paid == PAID_ONLY ? "selected" : "") . '>Rendezett</option>';
+$output .= '<option value="' . PAID_NOT . '"  ' . ($selected_paid == PAID_NOT ? "selected" : "") . '>Rendezetlen</option>';
+$output .= '</select>';
 
 $output .= '&nbsp;&nbsp;&nbsp;&nbsp;FAI licensz: ';
 $output .= '<select name="selected_licence" onChange="submit();">';

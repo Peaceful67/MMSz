@@ -11,7 +11,7 @@ if (isset($delete_fm)) {
 if (isset($fee_type_save)) {
     $isSucceed = false;
     if (isset($selected_member_name) && $selected_member_name >= 0) {
-        if ($selected_member_period > 0) {
+        if ($selected_member_period > 0) {            
             if (isFeeChangeableInFM($fee_member_id, $selected_member_period)) {
                 deleteFeeNameIfExists($fee_member_id, FEE_TYPE_MEMBERSHIP, $selected_member_period);
                 $fee = getFeeById($selected_member_period);

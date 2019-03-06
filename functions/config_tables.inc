@@ -162,9 +162,3 @@ define("NLM_MEMBER", 'member_id');
 define("NLM_NEWSLETTER_ID", 'nl_id');
 define("NLM_SENT", 'sent');
 
-define("COMMAND_TABLE", 'command');
-define("COMMAND_MEMBER_ID", 'mem_id');
-define("COMMAND_CODE", 'code');
-define("COMMAND_CREATED", 'created');
-define("COMMAND_NAME", 'name');
-define("COMMAND_VALUE", 'value');

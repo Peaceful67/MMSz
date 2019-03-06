@@ -34,8 +34,9 @@ define("NEWLINE", "\n");
 
 define("CHAPTCHA_METHOD_MUTLIPLE", "multiple");
 define("CHAPTCHA_METHOD_GOOGLE", "google");
-$chaptcha = CHAPTCHA_METHOD_MUTLIPLE;
-//$chaptcha = CHAPTCHA_METHOD_GOOGLE;
+define("CHAPTCHA_METHOD_NOTHING", "nothing");
+//$chaptcha = CHAPTCHA_METHOD_MUTLIPLE;
+$chaptcha = CHAPTCHA_METHOD_NOTHING;
 define("GOOGLE_SITE_KEY", "6Le3hYEUAAAAAIISplLOnO3FVKedc8A3lnT1bmyM");
 define("GOOGLE_SECRET_KEY", "6Le3hYEUAAAAAIBsY4AnTPN-YBd5x_z8KnEc11_9");
 
@@ -80,6 +81,8 @@ define("DOCUMENTS", "./documents/");
 define("SIMPLEPAY", "./simplepay/");
 define("CLASSES", "./classes/");
 define("MPDF", CLASSES . "");
+define("ELEMENTS", CLASSES . "Elements/");
+
 
 
 define("PROGI", URL . "/index.php");

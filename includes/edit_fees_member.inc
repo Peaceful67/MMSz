@@ -3,6 +3,10 @@
 if (!isset($editable_fees)) {
     $editable_fees = array();
 }
+
+if(!isset($only_this_year)) {
+    $only_this_year = 'on';
+}
 $output .= '<div class="keret">';
 if (in_array(FEE_TYPE_MEMBERSHIP, $editable_fees)) {
     if (!isset($selected_member_name)) {
@@ -227,6 +231,8 @@ if (in_array(FEE_TYPE_OCCASION, $editable_fees)) {
 }
 
 $output .= '<input value="Rögzítés"  type="submit" name="fee_type_save">';
+$output .= '<br><label>Engedélyezett időszak:</label><input type="checkbox" name="only_this_year" '.($only_this_year=='on' ? "checked":"").' onChange="submit();">';
+$output .= $only_this_year=='on' ? " Csak ezévi díjtételek választatók":" Bármely díjtétel választható";
 $output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
 $output .= '</div>';
 

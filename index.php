@@ -131,6 +131,9 @@ if (isset($_GET['simplepay'])) {
     } else {
         foreach ($admin_menu as $k => $v) {
             if (($mod == $v[SETUP_MOD_ID]) && isPermitted($v[SETUP_MOD_ACCESS])) {
+                if(getOptionValue(OPTIONS_NAME_DEVELOPMENT)>0) {
+                    warning("Fejlesztő állapot");
+                }
                 $output .= '<h2>' . $v[SETUP_MOD_TITLE] . '</h2>';
                 include_once (MODULES . $v[SETUP_MOD_MODULE]);
                 break;

@@ -2,7 +2,7 @@
 
 
 $output .= 'Év: <select name="search_fee_year"  onchange="submit();">';
-$selected_fee_id = -1;
+
 for ($y = YEAR_FROM; $y <= YEAR_TO; $y++) {
     $output .= '<option value="' . $y . '" ' . (($y == $search_fee_year) ? "selected" : "") . '>' . $y . '</option>';
 }
@@ -39,6 +39,8 @@ if ($search_fee_type == FEE_TYPE_CLUB) {
         $output .= '</select>';
         if ($search_fee_club_category > 0) {
             $selected_fee_id = $search_fee_club_category;
+        } else {
+            $selected_fee_id = -1;
         }
     }
 } else {
@@ -61,6 +63,8 @@ if ($search_fee_type == FEE_TYPE_CLUB) {
             $output .= $search_fee[FEE_SUM] . ' Ft';
             $selected_fee_id = $search_fee[FEE_ID];
         }
+    } else {
+        $selected_fee_id = -1;
     }
 }
 $output .= '&nbsp;&nbsp;&nbsp;';
@@ -69,6 +73,7 @@ if ($selected_fee_id > 0) {
 } else {
     $output .= '<font color="red">Válaszd ki a díjtételt !</font>';
 }
+$output .= '<input type="hidden" name="selected_fee_id" value='.$selected_fee_id.'>';
 $output .= '<br><br>';
 
 
