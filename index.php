@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';

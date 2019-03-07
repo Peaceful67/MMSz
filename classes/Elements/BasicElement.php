@@ -13,11 +13,14 @@
  */
 class BasicElement {
 
-    public $tableName;
-    public $tableFields = array();
+    private $tableName;
+    private $tableFields;
+    private $tableRow;
 
-    public function __construct() {
-        
+    function __construct() {
+        $this->tableName = '';
+        $this->tableFields = array();
+        $this->tableRow = array();
     }
 
     protected function setTableName($name) {
@@ -29,10 +32,39 @@ class BasicElement {
             $this->tableFiels[] = $field;
         }
     }
+
     protected function createTableIfNotExists($sql) {
         global $mysqliLink;
         $mysqliLink->query($sql);
-        
+    }
+
+    protected function getElementBy($key, $value) {
+        global $mysqliLink;
+        if (isempty($this->tableName)) {
+            return false;
+        }
+        if (!in_array($key, $this->tableFields)) {
+            return false;
+        }
+        $sql = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $key . '`="' . $value . '";';
+        $res = $mysqliLink->query($sql);
+        if ($res) {
+            $this->tableRow = $res->fetch_assoc();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected function getValue($key) {
+        if (empty($this->tableRow)) {
+            return '';
+        }
+        if (isset($this->tableRow[$key])) {
+            return $this->tableRow[$key];
+        } else {
+            return '';
+        }
     }
 
 }

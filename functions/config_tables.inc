@@ -133,16 +133,7 @@ define("LM_FROM", "date_from");
 define("LM_TO", "date_to");
 define("LM_CLUB", "club_id");
 
-define("SZAMLAZZ_TABLE", "szamlazz");
-define("SZAMLAZZ_BILL_NUMBER", "bill_number");
-define("SZAMLAZZ_NAME", "name");
-define("SZAMLAZZ_EMAIL", "email");
-define("SZAMLAZZ_ADDR_POST", "addr_post");
-define("SZAMLAZZ_ADDR_CITY", "addr_city");
-define("SZAMLAZZ_ADDR_STREET", "addr_street");
-define("SZAMLAZZ_TAX", "tax");
-define("SZAMLAZZ_PREPARED", "prepared");
-define("SZAMLAZZ_DONE", "done");
+
 
 define("OPTIONS_TABLE", 'options');
 define("OPTIONS_ID", 'id');

@@ -211,22 +211,7 @@ $db_tables = array(
   `addr` varchar(64) NOT NULL,
   `tax` varchar(16) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;",
-    "szamlazz" => "
-CREATE TABLE `szamlazz` (
-  `bill_number` varchar(16) NOT NULL,
-  `name` varchar(64) NOT NULL,
-  `email` varchar(31) NOT NULL,
-  `addr_post` varchar(4) NOT NULL,
-  `addr_city` varchar(22) NOT NULL,
-  `addr_street` varchar(32) NOT NULL,
-  `tax` varchar(16) NOT NULL,
-  `prepared` timestamp(1) NOT NULL DEFAULT CURRENT_TIMESTAMP(1),
-  `done` timestamp(1) NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-ALTER TABLE `szamlazz`
-  ADD KEY `bill_number` (`bill_number`);
-COMMIT;
-",
+   
     "options" => 'CREATE TABLE `options` (
   `id` int(11) NOT NULL,
   `name` varchar(32) NOT NULL,

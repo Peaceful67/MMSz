@@ -50,12 +50,16 @@ if (isset($menu_up)) {
             . ' `' . SETUP_MOD_WEIGHT . '`=' . $menu_weight
             . ' WHERE  `' . SETUP_MOD_WEIGHT . '`=' . ($menu_weight - 1) . ' ;';
     $mysqliLink->query($sql);
-    error_log($sql);
     $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
             . ' `' . SETUP_MOD_WEIGHT . '`=' . ($menu_weight - 1)
             . ' WHERE  `' . SETUP_MOD_ID . '`="' . $menu_up . '" ;';
     $mysqliLink->query($sql);
     logger($member_id, -1, LOGGER_SETUP, $menu_up . ' azonosítójú menu előrébb helyezve.');
+}
+if (isset($menu_delete)) {
+    $sql = 'DELETE FROM `' . SETUP_MOD_TABLE . '` WHERE `' . SETUP_MOD_ID . '`="' . $menu_delete . '" ;';
+    $mysqliLink->query($sql);
+    logger($member_id, -1, LOGGER_SETUP, $menu_delete . ' azonosítójú menu törlése.');
 }
 foreach ($admin_menu as $menu) {
     $group = MENU_GROUP . $menu[SETUP_MOD_ID];
@@ -82,8 +86,8 @@ foreach ($admin_menu as $menu) {
                     . '`' . SETUP_MOD_ENABLED . '`=' . $ena . ' '
                     . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu[SETUP_MOD_ID] . '";';
             $mysqliLink->query($sql);
-                logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menu '.
-                        ($ena==1 ? 'engedélyezve':'tiltva'));
+            logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menu ' .
+                    ($ena == 1 ? 'engedélyezve' : 'tiltva'));
         }
     }
 }
@@ -100,10 +104,12 @@ $output .= '<table>'
         . '<col width="5%"><col width="15%"><col width="40%"><col width="25%"><col width="25%">'
         . '<tr><th>Eng.</th><th>ID</th><th>Név/Cím <input type="submit" name="menu_submit" value="Mentés"></th><th>Elhelyezkedés</th><th>Műveletek</th></tr>';
 foreach ($admin_menu as $menu) {
+    $deleteable = true;
     $output .= '<input type="hidden" name="' . MENU_WEIGHT . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_WEIGHT] . '">';
     $output .= '<tr>';
     $output .= '<td><input type="checkbox" name="chkboxes[]" value="' . $menu[SETUP_MOD_ID] . '" onChange="submit();" ';
     if ($menu[SETUP_MOD_DEPENDENCY] != "") {
+        $deleteable = false;
         $dependecy = $menu[SETUP_MOD_DEPENDENCY];
         $output .= ' disabled title="' . $dependecy . '" ';
         if (array_key_exists($dependecy, $admin_menu)) {
@@ -128,6 +134,10 @@ foreach ($admin_menu as $menu) {
     if ($menu[SETUP_MOD_WEIGHT] < $max_weight) {
         $output .= '<button  type="submit" name="menu_down" value="' . $menu[SETUP_MOD_ID] . '" >'
                 . '<img src="' . IMAGES . 'down.jpg" title="Le"></button>';
+    }
+    if ($deleteable) {
+        $output .= '<button  type="submit" name="menu_delete" value="' . $menu[SETUP_MOD_ID] . '" >'
+                . '<img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
     }
     $output .= '</td>';
     $output .= '</tr>';
