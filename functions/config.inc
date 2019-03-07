@@ -15,8 +15,7 @@ $neverEnding = '2099-12-31';
 $today = date('Y-m-d');
 
 define('SECRET', '%/{)9A!#@');
-define("VERSION", "2.2");
-
+define("VERSION", "2.3");
 define("CSV_DELIMITER", ";");
 define("CSV_DECODE", "utf8_decode");
 

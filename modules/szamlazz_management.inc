@@ -1,6 +1,6 @@
 <?php
 
-if (!SZAMLAZZ_ENABLED) {
+ if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA)>0) {
     warning('A számlázó modul nincs engedélyezve !');
     theEnd($output);
     exit(0);

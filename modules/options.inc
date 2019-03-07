@@ -33,9 +33,13 @@ if (isset($save_options)) {
         if (!isset($password_link)) {
             $password_link = 'off';
         }
+        if (!isset($szamlazz_ena)) {
+            $szamlazz_ena = 'off';
+        }
 
         changeValue($development, OPTIONS_NAME_DEVELOPMENT);
         changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
+        changeValue($szamlazz_ena, OPTIONS_NAME_SZAMLAZZ_ENA);
     }
 }
 
@@ -92,9 +96,13 @@ if (0 == $expand_general) {
 } else {
     $output .= '<button name="expand_general" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
     $output .= '<div class="keret">';
-    $output .= '<label>Fejlesztői:</label><input type="checkbox" name="development" ' . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
+    $output .= '<label>Fejlesztői:</label><input type="checkbox" name="development" '
+            . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
     $output .= '<label>Belépő link jelszó kérésnél:</label><input type="checkbox" name="password_link" '
             . (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0 ? "checked" : "") . '><br>';
+    $output .= '<label>Számlázz.hu engedélyezve:</label><input type="checkbox" name="szamlazz_ena" '
+            . (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 ? "checked" : "") . '><br>';
+
     $output .= '</div>';
 }
 

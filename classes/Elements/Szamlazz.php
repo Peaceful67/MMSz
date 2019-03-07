@@ -52,4 +52,17 @@ class Szamlazz extends BasicElement {
         $this->bill_number = $this->getValue(SZAMLAZZ_BILL_NUMBER);
     }
 
+    public function insertSzamla($number, $name, $post, $city, $street, $tax) {
+        global $member_id;
+        $this->insertElement([
+            SZAMLAZZ_BILL_NUMBER => $number,
+            SZAMLAZZ_NAME => $name,
+            SZAMLAZZ_ADDR_POST => $post,
+            SZAMLAZZ_ADDR_CITY => $city,
+            SZAMLAZZ_ADDR_STREET => $street,
+            SZAMLAZZ_TAX => $tax
+        ]);
+        logger($member_id, -1, LOGGER_SZAMLAZZ, $number . ' számla előkészítése');
+    }
+
 }

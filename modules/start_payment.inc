@@ -12,17 +12,11 @@ if (isset($simplepay_number) AND isBillPaied($simplepay_number)) {
 
 if (isset($generate_bill)) {
     $number = generateBillingId();
-    if (SZAMLAZZ_ENABLED) {
-        $mysqliLink->query('INSERT INTO `' . SZAMLAZZ_TABLE . '` '
-                . '(`' . SZAMLAZZ_BILL_NUMBER . '`, `' . SZAMLAZZ_NAME . '`,'
-                . ' `' . SZAMLAZZ_ADDR_POST . '`,`' . SZAMLAZZ_ADDR_CITY . '`,`' . SZAMLAZZ_ADDR_STREET . '`,'
-                . '`' . SZAMLAZZ_TAX . '`) '
-                . 'VALUES ("' . $number . '","' . $invoice_name . '","'
-                . $invoice_addr_post . '","' . $invoice_addr_city . '","' . $invoice_addr_street
-                . '","' . $invoice_tax . '");');
-        logger($member_id, -1, LOGGER_SZAMLAZZ, $number . ' számla előkészítése');
-    }
     if ($generate_bill == PAY_METHOD_TRANSFER) {
+        if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
+            $szamla = new Szamlazz();
+            $szamla->insertSzamla($number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+        }
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $fee2bill_sum = 0;
         $email_msg = "Tisztelt " . getMemberName($member_id) . "!<br><br>Utalásos fizetést indítottál. ";
@@ -53,6 +47,10 @@ if (isset($generate_bill)) {
     } elseif ($generate_bill == PAY_METHOD_CARD) {
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $simplepay_number = 'SC_' . $number;
+        if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
+            $szamla = new Szamlazz();
+            $szamla->insertSzamla($simplepay_number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+        }
         $simplepay_sum = 0;
         foreach ($fms2bill as $fm2bill) {
             $simplepay_sum += $fm2bill[1];
@@ -64,6 +62,10 @@ if (isset($generate_bill)) {
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $fee2bill_sum = 0;
         $number = 'DR_' . $number;
+        if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
+            $szamla = new Szamlazz();
+            $szamla->insertSzamla($number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+        }
         $email_msg = "Azonnal lekönyvelt fizetést indítottál. ";
         $email_msg .= '<br>Az összegnek már korábban az ' . COMPANY_NAME . BANK_ACCOUNT . ' számú számlájára kellett érkeznie!<br>';
         $email_msg .= 'Az utalás belső azonosítója : ' . $number . ' !<br><br>';
@@ -102,7 +104,7 @@ if (isset($_SESSION[SESSION_FEE_TO_BILL])) {
     $output .= '<form  method="post" enctype="multipart/form-data">';
     $output .= '<div class="editor">';
     $submit_enabled = true;
-    if (SZAMLAZZ_ENABLED) {
+    if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
         include INCLUDES . 'get_invoice_customer.inc';
         $submit_enabled = !(empty($invoice_name) OR empty($invoice_addr_post) OR empty($invoice_addr_city) OR empty($invoice_addr_street));
     }

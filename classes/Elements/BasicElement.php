@@ -40,10 +40,7 @@ class BasicElement {
 
     protected function getElementBy($key, $value) {
         global $mysqliLink;
-        if (isempty($this->tableName)) {
-            return false;
-        }
-        if (!in_array($key, $this->tableFields)) {
+        if (!$this->isInitalized()) {
             return false;
         }
         $sql = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $key . '`="' . $value . '";';
@@ -65,6 +62,40 @@ class BasicElement {
         } else {
             return '';
         }
+    }
+
+    private function isInitalized() {
+        if (isempty($this->tableName)) {
+            return false;
+        }
+        if (!in_array($key, $this->tableFields)) {
+            return false;
+        }
+        return true;
+    }
+
+    protected function insertElement($row) {
+        global $mysqliLink;
+        if (!$this->isInitalized()) {
+            return false;
+        }
+        $sql = 'INSERT INTO `' . $this->tableName . '` ';
+        $keys = '';
+        $values = '';
+        $num = 0;
+        foreach ($row as $key => $value) {
+            if (!in_array($key, $this->tableFields)) {
+                return false;
+            }
+            $keys .= '`' . $key . '`';
+            $values .= '"' . $value . '"';
+            if (++$num < count($row)) {
+                $keys .= ', ';
+                $values .= ', ';
+            }
+        }
+        $sql .= $keys . ' VALUES (' . $values . ');';
+        return $mysqliLink->query($sql);
     }
 
 }

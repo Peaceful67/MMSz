@@ -15,8 +15,7 @@ if (DEVELOPMENT) {
     define("DATABASE_ADDR", "localhost");
     define("SMTP_USER", "");
     define("SMTP_PASSWD", "");
-    define("TMP_DIR" , "/tmp/");
-    define("SZAMLAZZ_ENABLED", true);
+    define("TMP_DIR" , "/tmp/");    
 } else {
     define("DATABASE_ADDR", "mysql56");
     define("URL", "http://tag.modellsport.hu");
@@ -26,7 +25,6 @@ if (DEVELOPMENT) {
     define("SMTP_USER", "tagmsportweb");
     define("SMTP_PASSWD", "V7a63WPA5Xf");
     define("TMP_DIR" , "../tmp/");
-    define("SZAMLAZZ_ENABLED", false);
 }
 
 define("COMPANY_NAME", "MMSz");
