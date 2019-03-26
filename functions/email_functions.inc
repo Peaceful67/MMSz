@@ -46,7 +46,7 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
     if (!empty($filename)) {
         $my_mail->AddAttachment($filename);
     }
-    if (DEVELOPMENT) {
+    if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         $my_mail->AddAddress(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL));
     }
     if (!$my_mail->Send()) {
@@ -94,6 +94,9 @@ function send_notification($id, $subject, $body) {
     $person_body = str_replace(REPLACE_NAME, getMemberName($id), $body);
     $formated_body = str_replace(NEWLINE, '<br>', $person_body);
     $addr = getMemberEmail($id);
+    if(getOptionValue(OPTIONS_NAME_DEVELOPMENT)>0) {
+        $addr = getOptionValue(OPTIONS_NAME_ADMIN_EMAIL);
+    }
     if (!isset($addr) OR empty($addr)) {
         error_log("Missing email address (send_notification)");
         return;
@@ -135,7 +138,6 @@ function start_sending_newsletters() {
                 $subject = $nl_row[NEWSLETTER_SUBJECT];
                 $body = $nl_row[NEWSLETTER_BODY];
                 send_newsletter($row[NLM_MEMBER], $subject, $body);
-//                error_log('Sending an email to: '.$row[NLM_MEMBER]);
                 $sql = 'UPDATE `' . NLM_TABLE . '` ' //Mark as sent                        
                         . 'SET `' . NLM_SENT . '`=CURRENT_TIMESTAMP '
                         . ' WHERE `' . NLM_ID . '`=' . $row[NLM_ID] . ';';

@@ -167,7 +167,7 @@ while ($res and $row = $res->fetch_assoc()) {
     if ($fm) {
         $fee = getFeeById($fm[FM_FEE_ID]);
         if($fee[FEE_SUM] != $row[BILLING_PRICE]) {
-            $output .= 'Fee összeg nem egyezik a BILL összeggel: ' . $row[BILLING_ID] . '<br>';
+            $output .= 'Fee összeg nem egyezik a BILL összeggel: ' . $row[BILLING_ID] . ', Fee:'.$fee[FEE_SUM].' Ft, Bill: '.$row[BILLING_PRICE].' Ft<br>';
             $bill_error = true;            
         }
         if ($fm[FM_BILL_ID] != $row[BILLING_ID]) {

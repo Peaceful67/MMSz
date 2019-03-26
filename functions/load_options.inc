@@ -20,7 +20,10 @@ define("OPTIONS_NAME_COMPANY_TELEFON", "company_telefon");
 
 define("OPTIONS_NAME_DEVELOPMENT", 'development');
 define("OPTIONS_NAME_PASSWORD_LINK", 'password_link');
+
 define("OPTIONS_NAME_SZAMLAZZ_ENA", 'szamlazz_ena');
+define("OPTIONS_NAME_SZAMLAZZ_USER", 'szamlazz_user');
+define("OPTIONS_NAME_SZAMLAZZ_PASSWD", 'szamlazz_passwd');
 
 
 define("OPTIONS_NAME_LAST_CRON_DAILY", 'cron_daily');
@@ -44,6 +47,8 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_DEVELOPMENT => 0,
     OPTIONS_NAME_PASSWORD_LINK => 1,
     OPTIONS_NAME_SZAMLAZZ_ENA => 0,
+    OPTIONS_NAME_SZAMLAZZ_USER => '',
+    OPTIONS_NAME_SZAMLAZZ_PASSWD => '',
    ];
 
 

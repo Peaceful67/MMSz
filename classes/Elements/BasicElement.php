@@ -1,21 +1,16 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /**
- * Description of BasicElement
+ * Description of BasicElement: very plain database element
  *
  * @author Peaceful
  */
 class BasicElement {
 
-    private $tableName;
-    private $tableFields;
-    private $tableRow;
+    protected $tableName;
+    protected $tableFields;
+    protected $tableRow;
 
     function __construct() {
         $this->tableName = '';
@@ -23,13 +18,13 @@ class BasicElement {
         $this->tableRow = array();
     }
 
-    protected function setTableName($name) {
+    function setTableName($name) {
         $this->tableName = $name;
     }
 
-    protected function setTableFields($fields) {
+    function setTableFields($fields) {
         foreach ($fields as $field) {
-            $this->tableFiels[] = $field;
+            $this->tableFields[] = $field;
         }
     }
 
@@ -40,7 +35,7 @@ class BasicElement {
 
     protected function getElementBy($key, $value) {
         global $mysqliLink;
-        if (!$this->isInitalized()) {
+        if (!$this->isInitalized($key)) {
             return false;
         }
         $sql = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $key . '`="' . $value . '";';
@@ -64,8 +59,8 @@ class BasicElement {
         }
     }
 
-    private function isInitalized() {
-        if (isempty($this->tableName)) {
+    private function isInitalized($key) {
+        if (empty($this->tableName)) {
             return false;
         }
         if (!in_array($key, $this->tableFields)) {
@@ -76,15 +71,13 @@ class BasicElement {
 
     protected function insertElement($row) {
         global $mysqliLink;
-        if (!$this->isInitalized()) {
-            return false;
-        }
         $sql = 'INSERT INTO `' . $this->tableName . '` ';
         $keys = '';
         $values = '';
         $num = 0;
         foreach ($row as $key => $value) {
             if (!in_array($key, $this->tableFields)) {
+                error_log('A '.$key.' mezo nem szerepel a tablaban !');
                 return false;
             }
             $keys .= '`' . $key . '`';
@@ -94,8 +87,13 @@ class BasicElement {
                 $values .= ', ';
             }
         }
-        $sql .= $keys . ' VALUES (' . $values . ');';
+        $sql .= '( '.$keys . ') VALUES (' . $values . ');';
         return $mysqliLink->query($sql);
     }
 
+    protected function deleteElementBy($key, $value) {
+        global $mysqliLink;
+        $sql = 'DELETE FROM `' . $this->tableName . '` WHERE `'.$key.'`="'.$value.'";';
+        $mysqliLink->query($sql);
+    }
 }

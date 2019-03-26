@@ -1,6 +1,6 @@
 <?php
 
- if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA)>0) {
+ if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA)<1) {
     warning('A számlázó modul nincs engedélyezve !');
     theEnd($output);
     exit(0);
@@ -33,7 +33,7 @@ if ($res->num_rows > 0) {
         $output .= '<td>' . $row[SZAMLAZZ_NAME] . '</td>';
         $output .= '<td>' . getSumOfBills($row[SZAMLAZZ_BILL_NUMBER]) . ' Ft</td>';
         $output .= '<td>' . $row[SZAMLAZZ_PREPARED] . '</td>';
-        $output .= '<td>' . $row[SZAMLAZZ_DONE] . '</td>';
+        $output .= '<td>' . ($row[SZAMLAZZ_DONE]>0 ? $row[SZAMLAZZ_DONE]:"Nincs kiállítva!") . '</td>';
         $output .= '</tr>';
     }
     $output .= "</table></div>";

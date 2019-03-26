@@ -1,6 +1,6 @@
 <?php
 
-if (DEVELOPMENT) {
+if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
     $config = array(
         'HUF_MERCHANT' => SIMPLE_PAY_MERCHANT, //merchant account ID (HUF)
         'HUF_SECRET_KEY' => SIMPLE_PAY_KEY, //secret key for account ID (HUF)	
@@ -69,7 +69,7 @@ $payment_status = array(
     'COMPLETE' => '<font color="green">Fizetés feldolgozva.</font>',
     'CONFIRMED' => '<font color="green">A tranzakció sikeresen lezajlott !<br>'
     . 'A teljesítésről rövidesen emailben megerősítést fogsz kapni.</font>',
-    'EMPTY RESULT' => '<font color="orange">Még nem érkezett válasz a OTP fizető szerverétől!</font>', 
+    'EMPTY RESULT' => '<font color="orange">Még nem érkezett válasz a OTP fizető szerverétől!</font>',
     'CARD_NOTAUTHORIZED' => '<font color="red">A bank a tranzakciót elutasította !<br>'
     . 'Kérjük, ellenőrizze a tranzakció során megadott adatok helyességét !<br>'
     . 'Amennyiben minden adatot helyesen adott meg, a visszautasítás okának kivizsgálása '

@@ -218,17 +218,21 @@ $db_tables = array(
   `value` varchar(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;',
     "nl_member" => 'CREATE TABLE `nl_member` (
-  `id` int(8) NOT NULL,
+  `id` int(8) NOT NULL AUTO_INCREMENT,
   `nl_id` int(8) NOT NULL,
   `member_id` int(8) NOT NULL,
-  `sent` timestamp(1) NULL DEFAULT NULL
+  `sent` timestamp(1) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;',
     "newletters" => 'CREATE TABLE `newsletter` (
-  `id` int(8) NOT NULL,
+  `id` int(8) NOT NULL AUTO_INCREMENT,
   `creator_id` int(8) NOT NULL,
   `creator_time` timestamp(1) NOT NULL DEFAULT CURRENT_TIMESTAMP(1),
   `subject` varchar(64) NOT NULL,
-  `body` text NOT NULL
+  `body` text NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;',
 );
 foreach ($db_tables as $key => $sql) {

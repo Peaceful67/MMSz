@@ -33,6 +33,13 @@ $newsletters = array();
 while ($res AND $row = $res->fetch_assoc()) {
     $newsletters[$row[NEWSLETTER_ID]] = $row;
 }
+if(isset($resend)) {
+    $email_subject = $newsletters[$resend][NEWSLETTER_SUBJECT];
+    $email_body = $newsletters[$resend][NEWSLETTER_BODY];
+    $selected_newsletter = -1;
+    $radio_news_letter = "email";
+}
+
 $output .= '<form method="post">';
 $output .= '<label>Hírlevelek: </label><select name="selected_newsletter" onChange="submit();">';
 $output .= '<option value=-1 ' . (-1 == $selected_newsletter ? 'selected' : '') . '>Új hírlevél készítése</option>';
@@ -40,10 +47,9 @@ foreach ($newsletters as $key => $letter) {
     $output .= '<option value="' . $key . '" ' . ($selected_newsletter == $key ? "selected" : "") . '>'
             . $letter[NEWSLETTER_TIME] . ' / ' . $letter[NEWSLETTER_SUBJECT] . '</option>';
 }
-$output .= '</select></br></br>';
-if ($selected_newsletter < 0) 
-    {
-    $output .= '<label>Címzettek: </label><select name="selected_addr" onChange="submit();">';
+$output .= '</select>';
+if ($selected_newsletter < 0) {
+    $output .= '</br></br><label>Címzettek: </label><select name="selected_addr" onChange="submit();">';
     foreach ($selected_group as $key => $opt) {
         $output .= '<option value="' . $key . '" ' . ($selected_addr == $key ? "selected" : "") . '>' . $opt[0] . '</option>';
     }
@@ -135,7 +141,8 @@ if ($selected_newsletter < 0)
         }
     }
 } else { // List newsletters
-    $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `'.NLM_NEWSLETTER_ID.'`='.$selected_newsletter.' ;';
+    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button  name="resend" value='.$selected_newsletter.'>Újra küldés</button></br></br>';
+    $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `' . NLM_NEWSLETTER_ID . '`=' . $selected_newsletter . ' ;';
     $res = $mysqliLink->query($sql);
     $output .= '<label>Küldő:</label>' . getMemberName($newsletters[$selected_newsletter][NEWSLETTER_CREATOR]) . '<br><br>';
     $output .= '<label>Tárgy:</label>' . $newsletters[$selected_newsletter][NEWSLETTER_SUBJECT] . '<br><br>';
@@ -143,7 +150,7 @@ if ($selected_newsletter < 0)
     $output .= '<label>Címzettek:</label><br>';
     while ($res AND $row = $res->fetch_assoc()) {
         $mem_id = $row[NLM_MEMBER];
-        $output .= getMemberName($row[NLM_MEMBER]) . ' / ' . getMemberEmail($row[NLM_MEMBER]) . ' : ' . (0== strtotime($row[NLM_SENT]) ? 'Várakozik' : $row[NLM_SENT]) . '<br>';
+        $output .= getMemberName($row[NLM_MEMBER]) . ' / ' . getMemberEmail($row[NLM_MEMBER]) . ' : ' . (0 == strtotime($row[NLM_SENT]) ? 'Várakozik' : $row[NLM_SENT]) . '<br>';
     }
 }
 

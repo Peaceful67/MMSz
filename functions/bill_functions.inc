@@ -162,6 +162,8 @@ function createOneBill($fm_id, $billing_number) {
 function pay_bills($number, $bank_ref = 0) {
     global $member_id;
     global $mysqliLink;
+    global $today;
+    global $output;
     if (!isset($member_id)) {
         $member_id = 0;
     }
@@ -174,32 +176,26 @@ function pay_bills($number, $bank_ref = 0) {
             . '`' . BILLING_NUMBER . '`="' . $number . '"';
     $mysqliLink->query($sql);
     $bills = getBillsByNumber($number);
-    if (!empty($bills)) {
-        notificationOfPayment($number);
-        if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
-            $sql = 'SELECT * FROM `' . SZAMLAZZ_TABLE . '` '
-                    . '`' . SZAMLAZZ_TABLE . '` WHERE `' . SZAMLAZZ_BILL_NUMBER . '`="' . $number . '" '
-                    . ' AND `' . SZAMLAZZ_DONE . '`=0 LIMIT 1;';
-            $res = $mysqliLink->query($sql);
-            if ($res AND ( $res->num_rows > 0)) {
-                $szamla = $res->fetch_assoc();
-                include_once INCLUDES . 'szamla_agent.inc';
-                $mysqliLink->query('UPDATE `' . SZAMLAZZ_TABLE . '` '
-                        . ' SET `' . SZAMLAZZ_DONE . '`=CURRENT_TIMESTAMP '
-                        . ' WHERE `' . SZAMLAZZ_BILL_NUMBER . '`="' . $row[SZAMLAZZ_BILL_NUMBER] . '"'
-                        . ' AND `' . SZAMLAZZ_DONE . '`=0;');
-                logger($member_id, -1, LOGGER_SZAMLAZZ, 'A ' . $number . ' azonosítójú számla kiállítva !');
-            } else {
-                error_log("Kellene szamlazni, de nincs kinek");
-                mail_system_error("Kellene szamlazni, de nincs kinek");
-            }
-        }
-    }
     foreach ($bills as $bill) {
         $fm_id = $bill[BILLING_FM_ID];
         $sql = 'UPDATE `' . FM_TABLE . '` SET `' . FM_PAY_ID . '`="' . $pay_id . '" WHERE `' . FM_ID . '`="' . $fm_id . '" ';
         $mysqliLink->query($sql);
         notificationFAI($fm_id);
+    }
+
+    if (!empty($bills)) {
+        notificationOfPayment($number);
+        if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
+            $sz = new Szamlazz();
+            $szamla = $sz->getElementByBillNumber($number);
+            if (!empty($szamla)) {
+                include_once INCLUDES . 'szamla_agent.inc';
+                logger($member_id, -1, LOGGER_SZAMLAZZ, 'A ' . $number . ' azonosítójú számla kiállítva !');
+            } else {
+                error_log("Kellene szamlazni, de nincs kinek");
+//                mail_system_error("Kellene szamlazni, de nincs kinek");
+            }
+        }
     }
 }
 

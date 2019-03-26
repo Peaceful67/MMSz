@@ -11,7 +11,7 @@ function retriveSession() {
 
 function conv_array($in_data) {
     $ret = array();
-    foreach ($in_data as  $value) {
+    foreach ($in_data as $value) {
         $ret[] = iconv("utf-8", "iso-8859-2", $value);
     }
     return $ret;
@@ -19,12 +19,11 @@ function conv_array($in_data) {
 
 function conv_array_walk($in_data) {
     $ret = array();
-    foreach ($in_data as  $key => $value) {
+    foreach ($in_data as $key => $value) {
         $ret[$key] = iconv("utf-8", "iso-8859-2", $value);
     }
     return $ret;
 }
-
 
 function redirect($id) {
     global $admin_menu;
@@ -202,8 +201,8 @@ function logger($id, $related, $category, $action) {
     $mysqliLink->query($sql);
     $sql = 'DELETE FROM `logs` WHERE `time_stamp` < DATE_SUB(NOW(), INTERVAL 2 YEAR);';
     $mysqliLink->query($sql);
-    if(DEVELOPMENT) {
-        error_log(iconv("utf-8", "iso-8859-2", 'Logger:'.$logger_categories[$category].'/'.$action));
+    if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
+        error_log(iconv("utf-8", "iso-8859-2", 'Logger:' . $logger_categories[$category] . '/' . $action));
     }
 }
 
@@ -572,8 +571,8 @@ function notificationFAI($fm_id) {
                 . $today . '-' . $fm[FM_TO] . ' időszakra.<br>'
                 . 'A tag részletes adatai a mellékletben';
 
-        if (DEVELOPMENT) {
-            emailExcelMember($mem_id, getOptionValue(OPTIONS_NAME_ADMIN_EMAIL) , $body);
+        if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
+            emailExcelMember($mem_id, getOptionValue(OPTIONS_NAME_ADMIN_EMAIL), $body);
         } else {
             emailExcelMember($mem_id, getOptionValue(OPTIONS_NAME_FAI_NOTIF_EMAIL), $body);
         }

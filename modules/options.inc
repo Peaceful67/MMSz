@@ -12,6 +12,10 @@ if (!isset($expand_company)) {
 if (!isset($expand_general)) {
     $expand_general = 0;
 }
+if (!isset($expand_szamlazz)) {
+    $expand_szamlazz = 0;
+}
+
 if (isset($save_options)) {
     if ($expand_newsletter != 0) {
         changeValue($max_newsletter, OPTIONS_NAME_MAX_NEWSLETTERS);
@@ -33,13 +37,17 @@ if (isset($save_options)) {
         if (!isset($password_link)) {
             $password_link = 'off';
         }
-        if (!isset($szamlazz_ena)) {
-            $szamlazz_ena = 'off';
-        }
 
         changeValue($development, OPTIONS_NAME_DEVELOPMENT);
         changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
+    }
+    if ($expand_szamlazz != 0) {
+        if (!isset($szamlazz_ena)) {
+            $szamlazz_ena = 'off';
+        }
         changeValue($szamlazz_ena, OPTIONS_NAME_SZAMLAZZ_ENA);
+        changeValue($szamlazz_user, OPTIONS_NAME_SZAMLAZZ_USER);
+        changeValue($szamlazz_passwd, OPTIONS_NAME_SZAMLAZZ_PASSWD);
     }
 }
 
@@ -48,6 +56,7 @@ $output .= '<input type="hidden" name="expand_newsletter" value="' . $expand_new
 $output .= '<input type="hidden" name="expand_emails" value="' . $expand_emails . '">';
 $output .= '<input type="hidden" name="expand_company" value="' . $expand_company . '">';
 $output .= '<input type="hidden" name="expand_general" value="' . $expand_general . '">';
+$output .= '<input type="hidden" name="expand_szamlazz" value="' . $expand_szamlazz . '">';
 $output .= '<label>Körlevél beállítások: </label>';
 if (0 == $expand_newsletter) {
     $output .= '<button name="expand_newsletter" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
@@ -75,7 +84,7 @@ if (0 == $expand_emails) {
     $output .= '<label>Emailek aláírása:</label><input type="text" name="email_signature" value="' . $options[OPTIONS_NAME_EMAIL_SIGNATURE] . '"><br>';
     $output .= '</div>';
 }
-$output .= '<label>Szövetség: </label>';
+$output .= '<label>Szövetség adatok: </label>';
 if (0 == $expand_company) {
     $output .= '<button name="expand_company" value="0" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
 } else {
@@ -100,12 +109,23 @@ if (0 == $expand_general) {
             . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
     $output .= '<label>Belépő link jelszó kérésnél:</label><input type="checkbox" name="password_link" '
             . (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0 ? "checked" : "") . '><br>';
-    $output .= '<label>Számlázz.hu engedélyezve:</label><input type="checkbox" name="szamlazz_ena" '
-            . (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 ? "checked" : "") . '><br>';
+
 
     $output .= '</div>';
 }
+$output .= '<label>Számlázz.hu: </label>';
+if (0 == $expand_szamlazz) {
+    $output .= '<button name="expand_szamlazz" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
+} else {
+    $output .= '<button name="expand_szamlazz" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
+    $output .= '<div class="keret">';
+    $output .= '<label>Számlázz.hu engedélyezve:</label><input type="checkbox" name="szamlazz_ena" '
+            . (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 ? "checked" : "") . '><br>';
+    $output .= '<label>Számlázz felhasználó:</label><input type="text" name="szamlazz_user" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_USER) . '"><br>';
+    $output .= '<label>számlázz jelszó:</label><input type="text" name="szamlazz_passwd" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_PASSWD) . '"><br>';
 
+    $output .= '</div>';
+}
 
 $output .= '<br><input type="submit" name="save_options" value="Mentés">';
 $output .= '</form></div>';

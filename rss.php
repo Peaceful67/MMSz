@@ -3,6 +3,7 @@
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';
 
+$output = '<?xml version="1.0"?>';
 
 if (isset($_GET['clubs'])) {
     $xml_clubs = new SimpleXMLElement("<?xml version=\"1.0\"?><clubs></clubs>");
@@ -13,10 +14,36 @@ if (isset($_GET['clubs'])) {
     while ($res AND $row = $res->fetch_assoc()) {
         $club_id = $row[CLUB_ID];
         $clubs_array[$club_id] = ($row);
-        $clubs_array[$club_id]['mem_num'] = getNumMemberOfClub($row[CLUB_ID]);
+        $clubs_array[$club_id]['club_leaders'] = getClubLeaders($club_id);
+        $clubs_array[$club_id]['mem_num'] = getNumMemberOfClub($club_id);
     }
-    array_to_xml($clubs_array,$xml_clubs);
+    array_to_xml($clubs_array, $xml_clubs, 'club');
     $output = $xml_clubs->asXML();
+}
+if (isset($_GET['memberships'])) {
+    $xml_memship = new SimpleXMLElement("<?xml version=\"1.0\"?><memberships></memberships>");
+    $mem_array = array();
+    $fees = getFeeIdsToday(FEE_TYPE_MEMBERSHIP);
+    foreach ($member_types as $mt_key => $mt_name) {
+        if (isset($fees[$mt_key])) {
+            $sql = 'SELECT * FROM `' . FM_TABLE . '` WHERE '
+                    . ' `' . FM_FEE_ID . '`=' . $fees[$mt_key]
+                    . ' AND (CURDATE() BETWEEN `' . FM_FROM . '` AND `' . FM_TO . '`) ';
+            $res = $mysqliLink->query($sql);
+            $num = $res ? $res->num_rows : 0;
+            $sql = 'SELECT * FROM `' . FM_TABLE . '` WHERE '
+                    . ' `' . FM_FEE_ID . '`=' . $fees[$mt_key]
+                    . ' AND `' . FM_BILL_ID . '`!=0'
+                    . ' AND (CURDATE() BETWEEN `' . FM_FROM . '` AND `' . FM_TO . '`) ';
+            $res = $mysqliLink->query($sql);
+            $num_paied = $res ? $res->num_rows : 0;
+            $mem_array[] = ["form" => $mt_name,
+                "members" => $num,
+                "paid" => $num_paied];
+        }
+    }
+    array_to_xml($mem_array, $xml_memship, 'membership');
+    $output = $xml_memship->asXML();
 }
 if (isset($_GET['members'])) {
     $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '` '
@@ -78,19 +105,18 @@ if (isset($_GET["officers"])) {
 }
 theEnd($output);
 
-
-function array_to_xml($array, &$xml_user_info) {
-    foreach($array as $key => $value) {
-        if(is_array($value)) {
-            if(!is_numeric($key)){
+function array_to_xml($array, &$xml_user_info, $item_name) {
+    foreach ($array as $key => $value) {
+        if (is_array($value)) {
+            if (!is_numeric($key)) {
                 $subnode = $xml_user_info->addChild("$key");
-                array_to_xml($value, $subnode);
-            }else{
-                $subnode = $xml_user_info->addChild("item$key");
-                array_to_xml($value, $subnode);
+                array_to_xml($value, $subnode,  $item_name0);
+            } else {
+                $subnode = $xml_user_info->addChild($item_name);
+                array_to_xml($value, $subnode, $item_name);
             }
-        }else {
-            $xml_user_info->addChild("$key",htmlspecialchars("$value"));
+        } elseif (!empty($value)) {
+            $xml_user_info->addChild("$key", htmlspecialchars(trim($value)));
         }
     }
 }

@@ -2,15 +2,10 @@
 
 // Szervezet függő adatok
 define("BANK_ACCOUNT", "10200823-22214380-00000000");
-if (DEVELOPMENT) {
-    define("FAI_NOTIF_EMAIL", "postafiok@emg.hu");
-    define("MMSZ_EMAIL", "postafiok@emg.hu");
-    define("MMSZ_ELNOK_EMAIL", "postafiok@emg.hu");
-} else {
-    define("FAI_NOTIF_EMAIL", "ree@eik.bme.hu");
-    define("MMSZ_EMAIL", "szeribandi@gmail.com");
-    define("MMSZ_ELNOK_EMAIL", "mmszelnok@gmail.com");
-}
+define("FAI_NOTIF_EMAIL", "postafiok@emg.hu");
+define("MMSZ_EMAIL", "postafiok@emg.hu");
+define("MMSZ_ELNOK_EMAIL", "postafiok@emg.hu");
+
 define("ADMIN_EMAIL", "peaceful.app@gmail.com");
 define("MMSZ_TEL", "70-7731303");
 define("EMAIL_SENDER", 'noreply@modellsport.hu');

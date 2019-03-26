@@ -4,9 +4,6 @@ if (!isset($editable_fees)) {
     $editable_fees = array();
 }
 
-if(!isset($only_this_year)) {
-    $only_this_year = 'on';
-}
 $output .= '<div class="keret">';
 if (in_array(FEE_TYPE_MEMBERSHIP, $editable_fees)) {
     if (!isset($selected_member_name)) {
@@ -35,8 +32,8 @@ if (in_array(FEE_TYPE_MEMBERSHIP, $editable_fees)) {
         $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_member_period">';
         $output .= '<option value="-1">Válassz !</option>';
         foreach ($fees as $fee) {
-            $output .= '<option value="' . $fee[0] . '" ' .
-                    ($selected_member_period == $fee[0] ? "selected" : "") . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
+                $output .= '<option value="' . $fee[0] . '" ' .
+                        ($selected_member_period == $fee[0] ? "selected" : "") . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
     }
@@ -230,9 +227,7 @@ if (in_array(FEE_TYPE_OCCASION, $editable_fees)) {
     $output .= '<br>';
 }
 
-$output .= '<input value="Rögzítés"  type="submit" name="fee_type_save">';
-$output .= '<br><label>Engedélyezett időszak:</label><input type="checkbox" name="only_this_year" '.($only_this_year=='on' ? "checked":"").' onChange="submit();">';
-$output .= $only_this_year=='on' ? " Csak ezévi díjtételek választatók":" Bármely díjtétel választható";
 $output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
+$output .= '<br><input value="Rögzítés"  type="submit" name="fee_type_save">';
 $output .= '</div>';
 

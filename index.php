@@ -1,4 +1,4 @@
- <?php
+<?php
 
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';
@@ -19,6 +19,9 @@ if (CHAPTCHA_METHOD_GOOGLE == $chaptcha) {
 $output .= '</head><body>
 
 ';
+if(getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) >0 AND !is_writable(SZAMLAK)) {
+    warning("<br><br>A számlák könyvtár nem írható");    
+} 
 
 if (isset($_GET["sp_timeout"]) AND $_GET["sp_timeout"] == 1 AND isset($_GET["order_ref"])) {
     logger(0, -1, LOGGER_SIMPLEPAY, 'Visszatérés az OTP felületről a ' . $_GET["order_ref"]
@@ -122,6 +125,9 @@ if (isset($_GET['simplepay'])) {
     redirect("card_backref");
     exit(0);
 } elseif (isset($mod)) {
+    if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
+        warning("Fejlesztő állapot");
+    }
     if ($mod == $admin_menu["login"][SETUP_MOD_ID]) {
         $output .= '<h2>' . $admin_menu["login"][SETUP_MOD_TITLE] . '</h2>';
         include_once (MODULES . $admin_menu["login"][SETUP_MOD_MODULE]);
@@ -131,9 +137,6 @@ if (isset($_GET['simplepay'])) {
     } else {
         foreach ($admin_menu as $k => $v) {
             if (($mod == $v[SETUP_MOD_ID]) && isPermitted($v[SETUP_MOD_ACCESS])) {
-                if(getOptionValue(OPTIONS_NAME_DEVELOPMENT)>0) {
-                    warning("Fejlesztő állapot");
-                }
                 $output .= '<h2>' . $v[SETUP_MOD_TITLE] . '</h2>';
                 include_once (MODULES . $v[SETUP_MOD_MODULE]);
                 break;

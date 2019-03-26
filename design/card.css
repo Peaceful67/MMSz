@@ -33,19 +33,19 @@ body {
 }
 .name {
     position: fixed;
-    top:30mm;
-    left:5mm;
+    top:27mm;
+    left:4mm;
     font-size: 16px;  
 }
 .data {
     position: fixed;
-    top:36mm;
-    left:5mm;
+    top:33mm;
+    left:4mm;
     font-size: 8px;
 }
 .year {
     position: fixed;
-    top:22mm;
-    left:25mm;
-    font-size: 16px;
+    top:18mm;
+    left:35mm;
+    font-size: 20px;
 }
