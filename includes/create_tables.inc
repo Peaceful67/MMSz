@@ -49,6 +49,7 @@ $db_tables = array(
   `Mező2` varchar(18) DEFAULT NULL,
   `homepage` varchar(64) NOT NULL,
   `bank` varchar(32) NOT NULL,
+  `tax` VARCHAR(16) NOT NULL,
   PRIMARY KEY (`IDK`),
   UNIQUE KEY `IDK_2` (`IDK`),
   KEY `IDK` (`IDK`)

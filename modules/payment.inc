@@ -1,15 +1,15 @@
 <?php
 
-if (isset($pay_bills)) {
-    if (count($check_bills) > 0) {
-        foreach ($check_bills as $bill) {
-            logger($member_id,-1, LOGGER_PAY,  'A '.$bill.' azonosítójú számlák befizetésének rögzítése');
-            pay_bills($bill);
-        }
-    } else {
-        warning("Legalább egy tételt válassz ki !");
-    }
+if (isset($pay_bill)) {
+    logger($member_id, -1, LOGGER_PAY, 'A ' . $pay_bill . ' azonosítójú számlák befizetésének rögzítése');
+    pay_bills($pay_bill);
 }
+
+if (isset($storno_bill)) {
+    logger($member_id, -1, LOGGER_BILL, 'A ' . $storno_bill . ' azonosítójú számlák sztornózva');
+    stornoBillNumber($storno_bill);
+}
+
 
 $unpaied = getUnpaiedBillNumbers();
 
@@ -18,12 +18,14 @@ if (count($unpaied) > 0) {
             . '<table><tr><th>Azonosító</th><th>Indított</th><th>Összeg</th><th>Tartalom</th><th>Beérkezett</th></tr>';
     foreach ($unpaied as $bill) {
         $output .= '<tr><td>' . $bill . '</td><td>' . getTimeOfBills($bill) . '</td><td>' . getSumOfBills($bill) . ' Ft</td>';
-        $output .= '<td>'. printBillItems($bill).'</td>';
-        $output .= '<td><input type="checkbox" name="check_bills[]" value="' . $bill . '"></td></tr>';
+        $output .= '<td>' . printBillItems($bill) . '</td>';
+        $output .= '<td><button type="submit" name="pay_bill" value="' . $bill . '" '
+                . 'onClick="return confirm(\'Biztosan beérkeztek a befizetések ?\')">Befizetes</button>&nbsp;&nbsp;&nbsp;&nbsp;'
+                . '<button type="submit" name="storno_bill" value="' . $bill . '" '
+                . 'onClick="return confirm(\'Biztosan sztornózod a tételt?\')">Sztorno</button></td></tr>';
     }
     $output .= '</table>';
-    $output .= '<input type="submit" name="pay_bills" value="Rögzítés" onClick="return confirm(\'Biztosan beérkeztek a befizetések ?\')">'
-            . '</form></div>';
+    $output .= '</form></div>';
 } else {
     $output .= 'Nincsenek kifizetetlen tételek.';
 }

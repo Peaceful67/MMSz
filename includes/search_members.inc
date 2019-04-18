@@ -203,8 +203,8 @@ if ($search_by_id > 0) {
         warning('Legalább 3 karakter adj meg a szűréshez');
     }
     if (strlen($search) >= 3) {
-        $sql .= ' WHERE (`' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '` LIKE "%' . $search . '%"  OR '
-                . '`' . MEMBER_TABLE . '`.`' . MEMBER_KERNEV . '` LIKE "%' . $search . '%")';
+        $sql .= ' WHERE ( CONCAT (`' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, " ", `'
+                . MEMBER_TABLE . '`.`' . MEMBER_KERNEV . '`)' . ' LIKE "' . $search . '%" )';
     } else {
         $sql .= ' WHERE 1 ';
     }
@@ -233,8 +233,7 @@ if ($res) {
     $total_member = $res->num_rows;
 } else {
     $total_member = 0;
-    mail_system_error('Hiba a lekérdezésben: '.$sql);
-
+    mail_system_error('Hiba a lekérdezésben: ' . $sql);
 }
 if ($searchByFees AND $selected_fee_id < 0) {
     $total_member = 0;

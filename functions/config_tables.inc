@@ -32,6 +32,7 @@ define("CLUB_ACT", "act");
 define("CLUB_COMMENT", "comment");
 define("CLUB_HOMEPAGE", "homepage");
 define("CLUB_BANK", "bank");
+define("CLUB_TAX", 'tax');
 
 define("CATEGORIES_TABLE", 'categories');
 define("CATEGORIES_ID", "cat_id");

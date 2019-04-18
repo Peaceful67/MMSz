@@ -12,17 +12,19 @@ if (isset($simplepay_number) AND isBillPaied($simplepay_number)) {
 
 if (isset($generate_bill)) {
     $number = generateBillingId();
+    $email = getMemberEmail($member_id);
     if ($generate_bill == PAY_METHOD_TRANSFER) {
         if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
             $szamla = new Szamlazz();
-            $szamla->insertSzamla($number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+            $szamla->insertSzamla($number, $email, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
         }
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $fee2bill_sum = 0;
         $email_msg = "Tisztelt " . getMemberName($member_id) . "!<br><br>Utalásos fizetést indítottál. ";
-        $email_msg .= '<br>Az összeget a ' . COMPANY_LONG_NAME . BANK_ACCOUNT . ' számú számlájára utald!<br>';
+        $email_msg .= '<br>Az összeget a ' . getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME).' '
+                . getOptionValue(OPTIONS_NAME_COMPANY_BANK_ACCOUNT) . ' számú számlájára utald!<br>';
         $email_msg .= 'A közlemény rovatba a ' . $number . ' azonosítót add meg !<br>'
-                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az ' . COMPANY_NAME . '-szel ' . getOptionValue(OPTIONS_NAME_MMSZ_EMAIL) . ' címen!<br>'
+                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . '-szel ' . getOptionValue(OPTIONS_NAME_MMSZ_EMAIL) . ' címen!<br>'
                 . 'A befizetésed lekönyvelésekor értesítést fog a rendszer küldeni a ' . getMemberEmail($member_id) . ' email címre.<br><br>';
         foreach ($fms2bill as $fm2bill) {
             $email_msg .= '<hr>Tétel: <br>' . FM_to_String($fm2bill[0]) . '<br>';
@@ -35,12 +37,12 @@ if (isset($generate_bill)) {
         mail_create_bill($email_msg);
         $output .= '<div class="editor">';
         $output .= '<div class="keret">';
-        $output .= 'Az alábbi adatokkal indítsd el az utalást:<br><b>Címzett: ' . COMPANY_LONG_NAME . '<br>'
-                . 'Bankszámla szám: ' . BANK_ACCOUNT . '<br>';
+        $output .= 'Az alábbi adatokkal indítsd el az utalást:<br><b>Címzett: ' . getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME) . '<br>'
+                . 'Bankszámla szám: ' . getOptionValue(OPTIONS_NAME_COMPANY_BANK_ACCOUNT) . '<br>';
         $output .= 'Közlemény: ' . $number . '<br>Összeg: ' . $fee2bill_sum . ' Ft</b><br>';
 
         $output .= 'A fenti adatokat emailben is elküldte a rendszer.<br>'
-                . 'Amikor az utalást beérkezik és azt az ' . COMPANY_NAME . ' lekönyveli, emailben értesítést fogsz kapni a '
+                . 'Amikor az utalást beérkezik és azt az ' . getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME) . ' lekönyveli, emailben értesítést fogsz kapni a '
                 . getMemberEmail($member_id) . ' email címre.';
         $output .= '<br>Amennyiben mégsem szeretnéd a fenti tételt utalással kiegyenlíteni, törölheted az "Adminisztráció" fül "Számla storno" gombja alatt.';
         $output .= '</div></div>';
@@ -49,7 +51,7 @@ if (isset($generate_bill)) {
         $simplepay_number = 'SC_' . $number;
         if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
             $szamla = new Szamlazz();
-            $szamla->insertSzamla($simplepay_number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+            $szamla->insertSzamla($simplepay_number, $email, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
         }
         $simplepay_sum = 0;
         foreach ($fms2bill as $fm2bill) {
@@ -64,10 +66,11 @@ if (isset($generate_bill)) {
         $number = 'DR_' . $number;
         if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
             $szamla = new Szamlazz();
-            $szamla->insertSzamla($number, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
+            $szamla->insertSzamla($number, $email, $invoice_name, $invoice_addr_post, $invoice_addr_city, $invoice_addr_street, $invoice_tax);
         }
         $email_msg = "Azonnal lekönyvelt fizetést indítottál. ";
-        $email_msg .= '<br>Az összegnek már korábban az ' . COMPANY_NAME . BANK_ACCOUNT . ' számú számlájára kellett érkeznie!<br>';
+        $email_msg .= '<br>Az összegnek már korábban az ' . getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME).' '
+                . getOptionValue(OPTIONS_NAME_COMPANY_BANK_ACCOUNT) . ' számú számlájára kellett érkeznie!<br>';
         $email_msg .= 'Az utalás belső azonosítója : ' . $number . ' !<br><br>';
 
         foreach ($fms2bill as $fm2bill) {

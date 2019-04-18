@@ -7,7 +7,7 @@ include_once FUNCTIONS . 'init.inc';
 $output = '<!DOCTYPE  html>
 <head>        
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="' . COMPANY_NAME . ' Tagnyilvántartó">
+    <meta name="description" content="' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' Tagnyilvántartó">
     <meta name="author" content="Baksa Zsolt (peaceful.app@gmail.com)">';
 
 $output .= '<link type="text/css" rel="stylesheet" media="screen" href="design/horizontal.css">
@@ -19,7 +19,7 @@ if (CHAPTCHA_METHOD_GOOGLE == $chaptcha) {
 $output .= '</head><body>
 
 ';
-if(getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) >0 AND !is_writable(SZAMLAK)) {
+if(getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) >0 AND !is_writable(SZAMLAZZ_DIR)) {
     warning("<br><br>A számlák könyvtár nem írható");    
 } 
 

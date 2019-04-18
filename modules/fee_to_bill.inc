@@ -15,9 +15,11 @@ if (isset($generate_bill)) {
         $fms2bill = unserialize($_SESSION[SESSION_FEE_TO_BILL]);
         $fee2bill_sum = 0;
         $email_msg = "Utalásos fizetést indítottál. ";
-        $email_msg .= '<br>Az összeget a '.COMPANY_LONG_NAME . BANK_ACCOUNT . ' számú számlájára utald!<br>';
+        $email_msg .= '<br>Az összeget a '. getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME).' '
+                . getOptionValue(OPTIONS_NAME_COMPANY_BANK_ACCOUNT) . ' számú számlájára utald!<br>';
         $email_msg .= 'A közlemény rovatba a ' . $number . ' azonosítót add meg !<br>'
-                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az '.COMPANY_NAME.'-szel '. getOptionValue(OPTIONS_NAME_MMSZ_EMAIL).' címen!<br><br>';
+                . 'Amennyiben három napon belül nem jelenik meg a befizetésed az online rendszerben, lépj kapcsolatba az '
+                .getOptionValue(OPTIONS_NAME_COMPANY_NAME).'-szel '. getOptionValue(OPTIONS_NAME_MMSZ_EMAIL).' címen!<br><br>';
         foreach ($fms2bill as $fm2bill) {
             $email_msg .= '<hr>Tétel: <br>' . FM_to_String($fm2bill[0]) . '<br>';
             $fee2bill_sum += $fm2bill[1];

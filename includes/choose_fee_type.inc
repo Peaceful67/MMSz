@@ -24,7 +24,7 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $member_types[$fee[FEE_NAME]]);
                 unset($selected_member_period);
             } else {
-                warning("Már van nem törölhető " . COMPANY_NAME . " tagsági díjtétel ebben az időszakban !");
+                warning("Már van nem törölhető " . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " tagsági díjtétel ebben az időszakban !");
             }
         }
     }

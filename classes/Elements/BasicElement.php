@@ -96,4 +96,12 @@ class BasicElement {
         $sql = 'DELETE FROM `' . $this->tableName . '` WHERE `'.$key.'`="'.$value.'";';
         $mysqliLink->query($sql);
     }
+    
+    protected function updateElements($whereKey, $whereValue, $updateKey, $updateValue) {
+        global $mysqliLink;
+        $sql = 'UPDATE `' . $this->tableName . '` SET `'.$updateKey.'`="'.$updateValue.'" '
+                . 'WHERE `'.$whereKey.'`="'.$whereValue.'";';
+        $mysqliLink->query($sql);
+        
+    }
 }

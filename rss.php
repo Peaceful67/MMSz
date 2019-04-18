@@ -5,6 +5,27 @@ include_once FUNCTIONS . 'init.inc';
 
 $output = '<?xml version="1.0"?>';
 
+if (isset($_GET['categories'])) {
+    $xml_cats = new SimpleXMLElement("<?xml version=\"1.0\"?><categories></categories>");
+    $cats_array = array();
+    $res = $mysqliLink->query('SELECT * FROM `' . CATEGORIES_TABLE . '`  WHERE 1 ORDER BY `' . CATEGORIES_SHORT . '`');
+    while ($res AND $row = $res->fetch_assoc()) {
+        $cat_id = $row[CATEGORIES_ID];
+        $cats_array[$cat_id] = ($row);
+        $cats_array[$cat_id][CATEGORIES_BRANCH] = $branches[$row[CATEGORIES_BRANCH]];
+        $file_en = RULES . '_' . $cat_id . '_EN.pdf';
+        $file_hu = RULES . '_' . $cat_id . '_HU.pdf';
+        if (is_file($file_en)) {
+            $cats_array[$cat_id]['document_en'] = URL_RULES.'_' . $cat_id . '_EN.pdf';
+        }
+        if (is_file($file_hu)) {
+            $cats_array[$cat_id]['document_hu'] = URL_RULES.'_' . $cat_id . '_HU.pdf';
+        }
+    }
+    array_to_xml($cats_array, $xml_cats, 'category');
+    $output = $xml_cats->asXML();
+}
+
 if (isset($_GET['clubs'])) {
     $xml_clubs = new SimpleXMLElement("<?xml version=\"1.0\"?><clubs></clubs>");
     $clubs_array = array();
@@ -110,7 +131,7 @@ function array_to_xml($array, &$xml_user_info, $item_name) {
         if (is_array($value)) {
             if (!is_numeric($key)) {
                 $subnode = $xml_user_info->addChild("$key");
-                array_to_xml($value, $subnode,  $item_name0);
+                array_to_xml($value, $subnode, $item_name0);
             } else {
                 $subnode = $xml_user_info->addChild($item_name);
                 array_to_xml($value, $subnode, $item_name);

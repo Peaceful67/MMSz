@@ -54,6 +54,7 @@ define("SESSION_SEARCH_VALUES", "search_values");
 define("SESSION_VIEW_COLUMNS", "view_columns");
 define("SESSION_MOD", "module");
 define("SESSION_LAST_MOD", "last_mod");
+define("SESSION_SZAMLAZZ_RESULT", "szamlazz_result");
 
 define("COOKIE_REMEMBER_ME", "remember_me");
 define("COOKIE_MEMBER_ID", "member_id");
@@ -89,6 +90,7 @@ define("CARD_LINK", URL . "/card?");
 define("IMAGES", URL . "/" . PATH_IMAGES);
 define("AVATAR_URL", URL . AVATAR);
 define("RULES", DOCUMENTS . "rules_");
+define("URL_RULES", URL.'/documents/rules_');
 
 define("MIME_ZIP", "application/x-gzip");
 define("MIME_CSV", "application/csv");

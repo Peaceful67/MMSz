@@ -46,6 +46,18 @@ $admin_menu_default = array(
         SETUP_MOD_WEIGHT => 0,
         SETUP_MOD_ENABLED => 1,
     ),
+   "szamlazz_res" => array(
+        SETUP_MOD_GROUP => -2,
+        SETUP_MOD_TITLE => "Számlázz.hu számlázó",
+        SETUP_MOD_MENU => "Számlazz.hu",
+        SETUP_MOD_ID => "szamlazz_res",
+        SETUP_MOD_MODULE => "szamlazz_res.inc",
+        SETUP_MOD_ACCESS => ACCESS_PUBLIC,
+        SETUP_MOD_DEPENDENCY => "",
+        SETUP_MOD_WEIGHT => 0,
+        SETUP_MOD_ENABLED => 1,
+    ),
+
     "simplepay_ipn" => array(
         SETUP_MOD_GROUP => -2,
         SETUP_MOD_TITLE => "Sikeres bankkártya tranzakció",

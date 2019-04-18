@@ -16,6 +16,22 @@ function getMemberClubNames($id) {
     return empty($ret) ? 'Egyik sem' : $ret;
 }
 
+function getClubsMember($mem_id) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . ROLE_TABLE . '`, `' . CLUB_TABLE . '` '
+            . 'WHERE `' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`="' . $mem_id . '" '
+            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=`' . CLUB_TABLE . '`.`' . CLUB_ID . '`'
+            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`!=0 '
+            . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
+            . 'GROUP BY `' . ROLE_CLUB . '`  ORDER BY `' . ROLE_FROM . '` DESC ;';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $ret[$row[CLUB_ID]] = $row[CLUB_NAME];
+    }
+    return $ret;
+}
+
 function getMemberClubId($id) {
     global $mysqliLink;
     $ret = -1;

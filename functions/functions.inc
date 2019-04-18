@@ -1,5 +1,7 @@
 <?php
 
+$redirected = false;
+
 function retriveSession() {
     global $_SESSION;
     global $edit_member;
@@ -27,6 +29,8 @@ function conv_array_walk($in_data) {
 
 function redirect($id) {
     global $admin_menu;
+    global $redirected;
+    $redirected = true;
     $_SESSION[SESSION_MOD] = $admin_menu[$id][SETUP_MOD_ID];
     header("Location: " . PROGI);
 }
@@ -105,7 +109,10 @@ function isPermitted($perm) {
 
 function theEnd($output) {
     global $mysqliLink;
-    header("Content-type:text/html; charset=UTF-8;");
+    global $redirected;
+    if (!$redirected) {
+        header("Content-type:text/html; charset=UTF-8;");
+    }
     echo $output;
     $mysqliLink->close();
     exit(0);
@@ -490,7 +497,7 @@ function emailExcelMember($mem_id, $addr, $body) {
     include_once CLASSES . 'PHPExcel.php';
     include_once CLASSES . 'PHPExcel/Writer/Excel2007.php';
     $objPHPExcel = new PHPExcel();
-    $objPHPExcel->getProperties()->setCreator(COMPANY_NAME . ' Tagnyilvántartó');
+    $objPHPExcel->getProperties()->setCreator(getOptionValue(OPTIONS_NAME_COMPANY_NAME). ' Tagnyilvántartó');
 
 
     $objPHPExcel->setActiveSheetIndex(0);

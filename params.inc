@@ -28,5 +28,5 @@ define("TMP_DIR", "/tmp/");
  */
 
 define("COMPANY_NAME", "MMSz");
-define("COMPANY_LONG_NAME", "Magyar Modelező Szövetség");
+define("COMPANY_LONG_NAME", "Magyar Modellező Szövetség");
 define("COMPANY_LOGO", 'http://modellsport.hu/sites/default/files/mmsz_logo_regi_orig.png');

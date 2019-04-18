@@ -187,14 +187,22 @@ function pay_bills($number, $bank_ref = 0) {
         notificationOfPayment($number);
         if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
             $sz = new Szamlazz();
-            $szamla = $sz->getElementByBillNumber($number);
-            if (!empty($szamla)) {
-                include_once INCLUDES . 'szamla_agent.inc';
-                logger($member_id, -1, LOGGER_SZAMLAZZ, 'A ' . $number . ' azonosítójú számla kiállítva !');
+            if ($sz->getElementByBillNumber($number)) {
+                $pdf = $sz->makeSzamla();
+                if (empty($pdf)) {
+                    unset($_SESSION[SESSION_SZAMLAZZ_RESULT]);
+                } else {
+                    $_SESSION[SESSION_SZAMLAZZ_RESULT] = $sz->szamlaToString();
+                    logger($member_id, -1, LOGGER_SZAMLAZZ, 'A ' . $number . ' azonosítójú számla kiállítva !');
+                }
             } else {
-                error_log("Kellene szamlazni, de nincs kinek");
-//                mail_system_error("Kellene szamlazni, de nincs kinek");
+                unset($_SESSION[SESSION_SZAMLAZZ_RESULT]);
+                mail_system_error("Kellene szamlazni, de nincs kinek ");
             }
+            ob_end_clean();
+            ob_start();
+            redirect('szamlazz_res');
+            exit(0);
         }
     }
 }
@@ -304,7 +312,7 @@ function notificationOfPayment($number) {
     foreach ($bills as $bill) {
         $sum += $bill[BILLING_PRICE];
     }
-    $subject = COMPANY_NAME . ' befizetés beérkezett';
+    $subject = getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' befizetés beérkezett';
     $body = 'Tisztelt ' . getMemberName($email_id) . ' !<br><br>'
             . 'A ' . $number . ' azonosítójú, ' . $sum . ' Ft összegű befizetésed a tagnyilvántartó rendszerben le lett könyvelve.<br>';
     send_notification($email_id, $subject, $body);
@@ -325,5 +333,18 @@ function getLastCustomer($mem_id) {
         return $res->fetch_assoc();
     } else {
         return false;
+    }
+}
+
+function getFmSumFromBill($fm) {
+    $ret = '---';
+    if(!isset($fm) OR empty($fm) OR !isset($fm[FM_BILL_ID])) {
+        return $ret;
+    }
+    $bill = getBillById($fm[FM_BILL_ID]);
+    if(empty($bill)) {
+        return $ret;
+    } else  {
+        return $bill[BILLING_PRICE];
     }
 }

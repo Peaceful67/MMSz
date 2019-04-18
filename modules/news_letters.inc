@@ -5,7 +5,7 @@ $selected_group = array(
     -1 => array("Válassz", "Kiknek az email címeit kéred"),
     0 => array("Egyesületi tisztek", "Vezetők, küldöttek, elnökök"),
     1 => array("Egyesületi küldöttek", "Csak küldöttek"),
-    2 => array("Elnökségi tagok", COMPANY_NAME . " elnökségi tagok"),
+    2 => array("Elnökségi tagok", getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " elnökségi tagok"),
     3 => array("Aktív tagok", "Akiknek van valamilyen szerepük bármely egyesületben"),
     4 => array("Rendezetlen tagok", "Aktív tagok, akiknek van előírt, de ki nem fizetett díjtételük, és van emailcímük"),
 );

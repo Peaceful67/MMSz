@@ -68,8 +68,8 @@ if (isset($password_renew)) {
         if ($record[MEMBER_EMAIL] == '') {
             warning("A megadott azonosítóhoz nem tartozik email cím!");
         } elseif (0 == strcasecmp(trim($record[MEMBER_EMAIL]), $member_email)) {
-            $body = 'Az ' . COMPANY_NAME . ' adminisztrációs felületen generált jelszavad: ' . $password . '<br>';
-            $body .= 'Az ' . COMPANY_NAME . ' azonosítód: ' . $passwd_id . '<br>';
+            $body = 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' adminisztrációs felületen generált jelszavad: ' . $password . '<br>';
+            $body .= 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosítód: ' . $passwd_id . '<br>';
             $body .= "Ezzel belépve, a profilod beállításainál a jelszavad megváltoztathatod.<br>";
             if (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0) {
                 $command = new Command;
@@ -91,7 +91,7 @@ if (isset($password_renew)) {
 
 
 $output .= '<form method="post" autocomplete="off"><div class="member_id"><div class="keret">
-    <label for="id">' . COMPANY_NAME . ' azonosító: </label>
+    <label for="id">' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosító: </label>
     <input type="hidden" name="mod" value="' . $mod . '">
     <input type="number" max="9999" name="member_id" value="' . $member_id . '" >&nbsp;&nbsp;vagy&nbsp;&nbsp;';
 $output .= '<label>Email :</label><input type="text"  name="login_email" ><br><br>
@@ -112,10 +112,10 @@ $output .= 'Emlékezz rám: <input type="checkbox" name="remember_me" value="tru
         ((isset($remember_me) AND $remember_me == "true") ? "checked" : "") . ' >&nbsp;&nbsp;&nbsp;&nbsp;
              <input type="submit" name="login_normal" value="Belépés">
             </div><br><div class="keret">
-Amennyiben még nincs jelszavad vagy elfelejtetted, <br>add meg az ' . COMPANY_NAME . ' azonosítódat és az emailcímedet<br>
+Amennyiben még nincs jelszavad vagy elfelejtetted, <br>add meg az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosítódat és az emailcímedet<br>
 Az email címednek szerepelnie kell az adatbázisban !<br>
 A belépéshez szükséges generált jelszót elküldjük az email címedre.<br><br>
-<label>' . COMPANY_NAME . ' azonosító: </label>
+<label>' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosító: </label>
     <input type="number" max="9999" name="passwd_id" value="' . $passwd_id . '" ><br><br>
 <label for="email">Email cím: </label>
 <input type="text" name="member_email" value="" id="email">  

@@ -41,6 +41,14 @@ if (isset($save_options)) {
         changeValue($development, OPTIONS_NAME_DEVELOPMENT);
         changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
     }
+    if ($expand_company != 0) {
+        changeValue($company_name, OPTIONS_NAME_COMPANY_NAME);
+        changeValue($company_long, OPTIONS_NAME_COMPANY_LONG_NAME);
+        changeValue($company_addr, OPTIONS_NAME_COMPANY_ADDR);
+        changeValue($company_telefon, OPTIONS_NAME_COMPANY_TELEFON);
+        changeValue($company_bank_name, OPTIONS_NAME_COMPANY_BANK_NAME);
+        changeValue($company_bank_account, OPTIONS_NAME_COMPANY_BANK_ACCOUNT);
+    }
     if ($expand_szamlazz != 0) {
         if (!isset($szamlazz_ena)) {
             $szamlazz_ena = 'off';
@@ -48,6 +56,7 @@ if (isset($save_options)) {
         changeValue($szamlazz_ena, OPTIONS_NAME_SZAMLAZZ_ENA);
         changeValue($szamlazz_user, OPTIONS_NAME_SZAMLAZZ_USER);
         changeValue($szamlazz_passwd, OPTIONS_NAME_SZAMLAZZ_PASSWD);
+        changeValue($szamlazz_prefix, OPTIONS_NAME_SZAMLAZZ_PREFIX);
     }
 }
 
@@ -86,16 +95,16 @@ if (0 == $expand_emails) {
 }
 $output .= '<label>Szövetség adatok: </label>';
 if (0 == $expand_company) {
-    $output .= '<button name="expand_company" value="0" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
+    $output .= '<button name="expand_company" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
 } else {
     $output .= '<button name="expand_company" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
     $output .= '<div class="keret">';
-    $output .= '<label>Adminisztrátor:</label><input type="text" name="admin_email" value="' . $options[OPTIONS_NAME_ADMIN_EMAIL] . '"><br>';
-    $output .= '<label>Szövetség:</label><input type="text" name="mmsz_email" value="' . $options[OPTIONS_NAME_MMSZ_EMAIL] . '"><br>';
-    $output .= '<label>Szövetség elnök:</label><input type="text" name="mmsz_elnok_email" value="' . $options[OPTIONS_NAME_MMSZ_ELNOK_EMAIL] . '"><br>';
-    $output .= '<label>Befizetés értesítés:</label><input type="text" name="fai_notif_email" value="' . $options[OPTIONS_NAME_FAI_NOTIF_EMAIL] . '"><br>';
-    $output .= '<label>Emailek feladója:</label><input type="text" name="email_sender" value="' . $options[OPTIONS_NAME_EMAIL_SENDER] . '"><br>';
-    $output .= '<label>Emailek aláírása:</label><input type="text" name="email_signature" value="' . $options[OPTIONS_NAME_EMAIL_SIGNATURE] . '"><br>';
+    $output .= '<label>Rövid név:</label><input type="text" name="company_name" value="' . $options[OPTIONS_NAME_COMPANY_NAME] . '"><br>';
+    $output .= '<label>Hosszú név:</label><input type="text" name="company_long" value="' . $options[OPTIONS_NAME_COMPANY_LONG_NAME] . '"><br>';
+    $output .= '<label>Cím:</label><input type="text" name="company_addr" value="' . $options[OPTIONS_NAME_COMPANY_ADDR] . '"><br>';
+    $output .= '<label>Telefon:</label><input type="text" name="company_telefon" value="' . $options[OPTIONS_NAME_COMPANY_TELEFON] . '"><br>';
+    $output .= '<label>Bank neve:</label><input type="text" name="company_bank_name" value="' . $options[OPTIONS_NAME_COMPANY_BANK_NAME] . '"><br>';
+    $output .= '<label>Számla szám:</label><input type="text" name="company_bank_account" value="' . $options[OPTIONS_NAME_COMPANY_BANK_ACCOUNT] . '"><br>';
     $output .= '</div>';
 }
 
@@ -123,6 +132,7 @@ if (0 == $expand_szamlazz) {
             . (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 ? "checked" : "") . '><br>';
     $output .= '<label>Számlázz felhasználó:</label><input type="text" name="szamlazz_user" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_USER) . '"><br>';
     $output .= '<label>számlázz jelszó:</label><input type="text" name="szamlazz_passwd" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_PASSWD) . '"><br>';
+    $output .= '<label>számla előtag:</label><input type="text" name="szamlazz_prefix" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_PREFIX) . '"><br>';
 
     $output .= '</div>';
 }

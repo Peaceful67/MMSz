@@ -3,7 +3,7 @@
 $downloads = array(
     array(0, "Válassz", "Válaszd ki, miről akarsz CSV formátumú fájlt letölteni."),
     array(1, "Tagok összetétele", "Tagsági forma, aktuális létszám, ebből fizetve"),
-    array(2, "Tagok kategóránként", "Kategória, Szakág, " . COMPANY_NAME . " azonosító, Név, Született, Egyesület, Tagdíj, Rendezve"),
+    array(2, "Tagok kategóránként", "Kategória, Szakág, " . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " azonosító, Név, Született, Egyesület, Tagdíj, Rendezve"),
     array(3, "Egyesületek vezetői", "Egyesület neve, Létszám, Vezetők"),
     array(4, "Egyesületek küldöttei", "Egyesület neve, Küldöttek száma, Maximális küldött, Küldöttek neve, Vezetők elérhetősége"),
     array(5, "Taglista", "Tag neve, Email, Születetett, Város, Egyesület"),
@@ -49,7 +49,7 @@ if (isset($download)) {
             header('Content-Type: ' . MIME_CSV);
             header('Content-Disposition: attachment; filename="' . $filename . '";');
             $fh = fopen('php://output', 'w');
-            fputcsv($fh, conv_array(array("Kategória", "Szakág", COMPANY_NAME . " azonosító", "Név", "Született", "Egyesület", "Tagdíj", "Rendezve")), CSV_DELIMITER);
+            fputcsv($fh, conv_array(array("Kategória", "Szakág", getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " azonosító", "Név", "Született", "Egyesület", "Tagdíj", "Rendezve")), CSV_DELIMITER);
             $cat_res = $mysqliLink->query('SELECT * FROM `' . CATEGORIES_TABLE . '` ORDER BY `' . CATEGORIES_SHORT . '`');
             while ($cat_res AND $cat_row = $cat_res->fetch_assoc()) {
                 $mem_res = $mysqliLink->query('SELECT * FROM `' . CM_TABLE . '` WHERE `' . CM_CATEGORY . '`=' . $cat_row[CATEGORIES_ID]);

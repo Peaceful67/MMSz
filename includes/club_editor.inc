@@ -18,6 +18,8 @@ if (!isset($club_act))
     $club_act = '';
 if (!isset($club_bank))
     $club_bank = '';
+if (!isset($club_tax))
+    $club_tax = '';
 
 if (isset($cancel)) {
     unset($edit_club);
@@ -36,6 +38,7 @@ if (isset($save_club)) {
                     . ' `' . CLUB_EMAIL . '`="' . $club_email . '", '
                     . ' `' . CLUB_HOMEPAGE . '`="' . $club_homepage . '", '
                     . ' `' . CLUB_BANK . '`="' . $club_bank . '", '
+                    . ' `' . CLUB_TAX . '`="' . $club_tax . '", '
                     . ' `' . CLUB_COMMENT . '`="' . $club_comment . '"; ';
             $mysqliLink->query($sql);
             $edit_club = $mysqliLink->insert_id;
@@ -49,6 +52,7 @@ if (isset($save_club)) {
                     . ' `' . CLUB_HOMEPAGE . '`="' . $club_homepage . '", '
                     . ' `' . CLUB_EMAIL . '`="' . $club_email . '", '
                     . ' `' . CLUB_BANK . '`="' . $club_bank . '", '
+                    . ' `' . CLUB_TAX . '`="' . $club_tax . '", '
                     . ' `' . CLUB_COMMENT . '`="' . $club_comment . '", '
                     . ' `' . CLUB_ACT . '`="' . (($club_act == 'on') ? '1' : '0') . '" '
                     . ' WHERE `' . CLUB_ID . '`="' . $edit_club . '"';
@@ -71,6 +75,7 @@ if ($edit_club > 0) {
         $club_homepage = $club[CLUB_HOMEPAGE];
         $club_bank = $club[CLUB_BANK];
         $club_act = $club[CLUB_ACT] == 1 ? 'on' : 'off';
+        $club_tax = $club[CLUB_TAX];
         $club_leader = getClubLeaders($edit_club);
         $club_president = getClubPresidents($edit_club);
         $club_delegate = getClubDelegates($edit_club);
@@ -86,6 +91,7 @@ $output .= '<label for="club_email">Klub email:</label><input name="club_email" 
 $output .= '<label for="club_comment">Megjegyzés:</label><input name="club_comment" type="text" value="' . $club_comment . '"><br>';
 $output .= '<label for="club_comment">Honlap:</label><input name="club_homepage" type="text" value="' . $club_homepage . '"><br>';
 $output .= '<label for="club_bank">Bankszámla:</label><input name="club_bank" type="text" value="' . $club_bank . '"><br>';
+$output .= '<label for="club_bank">Adószám:</label><input name="club_tax" type="text" value="' . $club_tax . '"><br>';
 $output .= '<label for="club_act">Aktív:</label><input name="club_act" type="checkbox"  ' . ($club_act == 'on' ? "checked" : "") . '><br>';
 if (isset($club_leader)) {
     $output .= '<label>Vezető:</label>' . ((strlen($club_leader) > 1) ? $club_leader : 'Nincs megadva !') . '<br>';

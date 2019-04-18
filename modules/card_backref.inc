@@ -19,7 +19,6 @@ if (isset($_SESSION[SESSION_SP_BACKREF])) {
     $backref = unserialize($_SESSION[SESSION_SP_BACKREF]);
     $backref->checkResponse();
     if (isBillPaied($backref->order_ref)) {
-//        error_log("Backref : Megvan a fizetés");
         redirect("simplepay_ipn");
         exit(0);
     }

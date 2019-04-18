@@ -24,6 +24,17 @@ if ($ios->status['ORDER_STATUS'] == 'FRAUD' OR
 //    error_log("IOS: " . $bill_number);
     $message .= $payment_status['CONFIRMED'];
 }
+if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) {
+    $sz = new Szamlazz();
+    $sz->getElementByBillNumber($bill_number);
+    if ($sz->isPdfExists($bill_number)) {
+        $message .= '<br><font color="green">A Számlázz.hu a számlát elkészítette és emailben elküldte.<br>';
+        $message .= '<a target="_blank" title="Letöltés" href="' . $sz->getPdfURL($bill_number) . '">Innen</a> közvetlenül is letölthető.</font>';
+    } else {
+        $message .= '<br><br><font color="red">Várjuk a Számlázz.hu számlájának elkészültét.';
+    }
+}
+
 
 echo $message;
 ?>

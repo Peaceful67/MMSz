@@ -10,7 +10,7 @@ $lu->setField("ORDER_REF", $simplepay_number);
 $lu->addProduct(array(
     'name' => 'Dijfizetés', //product name [ string ]
     'code' => $simplepay_number, //merchant systemwide unique product ID [ string ]
-    'info' => COMPANY_NAME.' díjfizetés', //product description [ string ]
+    'info' => getOptionValue(OPTIONS_NAME_COMPANY_NAME).' díjfizetés', //product description [ string ]
     'price' => $simplepay_sum, //product price [ HUF: integer | EUR, USD decimal 0.00 ]
     'vat' => 0, //product tax rate [ in case of gross price: 0 ] (percent)
     'qty' => 1                                         //product quantity [ integer ] 
