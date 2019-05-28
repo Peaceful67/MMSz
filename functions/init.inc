@@ -1,8 +1,7 @@
 <?php
-
-$mysqliLink = new mysqli(DATABASE_ADDR, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME);
+$mysqliLink = new MYSQLi(DATABASE_ADDR, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME) or  die(mysqli_error());
 if ($mysqliLink->connect_errno) {
-    error_log("MySQL:" . $mysqliLink->connect_error);
+    error_log("MySQL hiba:" . $mysqliLink->connect_error);
     die(-1);
 }
 $mysqliLink->set_charset("utf8");
@@ -21,7 +20,7 @@ include_once FUNCTIONS . 'load_options.inc';
 include_once FUNCTIONS . 'bill_functions.inc';
 include_once FUNCTIONS . 'lm_functions.inc';
 include_once INCLUDES . 'setup_load.inc';
-include_once INCLUDES . 'crontab.inc';
+// include_once INCLUDES . 'crontab.inc';
 
 
 

@@ -9,6 +9,13 @@ $selected_group = array(
     3 => array("Aktív tagok", "Akiknek van valamilyen szerepük bármely egyesületben"),
     4 => array("Rendezetlen tagok", "Aktív tagok, akiknek van előírt, de ki nem fizetett díjtételük, és van emailcímük"),
 );
+if (isset($_SESSION[SESSION_FILTERED_NEWSLETTER]) AND ! empty($_SESSION[SESSION_FILTERED_NEWSLETTER])) {
+    $filtered = unserialize($_SESSION[SESSION_FILTERED_NEWSLETTER]);
+    unset($_SESSION[SESSION_FILTERED_NEWSLETTER]);
+} else {
+    $filtered = array();
+}
+
 if (!isset($selected_addr)) {
     $selected_addr = -1;
 }
@@ -33,7 +40,7 @@ $newsletters = array();
 while ($res AND $row = $res->fetch_assoc()) {
     $newsletters[$row[NEWSLETTER_ID]] = $row;
 }
-if(isset($resend)) {
+if (isset($resend)) {
     $email_subject = $newsletters[$resend][NEWSLETTER_SUBJECT];
     $email_body = $newsletters[$resend][NEWSLETTER_BODY];
     $selected_newsletter = -1;
@@ -63,16 +70,19 @@ if ($selected_newsletter < 0) {
     $all = array();
     while ($res AND $row = $res->fetch_assoc()) {
         $all[] = $row[MEMBER_ID];
+        if (in_array($row[MEMBER_ID], $filtered)) {
+            $chk = ADDR_CHK . $row[MEMBER_ID];
+            $$chk = 'on';
+        }
     }
-    if ($old_selected_addr == $selected_addr) {
-        
-    } else {
+    if ($old_selected_addr != $selected_addr) {
         foreach ($all as $id) {
             $chk = ADDR_CHK . $id;
             unset($$chk);
         }
         $old_selected_addr = $selected_addr;
-        if ($res = retriveAddresses($selected_addr)) {
+        $res = retriveAddresses($selected_addr);
+        if ($res) {
             while ($row = $res->fetch_assoc()) {
                 $chk = ADDR_CHK . $row[MEMBER_ID];
                 $$chk = 'on';
@@ -92,8 +102,7 @@ if ($selected_newsletter < 0) {
             $checked = '';
         }
         $output .= '<li><input type="checkbox" name="' . $chk . '" ' . $checked . ' "  onChange="submit();">'
-                . '<a title="(' . $mem[MEMBER_ID] . ')  ' . $mem[MEMBER_EMAIL] . '" '
-                . 'href="' . CARD_LINK . $mem[MEMBER_ID] . '" target="_blank">'
+                . '<a title="(' . $mem[MEMBER_ID] . ')  ' . $mem[MEMBER_EMAIL] . '">'
                 . $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . '</a></li>';
     }
     $output .= '</ul>';
@@ -141,7 +150,7 @@ if ($selected_newsletter < 0) {
         }
     }
 } else { // List newsletters
-    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button  name="resend" value='.$selected_newsletter.'>Újra küldés</button></br></br>';
+    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button  name="resend" value=' . $selected_newsletter . '>Újra küldés</button></br></br>';
     $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `' . NLM_NEWSLETTER_ID . '`=' . $selected_newsletter . ' ;';
     $res = $mysqliLink->query($sql);
     $output .= '<label>Küldő:</label>' . getMemberName($newsletters[$selected_newsletter][NEWSLETTER_CREATOR]) . '<br><br>';

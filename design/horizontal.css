@@ -288,7 +288,7 @@ header h2 {
 .email_address {
     position:fixed;
     float:top;
-      width: 300px; 
+    width: 300px; 
 }
 .email_body {
     float:left;
@@ -315,27 +315,30 @@ header h2 {
 
 
 .scrolled_lists table {
-    width:90%;
+    width:95%;
     border-collapse: collapse;
     border: 2px solid black;
     margin: 20px;
-    position:absolute;
+    position:absolute;   
+    table-layout: fixed;
 }
 .scrolled_lists table th {
     font-size: 15px;
     text-align: center;
     border: 1px solid black;
     background-color: lightgray;
+    top: 0;
 }
+
 .scrolled_lists table td {
     font-size: 15px;
-    border: 1px solid black;
+    border: 1px solid black;    
 }
 
 .scrolled_lists   thead {
     display: block;
     overflow: auto;
-    position: relative;
+    position: fixed;
 }
 
 .scrolled_lists    tbody {

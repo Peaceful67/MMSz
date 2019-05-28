@@ -15,7 +15,7 @@ $neverEnding = '2099-12-31';
 $today = date('Y-m-d');
 
 define('SECRET', '%/{)9A!#@');
-define("VERSION", "2.4");
+define("VERSION", "2.5");
 define("CSV_DELIMITER", ";");
 define("CSV_DECODE", "utf8_decode");
 
@@ -55,6 +55,7 @@ define("SESSION_VIEW_COLUMNS", "view_columns");
 define("SESSION_MOD", "module");
 define("SESSION_LAST_MOD", "last_mod");
 define("SESSION_SZAMLAZZ_RESULT", "szamlazz_result");
+define("SESSION_FILTERED_NEWSLETTER", "filtered_newsletter");
 
 define("COOKIE_REMEMBER_ME", "remember_me");
 define("COOKIE_MEMBER_ID", "member_id");
@@ -84,7 +85,6 @@ define("MPDF", CLASSES . "");
 define("ELEMENTS", CLASSES . "Elements/");
 
 
-
 define("PROGI", URL . "/index.php");
 define("CARD_LINK", URL . "/card?");
 define("IMAGES", URL . "/" . PATH_IMAGES);
@@ -99,6 +99,7 @@ define("AVATAR_WIDTH", 100);
 define("AVATAR_HEIGHT", 130);
 define("AVATAR_SIZED_WIDTH", 220);
 define("AVATAR_SIZED_HEIGHT", 300);
+define("AVATAR_TOLERANCE", 1.05);
 define("CARD_AVATAR_WIDTH", 220);
 define("CARD_AVATAR_HEIGHT", 300);
 define("CARD_IMG_DPI", '327');

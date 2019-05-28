@@ -18,7 +18,7 @@ if (!isset($order_by)) {
 if (!isset($act_club)) {
     $act_club = "off";
 }
-$col_width = array(5, 40,40, 10, 5);
+$col_width = array(5,35,40, 10, 10);
 $del_act = $del_max = 0;
 foreach(getClubNameList() as $cl_id => $cl_name ) {
     $del_act += getNumberOfDelegateClub($cl_id);
@@ -33,11 +33,20 @@ $output .= '<br><div class="scrolled_lists"><form method="post"> '
         . ' <input type="checkbox" name="act_club" ' . ($act_club == "on" ? "checked" : "") . ' onchange="submit();">'
         . 'Csak aktív egyesületek'
         . '<table border="1"><thead>';
-$output .= '<tr><th style="width:' . $col_width[0] . '%;">Nr.</th><th style="width:' . $col_width[1] . '%;">Név</th>'
-        . '<th style="width:' . $col_width[2] . '%;">Cím</th><th style="width:' . $col_width[3] . '%;">Tagok</th>'
-        . '<th style="width:' . $col_width[4] . '%;">Művelet</th></tr></thead><tbody>';
+$output .= '<tr><th style="width:' . $col_width[0] . '%">Nr.</th><th style="width:' . $col_width[1] . '%">Név</th>'
+        . '<th style="width:' . $col_width[2] . '%">Cím</th><th style="width:' . $col_width[3] . '%">Tagok</th>'
+        . '<th style="width:' . $col_width[4] . '%">Művelet</th></tr></thead><tbody>';
 
 while ($res AND $row = $res->fetch_assoc()) {
+    $files = scandir(DOCUMENTS);
+    $needle = 'club_' . $row[CLUB_ID] . '_';
+    $docus = ' ';
+    foreach ($files as $f) {
+        if (substr($f, 0, strlen($needle)) == $needle) {
+            $docus .= '<a target="_blank" href="' . DOCUMENTS . $f . '"><img style="width:20px;" src="' . IMAGES . 'pdf.jpg"></a>';
+        }
+    }
+
     $output .= '<tr style="color: ' . (($row[CLUB_ACT] == 1) ? 'green' : 'red') . ';">';
     $output .= '<td style="width:' . $col_width[0] . '%;">' . $row[CLUB_ID] . '. ';
     if(isClubMembership($row[CLUB_ID])>0) {
@@ -56,7 +65,7 @@ while ($res AND $row = $res->fetch_assoc()) {
     if (!isClubUsed($row[CLUB_ID])) {
         $output .= '<button  type="submit" name="delete_club" value="' . $row[CLUB_ID] . '" onClick="return confirm(\'Biztosan tölni akarod a ' . $row[CLUB_ID] . ' azonosítójú egyesületet?\')"><img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
     }
-    $output .= '</td>';
+    $output .= $docus.'</td>';
     $output .= "</tr>";
 }
 $output .= "</tbody></table></form></div>";

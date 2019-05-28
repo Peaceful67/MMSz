@@ -29,13 +29,14 @@ if (in_array(FEE_TYPE_MEMBERSHIP, $editable_fees)) {
             }
         }
 
-        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_member_period">';
+        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_member_period" onChange="submit();">';
         $output .= '<option value="-1">Válassz !</option>';
         foreach ($fees as $fee) {
-                $output .= '<option value="' . $fee[0] . '" ' .
-                        ($selected_member_period == $fee[0] ? "selected" : "") . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
+            $output .= '<option value="' . $fee[0] . '" ' .
+                    ($selected_member_period == $fee[0] ? "selected" : "") . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
+        $output .= printWarning($fees, $selected_member_period);
     }
     $output .= '<br>';
 }
@@ -62,7 +63,7 @@ if (in_array(FEE_TYPE_INSURANCE, $editable_fees)) {
             }
         }
 
-        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_insurance_period">';
+        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_insurance_period" onChange="submit();">';
         $output .= '<option value="-1">Válassz !</option>';
         foreach ($fees as $fee) {
             $output .= '<option value="' . $fee[0] . '" '
@@ -70,6 +71,7 @@ if (in_array(FEE_TYPE_INSURANCE, $editable_fees)) {
                     . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
+        $output .= printWarning($fees, $selected_insurance_period);
     }
     $output .= '<br>';
 }
@@ -104,12 +106,12 @@ if (in_array(FEE_TYPE_ORGANIZATION, $editable_fees)) {
                     . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
+        $output .= printWarning($fees, $selected_organ_period);
     }
     $output .= '<br>';
 }
 $organ_licence = retriveMember($fee_member_id)[MEMBER_LICENCE];
 $output .= '<label>Nemzetközi azonosító:</label><input  style="width: 150px;" type="text" name="organ_licence" value="' . $organ_licence . '"><br>';
-
 if (in_array(FEE_TYPE_ASSOCIATION, $editable_fees)) {
     if (!isset($selected_assoc)) {
         $selected_assoc = -2;
@@ -140,6 +142,7 @@ if (in_array(FEE_TYPE_ASSOCIATION, $editable_fees)) {
                     . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
+        $output .= printWarning($fees, $selected_assoc_period);
     }
     $output .= '<br>';
 }
@@ -180,7 +183,7 @@ if (in_array(FEE_TYPE_CLUB, $editable_fees)) {
                 }
             }
 
-            $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_club_period">';
+            $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<select name="selected_club_period" onChange="submit();">';
             $output .= '<option value="-1">Válassz !</option>';
             foreach ($fees as $feeOfClub) {
                 $output .= '<option value="' . $feeOfClub[0] . '" '
@@ -188,6 +191,7 @@ if (in_array(FEE_TYPE_CLUB, $editable_fees)) {
                         . '>' . $feeOfClub[1] . ':' . $feeOfClub[2] . ' = ' . $feeOfClub[3] . ' Ft</option>';
             }
             $output .= '</select>';
+            $output .= printWarning($fees, $selected_club_period);
         }
     }
     $output .= '<br>';
@@ -223,6 +227,7 @@ if (in_array(FEE_TYPE_OCCASION, $editable_fees)) {
                     . '>' . $fee[1] . ':' . $fee[2] . ' = ' . $fee[3] . ' Ft</option>';
         }
         $output .= '</select>';
+        $output .= printWarning($fees, $selected_occasion_period);
     }
     $output .= '<br>';
 }
@@ -231,3 +236,18 @@ $output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '"
 $output .= '<br><input value="Rögzítés"  type="submit" name="fee_type_save">';
 $output .= '</div>';
 
+function printWarning($fees, $period) {
+    global $today, $endOfYear;
+    $ret = '';
+    foreach ($fees as $fee) {
+        if ($period == $fee[0]) {
+            if ($fee[1] > $endOfYear) {
+                $ret = '<font color="orange"> Jövőbeni időszak !</font>';
+            }
+            if ($fee[2] < $today) {
+                $ret = '<font color="red"> Elmúlt időszak !</font>';
+            }
+        }
+    }
+    return $ret;
+}

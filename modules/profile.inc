@@ -23,10 +23,10 @@ switch ($radio_edit_member) {
         include_once INCLUDES . 'base_data.inc';
         break;
     case "fees":
-       $fee_member_id = $member_id;
+        $fee_member_id = $member_id;
         $deletable_fm = true;
-        $editable_fees = array(FEE_TYPE_ORGANIZATION, FEE_TYPE_CLUB, 
-             FEE_TYPE_ASSOCIATION, FEE_TYPE_OCCASION);
+        $editable_fees = array(FEE_TYPE_ORGANIZATION, FEE_TYPE_CLUB,
+            FEE_TYPE_OCCASION);
         include_once INCLUDES . 'choose_fee_type.inc';
         break;
     case "passwd":

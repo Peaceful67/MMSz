@@ -107,6 +107,15 @@ function isPermitted($perm) {
         return false;
 }
 
+function getAccessOfMmodule($module) {
+    global $admin_menu;
+    if (isset($admin_menu[$module])) {
+        return $admin_menu[$module][SETUP_MOD_ACCESS];
+    } else {
+        return ACCESS_PUBLIC;
+    }
+}
+
 function theEnd($output) {
     global $mysqliLink;
     global $redirected;
@@ -497,7 +506,7 @@ function emailExcelMember($mem_id, $addr, $body) {
     include_once CLASSES . 'PHPExcel.php';
     include_once CLASSES . 'PHPExcel/Writer/Excel2007.php';
     $objPHPExcel = new PHPExcel();
-    $objPHPExcel->getProperties()->setCreator(getOptionValue(OPTIONS_NAME_COMPANY_NAME). ' Tagnyilvántartó');
+    $objPHPExcel->getProperties()->setCreator(getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' Tagnyilvántartó');
 
 
     $objPHPExcel->setActiveSheetIndex(0);

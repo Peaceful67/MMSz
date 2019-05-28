@@ -5,10 +5,10 @@ if (!isset($document_id)) {
 }
 
 if (isset($delete_document)) {
-    $file = DOCUMENTS . $delete_document;
+    $file = DOCUMENTS. $delete_document;
     unlink($file);
     logger($member_id, $document_id, LOGGER_MEMBER_MOD, "A " . $document_id . " taghoz tartozó dokumentum (" . $delete_document . ") törlése");
-}
+} 
 
 if (isset($_FILES["document_upload"]) AND isset($feltolt)) {
     if ($_FILES["document_upload"]["type"] == "application/pdf") {
@@ -27,14 +27,15 @@ if (!empty($files)) {
     $needle = $document_id . '_';
     foreach ($files as $f) {
         if (substr($f, 0, strlen($needle)) == $needle) {
-            $output .= '<a target="_blank" href="' . DOCUMENTS . $f . '"><img src="' . IMAGES . 'pdf.jpg"></a>';
+            $output .= '<a target="_blank" href="' . DOCUMENTS . $f . '"><img style="width: 60px;" src="' . IMAGES . 'pdf.jpg"></a>';
         }
     }
     $output .= '<br>';
     foreach ($files as $f) {
         if (substr($f, 0, strlen($needle)) == $needle) {
-            $output .= '<input alt="Törlés" type="image" name="delete_document" value="' . $f . '" src="'
-                    . IMAGES . 'delete.jpg" style="margin-left: 18px; margin-right: 18px;" onClick="return confirm(\'Biztosan tölni akarod a dokumentumot ?\')">';
+            $output .= '<button type="submit" name="delete_document" value="' . $f . '" onClick="return confirm(\'Biztosan tölni akarod a dokumentumot ?\')">'
+                    . '<img style="margin-left: 14px; margin-right: 14px;" src="' . IMAGES . 'delete.jpg" title="Törlés">'
+                    . '</button>';
         }
     }
 }

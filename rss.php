@@ -125,6 +125,7 @@ if (isset($_GET["officers"])) {
     $output .= '</officers>';
 }
 theEnd($output);
+include_once INCLUDES . 'crontab.inc';
 
 function array_to_xml($array, &$xml_user_info, $item_name) {
     foreach ($array as $key => $value) {

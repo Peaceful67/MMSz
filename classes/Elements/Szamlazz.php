@@ -207,7 +207,7 @@ class Szamlazz extends BasicElement {
         curl_setopt($curl, CURLOPT_SAFE_UPLOAD, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, 30);
         curl_setopt($curl, CURLOPT_COOKIEJAR, $this->cookie_file);
-        if (file_exists($cookie_file) && filesize($this->cookie_file) > 0) {
+        if (file_exists($this->cookie_file) && filesize($this->cookie_file) > 0) {
             curl_setopt($curl, CURLOPT_COOKIEFILE, $this->cookie_file);
         }
         return $curl;

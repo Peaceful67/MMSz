@@ -204,7 +204,7 @@ if ($search_by_id > 0) {
     }
     if (strlen($search) >= 3) {
         $sql .= ' WHERE ( CONCAT (`' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, " ", `'
-                . MEMBER_TABLE . '`.`' . MEMBER_KERNEV . '`)' . ' LIKE "' . $search . '%" )';
+                . MEMBER_TABLE . '`.`' . MEMBER_KERNEV . '`)' . ' LIKE "%' . $search . '%" )';
     } else {
         $sql .= ' WHERE 1 ';
     }
@@ -238,6 +238,18 @@ if ($res) {
 if ($searchByFees AND $selected_fee_id < 0) {
     $total_member = 0;
 }
+if (isset($filtered_newsletter) AND $total_member > 0) {
+    $filtered = array();
+    while ($res AND $row = $res->fetch_assoc()) {
+        if (!empty($row[MEMBER_EMAIL])) {
+            $filtered[] = $row[MEMBER_ID];
+        }
+    }
+    $_SESSION[SESSION_FILTERED_NEWSLETTER] = serialize($filtered);
+    redirect("news_letters");
+} else {
+    unset($_SESSION[SESSION_FILTERED_NEWSLETTER]);
+}
 $output .= '<div class="search"><form  method="post"><div class="keret">';
 
 if ($searchByFees) {
@@ -263,6 +275,10 @@ if ($order_by == MEMBER_VEZNEV) {
 }
 $output .= '>Név&nbsp;&nbsp;&nbsp;&nbsp;<b>Találat :' . $total_member . ' tag</b>';
 
+if ($total_member > 0 AND isPermitted(getAccessOfMmodule("news_letters"))) {
+    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;';
+    $output .= '<input type="submit" name="filtered_newsletter" value="Körlevél" title="Csak ez email címmel rendelkezőknek !">';
+}
 if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
     $output .= '<br><br>';
     $output .= 'Egyesület: <select  name="selected_club" onChange="submit();">';

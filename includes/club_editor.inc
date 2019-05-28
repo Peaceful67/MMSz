@@ -25,9 +25,10 @@ if (isset($cancel)) {
     unset($edit_club);
     return;
 }
+
 if (isset($save_club)) {
     if (empty($club_name)) {
-        warning('Add meg a klub nevét !');
+        warning('Add meg az egyesület nevét !');
     } else {
         if ($edit_club < 0) {
             $sql = 'INSERT INTO `' . CLUB_TABLE . '` SET '
@@ -58,9 +59,25 @@ if (isset($save_club)) {
                     . ' WHERE `' . CLUB_ID . '`="' . $edit_club . '"';
             $mysqliLink->query($sql);
             logger($member_id, -1, LOGGER_CLUB_EDIT, $edit_club . ' azonosítójú egyesület adatai módosítva.');
+            if (isset($_FILES["document_upload"]) AND isset($feltolt)) {
+                if ($_FILES["document_upload"]["type"] == "application/pdf") {
+                    $file = DOCUMENTS . 'club_' . $edit_club . uniqid('_') . '.pdf';
+                    move_uploaded_file($_FILES["document_upload"]["tmp_name"], $file);
+                    logger($member_id, $edit_club, LOGGER_CLUB_EDIT, "A " . $edit_club . " egyesülethez tartozó új dokumentum feltöltése : " . $file);
+                } else {
+                    warning("A feltöltött fájl nem pdf !");
+                }
+            }
         }
     }
 }
+if (isset($delete_document)) {
+    $file = DOCUMENTS . $delete_document;
+    unlink($file);
+    logger($member_id, $edit_club, LOGGER_CLUB_EDIT, "A " . $edit_club . " egyesülethez tartozó dokumentum (" . $delete_document . ") törlése");
+}
+
+
 
 if ($edit_club > 0) {
     $res = $mysqliLink->query('SELECT * FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_ID . '`=' . $edit_club . ' LIMIT 1');
@@ -82,7 +99,7 @@ if ($edit_club > 0) {
     }
 }
 
-$output .= '<div class="editor"><div class="keret"><form method="post">';
+$output .= '<div class="editor"><div class="keret"><form method="post" enctype="multipart/form-data">';
 $output .= '<label for="club_name">Klub név:</label><input name="club_name" type="text" value="' . $club_name . '"><br>';
 $output .= '<label for="club_postcode">Irányítószám:</label><input name="club_postcode" type="text" value="' . $club_postcode . '"><br>';
 $output .= '<label for="club_city">Város:</label><input name="club_city" type="text" value="' . $club_city . '"><br>';
@@ -105,8 +122,38 @@ if (isset($club_delegate)) {
     $output .= '<br>';
 }
 
+$files = scandir(DOCUMENTS);
+
+if (!empty($files)) {
+    $needle = 'club_' . $edit_club . '_';
+    $found = false;
+    foreach ($files as $f) {
+        if (substr($f, 0, strlen($needle)) == $needle) {
+            $found = true;
+            $output .= '<a target="_blank" href="' . DOCUMENTS . $f . '"><img style="width:60px;" src="' . IMAGES . 'pdf.jpg"></a>';
+        }
+    }
+    if ($found) {
+        $output .= '<br>';
+    }
+    foreach ($files as $f) {
+        if (substr($f, 0, strlen($needle)) == $needle) {
+            $output .= '<button type="submit" name="delete_document" value="' . $f . '" onClick="return confirm(\'Biztosan tölni akarod a dokumentumot ?\')">'
+                    . '<img style="margin-left: 14px; margin-right: 14px;" src="' . IMAGES . 'delete.jpg" title="Törlés">'
+                    . '</button>';
+        }
+    }
+    if ($found) {
+        $output .= '<br>';
+    }
+}
 
 $output .= '<input type="hidden" name="edit_club" value="' . $edit_club . '">'
         . '<input type="submit" name="save_club" value="Rögzít"> '
-        . '<input type="submit" name="cancel" value="Mégsem">';
-$output .= '</form></div></div>';
+        . '&nbsp;&nbsp;&nbsp;<input type="submit" name="cancel" value="Mégsem">';
+$output .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Feltöltés:
+    <input type="file" name="document_upload"/>';
+
+$output .= '</div>';
+
+$output .= '</form></div>';

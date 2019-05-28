@@ -40,7 +40,10 @@ if (isset($_FILES["avatar_upload"]) AND isset($feltolt_avatar)) {
         $check = getimagesize($_FILES["avatar_upload"]["tmp_name"]);
         if ($check !== false OR $_FILES["document_upload"]["type"] == "image/jpg") {
             list($width, $height) = $check;
-            if ($width >= AVATAR_SIZED_WIDTH AND $height >= AVATAR_SIZED_HEIGHT) {
+            if (!isAvatarRatio($width, $height)) {
+                warning(AVATAR_SIZED_WIDTH . "(széles)/" . AVATAR_SIZED_HEIGHT . " (magas) képarányú (&#177;5%) kép tölthető csak fel !");
+                unset($_FILES);
+            } elseif ($width >= AVATAR_SIZED_WIDTH AND $height >= AVATAR_SIZED_HEIGHT) {
                 $thumb = imagecreatetruecolor(AVATAR_WIDTH, AVATAR_HEIGHT);
                 $sized = imagecreatetruecolor(AVATAR_SIZED_WIDTH, AVATAR_SIZED_HEIGHT);
                 $source = imagecreatefromjpeg($_FILES["avatar_upload"]["tmp_name"]);
@@ -66,7 +69,7 @@ $output .= '<H1>Arckép feltöltés</H1>';
 if (isset($avatar_id)) {
     if (is_file($file)) {
         $mtime = filemtime($file);
-        $output .= '<img height="' . AVATAR_HEIGHT . '" width="' . AVATAR_WIDTH . '" src="' . AVATAR_URL . $avatar_id . '.jpg?'.$mtime.'"/>';
+        $output .= '<img height="' . AVATAR_HEIGHT . '" width="' . AVATAR_WIDTH . '" src="' . AVATAR_URL . $avatar_id . '.jpg?' . $mtime . '"/>';
     } else {
         $output .= "Nincs feltöltött kép";
     }
@@ -96,4 +99,12 @@ if (is_file($original_file)) {
 $output .= '</form>';
 $output .= '</div>';
 
-
+function isAvatarRatio($width, $height) {
+    if ((floatval($height * AVATAR_SIZED_WIDTH) / floatval($width*AVATAR_SIZED_HEIGHT)) > AVATAR_TOLERANCE) {
+        return false;
+    }
+    if ((floatval($height*AVATAR_SIZED_WIDTH) / floatval($width*AVATAR_SIZED_HEIGHT)) < (1 / AVATAR_TOLERANCE)) {
+        return false;
+    }
+    return true;
+}
