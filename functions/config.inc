@@ -56,6 +56,7 @@ define("SESSION_MOD", "module");
 define("SESSION_LAST_MOD", "last_mod");
 define("SESSION_SZAMLAZZ_RESULT", "szamlazz_result");
 define("SESSION_FILTERED_NEWSLETTER", "filtered_newsletter");
+define("SESSION_FILTERED_CONGRESS", "filtered_congress");
 define("SESSION_ROLE_AS", "role_as");
 
 define("COOKIE_REMEMBER_ME", "remember_me");
@@ -83,15 +84,21 @@ define("DOCUMENTS", "./documents/");
 define("SIMPLEPAY", "./simplepay/");
 define("CLASSES", "./classes/");
 define("MPDF", CLASSES . "");
-define("ELEMENTS", CLASSES . "Elements/");
-
+define("ELEMENTS", "elements/");
+define("POLLING", ELEMENTS . "polling/");
 
 define("PROGI", URL . "/index.php");
 define("CARD_LINK", URL . "/card?");
 define("IMAGES", URL . "/" . PATH_IMAGES);
 define("AVATAR_URL", URL . AVATAR);
 define("RULES", DOCUMENTS . "rules_");
-define("URL_RULES", URL.'/documents/rules_');
+define("URL_RULES", URL . '/documents/rules_');
+define("CONGRESS", DOCUMENTS.'congress/');
+define("CONGRESS_HELP_FILE", CONGRESS.'congress_help.pdf');
+define("CONGRESS_ITEM_DOC", CONGRESS . "congress_item_");
+define("CONGRESS_COMMENT_DOC", CONGRESS . "congress_comment_");
+define("CONGRESS_CREATE_SUM", CONGRESS.'congress_sum_');
+define("CONGRESS_ITEM_SUM", CONGRESS.'item_sum_');
 
 define("MIME_ZIP", "application/x-gzip");
 define("MIME_CSV", "application/csv");
@@ -259,6 +266,10 @@ define("LOGGER_OPTIONS", 31);
 define("LOGGER_CRONTAB", 32);
 define("LOGGER_FAI_API", 33);
 define("LOGGER_TYPES", 34);
+define("LOGGER_CONGRESS_ONLINE", 35);
+define("LOGGER_CONGRESS_COMMENT", 36);
+define("LOGGER_CONGRESS_VOTE", 37);
+define("LOGGER_HELP", 38);
 
 
 $logger_categories = array(
@@ -287,5 +298,9 @@ $logger_categories = array(
     LOGGER_CRONTAB => "Crontab",
     LOGGER_FAI_API => "FAI API",
     LOGGER_TYPES => "Típuslisták szerkesztése",
+    LOGGER_CONGRESS_ONLINE => "Online szavazás szerkesztése",
+    LOGGER_CONGRESS_COMMENT => "Online szavazás hozzászólás",
+    LOGGER_CONGRESS_VOTE => "Online szavazás szavazás",
+    LOGGER_HELP => "Leírás szerkesztése",
 );
 ?>

@@ -65,6 +65,10 @@ if (isset($save_options)) {
         if (!isset($development)) {
             $development = 'off';
         }
+        if (!isset($help_enabled)) {
+            $help_enabled = 'off';
+        }
+
         if (!isset($password_link)) {
             $password_link = 'off';
         }
@@ -83,6 +87,7 @@ if (isset($save_options)) {
         changeValue($delegate_mod, OPTIONS_NAME_DELEGATE_MOD);
         changeValue($development, OPTIONS_NAME_DEVELOPMENT);
         changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
+        changeValue($help_enabled, OPTIONS_NAME_HELP_ENABLED);
     }
     if ($expand_company != 0) {
         changeValue($company_name, OPTIONS_NAME_COMPANY_NAME);
@@ -161,6 +166,8 @@ if (0 == $expand_general) {
     $output .= '<div class="keret">';
     $output .= '<label>Fejlesztői:</label><input type="checkbox" name="development" '
             . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
+    $output .= '<label>Help megjelenítés:</label><input type="checkbox" name="help_enabled" '
+            . (getOptionValue(OPTIONS_NAME_HELP_ENABLED) > 0 ? "checked" : "") . '><br>';
     $output .= '<label>Felhasználó mint:</label>';
     $output .= '<input type="number" min="1" max="10000" maxlength="4" size="4" name="role_as_member" value="' . $role_as_member . '"> tag<br>';
     $output .= '<label>Belépő link jelszó kérésnél:</label><input type="checkbox" name="password_link" '

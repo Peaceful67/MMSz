@@ -15,6 +15,21 @@ function getMemberClubNames($id) {
     }
     return empty($ret) ? 'Egyik sem' : $ret;
 }
+function getMemberClubNamesByDate($id, $date) {
+    global $mysqliLink;
+    $ret = '';
+    $sql = 'SELECT `' . CLUB_NAME . '` FROM `' . ROLE_TABLE . '`, `' . CLUB_TABLE . '` '
+            . 'WHERE `' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`="' . $id . '" '
+            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=`' . CLUB_TABLE . '`.`' . CLUB_ID . '`'
+            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`="' . ACCESS_USER . '"'
+            . ' AND ("'.$date.'" BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
+            . 'GROUP BY `' . ROLE_CLUB . '`  ORDER BY `' . ROLE_FROM . '` DESC ;';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $ret .= $row[CLUB_NAME] . ', ';
+    }
+    return empty($ret) ? 'Egyik sem' : $ret;
+}
 
 function getClubsMember($mem_id) {
     global $mysqliLink;
@@ -491,6 +506,7 @@ function getBranchesOfLeader($mem_id) {
     while ($res AND $row = $res->fetch_assoc()) {
         $ret[$row[ROLE_CATEGORY_LEADER]] = $branches[$row[ROLE_CATEGORY_LEADER]];
     }
-    return $ret;
-    
+    return $ret;   
 }
+
+

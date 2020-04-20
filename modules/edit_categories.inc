@@ -103,7 +103,7 @@ if (isset($category_id)) {
     $output .= '<input type="hidden" name="category_id" value="' . $category_id . '">';
 }
 $leaded_brances = getBranchesOfLeader($member_id);
-if(isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ_PRESIDENT) OR isPermitted(ACCESS_MMSZ_PRESIDENT)) {
+if(isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ) OR isPermitted(ACCESS_MMSZ_PRESIDENT)) {
     $leaded_brances = $branches;
 }
 if (empty($leaded_brances)) {

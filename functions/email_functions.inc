@@ -41,13 +41,14 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
     $my_mail->Subject = $subject;
     $my_mail->AltBody = 'Az üzenet megtekintéséhez használj HTML kompatibilis email klienst !';
     $my_mail->MsgHTML($body);
-    $my_mail->AddAddress($addr);
     $my_mail->Encoding = 'base64';
     if (!empty($filename)) {
         $my_mail->AddAttachment($filename);
     }
     if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         $my_mail->AddAddress(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL));
+    } else {
+        $my_mail->AddAddress($addr);
     }
     if (!$my_mail->Send()) {
         error_log('Error occurred during sending the email: ' . $my_mail->ErrorInfo);
@@ -94,7 +95,7 @@ function send_notification($id, $subject, $body) {
     $person_body = str_replace(REPLACE_NAME, getMemberName($id), $body);
     $formated_body = str_replace(NEWLINE, '<br>', $person_body);
     $addr = getMemberEmail($id);
-    if(getOptionValue(OPTIONS_NAME_DEVELOPMENT)>0) {
+    if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         $addr = getOptionValue(OPTIONS_NAME_ADMIN_EMAIL);
     }
     if (!isset($addr) OR empty($addr)) {
@@ -144,5 +145,38 @@ function start_sending_newsletters() {
                 $mysqliLink->query($sql);
             }
         }
+    }
+}
+
+function sending_emails() {
+    global $options;
+    $max = $options[OPTIONS_NAME_MAX_NEWSLETTERS];
+    updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
+    $emailMember = new EmailMember();
+    $email = new Email(EMAIL_CONTEXT_DUMMY, -1);
+    for ($i = 1; $i < $max; $i++) {
+        if (!$emailMember->retriveUnsentEmail()) {
+            break;
+        }
+        $mem_id = $emailMember->getMemberId();
+        $addr = getMemberEmail($mem_id);
+        
+        $email->getEmailById($emailMember->getEmailId());
+        $subject = $email->getEmailSubject();
+        $body = $email->getEmailBody();
+        if (!isset($addr) OR empty($addr)) {
+            error_log("Missing email address (send_mail)");
+            mail_system_error('Nem létező emailcím !\r\nTárgy: ' . $subject . '\r\nTartalom: ' . $body);
+            continue;
+        }
+        $email_body = '<html><body style=\"font-family:Verdana, Verdana, Geneva, sans-serif; font-size:12px;\">';
+        $email_body .= $email->changeNewLines($body);
+        $email_body .= "<br><br>" . getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE);
+        $email_body .= "</body></html>\n";
+        $person_body = str_replace(REPLACE_NAME, getMemberName($mem_id), $email_body);
+        $formated_body = str_replace(NEWLINE, '<br>', $person_body);
+        send_mail_via_phpmailer($addr, $subject, $formated_body);
+        $emailMember->setSent();
+        logger(-1, $mem_id, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
     }
 }

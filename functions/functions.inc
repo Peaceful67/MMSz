@@ -19,6 +19,7 @@ function conv_array($in_data) {
     return $ret;
 }
 
+
 function conv_array_walk($in_data) {
     $ret = array();
     foreach ($in_data as $key => $value) {
@@ -31,7 +32,11 @@ function redirect($id) {
     global $admin_menu;
     global $redirected;
     $redirected = true;
-    $_SESSION[SESSION_MOD] = $admin_menu[$id][SETUP_MOD_ID];
+    if (isset($admin_menu[$id])) {
+        $_SESSION[SESSION_MOD] = $admin_menu[$id][SETUP_MOD_ID];
+    } else {
+        error_log('Redirect, unknown menu: ' . $id);
+    }
     header("Location: " . PROGI);
 }
 
@@ -130,13 +135,6 @@ function getAccessOfMmodule($module) {
     }
 }
 
-function theEnd($output) {
-    global $redirected;
-    if (!$redirected) {
-        header("Content-type:text/html; charset=UTF-8;");
-    }
-    echo $output;
-}
 
 function randomPassword() {
     $alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
@@ -348,11 +346,12 @@ function putSelectionOfClub($varname) {
     global $member_id, $output, $$varname;
     $clubs = getClubsOfLeader($member_id);
     reset($clubs);
-    if (empty($clubs)) {        return -1;
+    if (empty($clubs)) {
+        return -1;
     }
     $output .= '<br><br>Egyesület: ';
     if (count($clubs) > 1) {
-        if(!isset($$varname)) {
+        if (!isset($$varname)) {
             $$varname = key($clubs);
         }
         $output .= '<select  name="' . $varname . '" onChange="submit();">';
@@ -363,7 +362,7 @@ function putSelectionOfClub($varname) {
         return $$varname;
     } else {
         $cl_id = key($clubs);
-        $output .= getClubName($cl_id).'&nbsp;&nbsp;&nbsp;';
+        $output .= getClubName($cl_id) . '&nbsp;&nbsp;&nbsp;';
         return $cl_id;
     }
 }
@@ -717,3 +716,77 @@ function getMemberIdByEmail($email_addr) {
     }
 }
 
+function retriveAddresses($sel) {
+    global $mysqliLink;
+    $ret = false;
+    switch ($sel) {
+        case 0:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '`';
+            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' (`active`.`' . ROLE_PERMISSION . '`="' . ACCESS_CLUBLEADER . '" '
+                    . ' OR `active`.`' . ROLE_PERMISSION . '`="' . ACCESS_CLUB_DELEGATE . '" '
+                    . ' OR `active`.`' . ROLE_PERMISSION . '`="' . ACCESS_CLUB_PRESIDENT . '")'
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '`!="" '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
+            $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` ';
+            $ret = $mysqliLink->query($sql);
+            break;
+        case 1:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '`';
+            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' (`active`.`' . ROLE_PERMISSION . '`="' . ACCESS_CLUBLEADER . '" )'
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '`!="" '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
+            $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` ';
+            $ret = $mysqliLink->query($sql);
+            break;
+        case 2:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '`';
+            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' ( `active`.`' . ROLE_PERMISSION . '`="' . ACCESS_CLUB_DELEGATE . '" '
+                    . ' )'
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '`!="" '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
+            $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` ';
+            $ret = $mysqliLink->query($sql);
+            break;
+        case 3:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM `' . MEMBER_TABLE . '`, `' . ROLE_TABLE . '` WHERE '
+                    . '`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`'
+                    . ' AND `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`="' . ACCESS_MMSZ_PRESIDENT . '"'
+                    . ' AND (CURDATE() BETWEEN `' . ROLE_TABLE . '`.`' . ROLE_FROM . '` AND `' . ROLE_TABLE . '`.`' . ROLE_TO . '`)';
+            $ret = $mysqliLink->query($sql);
+            break;
+        case 4:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '` '
+                    . ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' `active`.`' . ROLE_PERMISSION . '`!="' . ACCESS_PUBLIC . '" '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '`!="" '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
+            $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` ';
+            $ret = $mysqliLink->query($sql);
+            break;
+        case 5:
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM ((`' . MEMBER_TABLE . '` '
+                    . ' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON ('
+                    . ' `paid_fm`.`' . FM_PAY_ID . '`="0" '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`paid_fm`.`' . FM_MEMEBER_ID . '` '
+                    . ' AND (CURDATE() BETWEEN `paid_fm`.`' . FM_FROM . '` AND `paid_fm`.`' . FM_TO . '`))'
+                    . ' INNER JOIN `' . FEE_TABLE . '` AS `paid_fee` ON ('
+                    . ' `paid_fm`.`' . FM_FEE_ID . '`=`paid_fee`.`' . FEE_ID . '` '
+                    . ' AND `paid_fee`.`' . FEE_TYPE . '`="' . FEE_TYPE_MEMBERSHIP . '" )'
+                    . ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' `active`.`' . ROLE_PERMISSION . '` != "' . ACCESS_PUBLIC . '" '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` = `active`.`' . ROLE_MEMBER . '` '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` != "" '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`)))) ';
+            $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_EMAIL . '` ';
+            $ret = $mysqliLink->query($sql);
+            break;
+    }
+    return $ret;
+}

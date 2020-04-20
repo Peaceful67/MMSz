@@ -1,5 +1,4 @@
 <?php
-
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';
 
@@ -12,12 +11,7 @@ $output = '<!DOCTYPE  html>
 
 $output .= '<link type="text/css" rel="stylesheet" media="screen" href="design/horizontal.css">';
 
-if (CHAPTCHA_METHOD_GOOGLE == $chaptcha) {
-    $output .= '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
-}
-$output .= '</head><body>
-
-';
+$output .= '</head><body>';
 if (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 AND ! is_writable(SZAMLAZZ_DIR)) {
     warning("<br><br>A számlák könyvtár nem írható");
 }
@@ -29,36 +23,21 @@ if (isset($_GET["sp_timeout"]) AND $_GET["sp_timeout"] == 1 AND isset($_GET["ord
     redirect("sp_timeout");
     exit(0);
 }
-if (isset($_GET["init"]) AND $_GET["init"] == 'create') {
-    /*
-      include_once INCLUDES . 'create_tables.inc';
-      $member_id = $edit_member = -1;
-      $mod = 'new_member';
-      $permission = ACCESS_ADMIN;
-     */
-} else {
-    if (CHAPTCHA_METHOD_GOOGLE == $chaptcha) {
-        include_once FUNCTIONS . 'rechaptchalib.php';
-        $reCaptcha = new ReCaptcha(GOOGLE_SECRET_KEY);
-        $resp = $reCaptcha->verifyResponse($_SERVER['REMOTE_ADDR'], $_POST['g-recaptcha-response']);
-        $output .= " json_encode(array(
-    'valid'   => $resp->success,
-    'message' => $resp->success ? null  : 'Hey, the captcha is wrong!',   
-    ))";
-    }
-    include_once INCLUDES . 'auth_member.inc';
-    $permission = getPermission($member_id);
-    if (isPermitted(ACCESS_ADMIN)) {
-        if (isset($_SESSION[SESSION_ROLE_AS]) AND $_SESSION[SESSION_ROLE_AS] > 0) {
-            $member_id = $_SESSION[SESSION_ROLE_AS];
-            $permission = getPermission($member_id);
-            error_log('Admin vagyok, de ez akarok lenni: ' . $member_id. ' jogok: '.$permission);
-            
-        }
+
+if (isset($_GET) AND isset($_GET["c"])) {
+    $command = new Command('');
+    $command->getItemOnce($_GET["c"]);
+}
+include_once INCLUDES . 'auth_member.inc';
+
+$permission = getPermission($member_id);
+if (isPermitted(ACCESS_ADMIN)) {
+    if (isset($_SESSION[SESSION_ROLE_AS]) AND $_SESSION[SESSION_ROLE_AS] > 0) {
+        $member_id = $_SESSION[SESSION_ROLE_AS];
+        $permission = getPermission($member_id);
+        error_log('Admin vagyok, de ez akarok lenni: ' . $member_id . ' jogok: ' . $permission);
     }
 }
-
-
 
 retriveSession();
 
@@ -89,7 +68,7 @@ if (isset($sel_group)) {
     $sel_group = -3;
 }
 
-$output .= '<form method="post">';
+$output .= '<form method="post" enctype="multipart/form-data">';
 $output .= '<div class="control">';
 foreach ($main_menu_group as $group) {
 
@@ -123,7 +102,7 @@ if ($mod != $admin_menu["gdpr"][SETUP_MOD_ID]) {
     }
 }
 $output .= '</div>';
-$output .= '</form>';
+
 
 $output .= '<div class="torzs">';
 if (isset($_GET['simplepay'])) {
@@ -132,7 +111,7 @@ if (isset($_GET['simplepay'])) {
     exit(0);
 } elseif (isset($mod)) {
     if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
-        warning("Fejlesztő állapot (".$member_id.")");
+        warning("Fejlesztő állapot (" . $member_id . ")");
     }
     if ($mod == $admin_menu["login"][SETUP_MOD_ID]) {
         $output .= '<h2>' . $admin_menu["login"][SETUP_MOD_TITLE] . '</h2>';
@@ -143,7 +122,21 @@ if (isset($_GET['simplepay'])) {
     } else {
         foreach ($admin_menu as $k => $v) {
             if (($mod == $v[SETUP_MOD_ID]) && isPermitted($v[SETUP_MOD_ACCESS])) {
-                $output .= '<h2>' . $v[SETUP_MOD_TITLE] . '</h2>';
+                o('<h2>' . $v[SETUP_MOD_TITLE]);
+                if (getOptionValue(OPTIONS_NAME_HELP_ENABLED) > 0) {
+                    $help = new Help($mod);
+                    if ($help->isHelpExiting()) {
+                        output_spaces(5);
+                        o('<div class="tooltip">');
+                        o('<img style="height: 15px; width:15px; padding: 0px;" src="' . IMAGES . 'help.png">');
+                        o('<span style="width: 450px;" class="tooltiptext">');
+                        o($help->getTitle());
+                        output_ln();
+                        o($help->getDescription());
+                        o('</span></div>');
+                    }
+                }
+                o('</h2>');
                 include_once (MODULES . $v[SETUP_MOD_MODULE]);
                 break;
             }
@@ -151,7 +144,7 @@ if (isset($_GET['simplepay'])) {
     }
 }
 $output .= '</div >';
-
+$output .= '</form>';
 
 
 $output .= '</body>
@@ -160,5 +153,4 @@ $output .= '</body>
 theEnd($output);
 
 include_once INCLUDES . 'crontab.inc';
-?>
 

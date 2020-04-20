@@ -1,19 +1,6 @@
 <?php
 
-$now = time();
-if (isset($_GET["c"])) {
-    $command = new Command();
-    $command->getItemOnce($_GET["c"]);
-    if ($command->isCommandPassword()) {
-        $member_id = $command->mem_id;
-        $member_pass = $command->value;
-        $login_normal = 'coded';
-        $mod = 'profile';
-        $radio_edit_member = 'passwd';
-        $old_pass = $member_pass;
-        $remember_me = "true";
-    }
-}
+
 if (!isset($member_id)) {
     $member_id = 0;
 }

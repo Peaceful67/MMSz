@@ -6,12 +6,13 @@ if ($mysqliLink->connect_errno) {
     die(-1);
 }
 $mysqliLink->set_charset("utf8");
-
+$now = time();
 include_once FUNCTIONS . 'config_tables.inc';
 include_once FUNCTIONS . 'config.inc';
 include_once FUNCTIONS . 'menus.inc';
 include_once 'texts.hu.inc';
 include_once FUNCTIONS . 'functions.inc';
+include_once FUNCTIONS . 'output.inc';
 include_once FUNCTIONS . 'create_elements.inc';
 include_once FUNCTIONS . 'email_functions.inc';
 include_once FUNCTIONS . 'role_functions.inc';

@@ -74,6 +74,11 @@ function getAllFaiMembersId() { // Ez csak az átmenethez kell
 
 function countFaiMembersOfClub($club_id, $date) {
     global $mysqliLink;
+    if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) != 1) {
+        warning('FAI API nincs engedélyezve');
+        return 0;
+    }
+
     if (!isset($date)) {
         global $today;
         $date = $today;
@@ -257,22 +262,20 @@ function isReadyForFAI($fm2bill) {
     global $today;
     $fm_id = $fm2bill[0];
     $type = $fm2bill[1];
-    $name = $fm2bill[2];    
+    $name = $fm2bill[2];
     if ($type == FEE_TYPE_ORGANIZATION AND $name == FEE_ORG_NAME_FAI) {
         $ret = '';
         $fm = getFmById($fm_id);
         $mem = getMemberById($fm[FM_MEMEBER_ID]);
-        if(!filter_var($mem[MEMBER_EMAIL], FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($mem[MEMBER_EMAIL], FILTER_VALIDATE_EMAIL)) {
             $ret .= 'Helytelen email cím, ';
         }
-        if(!is_file('.' . AVATAR . $mem[MEMBER_ID] . '.jpg')) {
+        if (!is_file('.' . AVATAR . $mem[MEMBER_ID] . '.jpg')) {
             $ret .= ' Nincs feltöltött fénykép,';
         }
-        /*
-        if(!isPayedMembersip($mem[MEMBER_ID], $today)) {
+        if (!isPayedMembersip($mem[MEMBER_ID], $today)) {
             $ret .= ' Tagsági nincs kifizetve';
         }
-         */
         return $ret;
     } else {
         return '';

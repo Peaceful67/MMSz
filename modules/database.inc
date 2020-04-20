@@ -41,21 +41,24 @@ if (isset($phpinfo)) {
 }
 
 if (isset($import)) {
-    $sql = 'SELECT * FROM `TABLE 1` WHERE 1;';
+    $sql = 'SELECT * FROM `TABLE 25` ';
     $eredm = $mysqliLink->query($sql);
-    error_log($sql);
     if ($eredm) {
         while ($row = $eredm->fetch_assoc()) {
-            $kernev = $row[MEMBER_KERNEV];
-            $veznev = $row[MEMBER_VEZNEV];            
-            $birth_city = $row[MEMBER_BIRTH_CITY];
-            $mother = $row[MEMBER_MOTHER];
-            $addr_city = $row[MEMBER_ADDR_CITY];
-            $addr_post = $row[MEMBER_ADDR_POST];
-            $addr_street = $row[MEMBER_ADDR_STREET];
-            $email = $row[MEMBER_EMAIL];
-            $sex = $row[MEMBER_SEX];
-            $born = DateTime::createFromFormat('Y.m.d', $row[MEMBER_BORN])->format('Y-m-d');
+            $names = explode(' ', $row['Név']);           
+            $veznev = $names[0];
+            $kernev = $names[1];            
+            if(isset($names[2])) {
+                $kernev .= ' '.$names[2];
+            }
+            $birth_city = $row['Születési hely'];
+            $mother = $row['Anyja neve'];
+            $addr_city = $row['Település'];
+            $addr_post = $row['Irányítószám'];
+            $addr_street = $row['Cím'];
+            $email = $row['E-mail'];
+            $sex = 'M';
+            $born = DateTime::createFromFormat('Y.m.d', $row['Születési dátum'])->format('Y-m-d');
             $base_data_id = createNewMember();
             $sql = 'UPDATE `' . MEMBER_TABLE . '` SET ';
             $sql .= ' `' . MEMBER_VEZNEV . '` ="' . $veznev . '" ,';
@@ -72,6 +75,7 @@ if (isset($import)) {
             $sql .= ' `' . MEMBER_NICKNAME . '` ="" ,';
             $sql .= ' `' . MEMBER_SEX . '` ="' . $sex . '" ';
             $sql .= ' WHERE `' . MEMBER_ID . '`="' . $base_data_id . '"';
+            setClubOfNewMember($base_data_id, 49);
             error_log($sql);
             $mysqliLink->query($sql);
         }

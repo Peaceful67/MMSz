@@ -12,6 +12,7 @@ define("OPTIONS_NAME_EMAIL_SENDER", "email_sender");
 define("OPTIONS_NAME_EMAIL_REPLY", "email_reply");
 define("OPTIONS_NAME_EMAIL_SIGNATURE", "email_signature");
 
+
 define("OPTIONS_NAME_COMPANY_NAME", "company_name");
 define("OPTIONS_NAME_COMPANY_LONG_NAME", "company_long_name");
 define("OPTIONS_NAME_COMPANY_ADDR", "company_addr");
@@ -26,6 +27,7 @@ define("OPTIONS_NAME_DELEGATE_MOD", 'delegate_mod');
 //define("OPTIONS_NAME_DELEGATE_MOD_RANGE", 'range');
 define("OPTIONS_NAME_DELEGATE_STEP", 'delegate_step');
 define("OPTIONS_NAME_DELEGATE_RANGE", 'delegate_range');
+define("OPTIONS_NAME_HELP_ENABLED", 'help');
 
 define("OPTIONS_NAME_SZAMLAZZ_ENA", 'szamlazz_ena');
 define("OPTIONS_NAME_SZAMLAZZ_USER", 'szamlazz_user');
@@ -76,6 +78,7 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_FAI_PRINT => 'https://sl-test.fai.org/licence?view=faisl&layout=view&tmpl=component&print=1&licence_id=',
     OPTIONS_NAME_FAI_AUTH_USER => 'hun-ciam',
     OPTIONS_NAME_FAI_AUTH_PASSWD => '6EhBft6I',
+    OPTIONS_NAME_HELP_ENABLED => 0,
 ];
 
 

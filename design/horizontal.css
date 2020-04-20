@@ -116,6 +116,20 @@ header h2 {
     padding: 0px;
 }
 
+.show_avatar img {
+  padding: 0px;
+  transition: transform .5s;
+  width: 20px;
+  height: 26px;
+  margin: 2px;
+}
+
+.show_avatar img:hover {
+  -ms-transform: scale(5); /* IE 9 */
+  -webkit-transform: scale(5); /* Safari 3-8 */
+  transform: scale(5); 
+}
+
 .card {
     line-height: 200%;
 }
@@ -232,9 +246,11 @@ header h2 {
 }
 
 .keret {
+    position: relative;
     border: 2px solid #a1a1a1;
     padding: 10px 40px; 
     border-radius: 25px;
+    margin: 10px;
 }
 .fees_members table {
     border: 0px;
@@ -266,7 +282,9 @@ header h2 {
 
 }
 
-
+.pressed_button button {
+    background-color: gray;
+}
 
 .kategoriak ul { 
     height: 300px; 
@@ -297,7 +315,7 @@ header h2 {
 }
 
 .email_address ul { 
-    height: 600px; 
+    height: 300px; 
     overflow: auto; 
     width: 300px; 
     border: 1px solid #000; 
@@ -312,8 +330,35 @@ header h2 {
     margin-left: 10px;
     padding: 0px; 
 }
-
-
+.congress_address ul {
+    position: absolute;
+    list-style-type: none;
+    list-style-position: inside;
+    overflow-x: hidden;
+    overflow-y: auto;
+    top: 100px;
+    left: 0px;
+    height: 300px; 
+    width: 250px;   
+    border: 1px solid #000; 
+    margin: 10px; 
+    padding: 10px; 
+}
+.congress_address li {
+    margin: 0px; 
+    margin-left: 10px;
+    padding: 0px; 
+}
+.congress_selected {
+    position: absolute;
+    overflow-x: auto;
+    overflow-y: auto;
+    top: 100px;
+    left: 320px;
+    width: 700px;
+    height: 300px;
+    margin: 10px; 
+}
 .scrolled_list table {
     width:90%;
     border: 2px solid black;
@@ -358,17 +403,17 @@ header h2 {
 .tooltip {
     position: relative;
     display: inline-block;
-    border-bottom: 1px dotted black;
+/*    border-bottom: 1px dotted black; */
 }
 
 .tooltip .tooltiptext {
     visibility: hidden;
-    background-color: black;
-    color: #fff;
-    width: 200px;
+    background-color: lightslategrey;
+    color: black;
+/*    width: 150px;*/
     text-align: left;
-    border-radius: 6px;
-    padding: 5px 0;
+    border-radius: 5px;
+    padding: 5px;
     overflow-x: auto;
     /* Position the tooltip */
     position: absolute;

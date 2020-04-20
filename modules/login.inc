@@ -68,13 +68,16 @@ if (isset($password_renew)) {
         if ($record[MEMBER_EMAIL] == '') {
             warning("A megadott azonosítóhoz nem tartozik email cím!");
         } elseif (0 == strcasecmp(trim($record[MEMBER_EMAIL]), $member_email)) {
-            $body = 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' adminisztrációs felületen generált jelszavad: ' . $password . '<br>';
-            $body .= 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosítód: ' . $passwd_id . '<br>';
-            $body .= "Ezzel belépve, a profilod beállításainál a jelszavad megváltoztathatod.<br>";
             if (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0) {
-                $command = new Command;
-                $code = $command->putPassword($passwd_id, $password);
-                $body .= 'Ezen a <a href="' . URL . '?c=' . $code . '">linken</a> keresztül 24 órán belül automatikusan beléphetsz a fenti jelszóval<br>';
+                $command = new Command(Command::PASSWORD);
+                $code = $command->putItem($passwd_id, $password);
+                $body = 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' adminisztrációs felületen jelszó generálást kértél.<br>';
+                $body .= 'Ezen a <a href="' . URL . '?c=' . $code . '">linken</a> keresztül 24 órán belül automatikusan beléphetsz<br>';
+                $body .= "Add meg az új jelszavad !<br>";
+            } else {
+                $body = 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' adminisztrációs felületen generált jelszavad: ' . $password . '<br>';
+                $body .= 'Az ' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' azonosítód: ' . $passwd_id . '<br>';
+                $body .= "Ezzel belépve, a profilod beállításainál a jelszavad megváltoztathatod.<br>";
             }
             $subject = "Generált jelszó";
             send_mail($subject, $body);

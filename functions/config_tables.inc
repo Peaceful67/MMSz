@@ -42,14 +42,6 @@ define("CATEGORIES_LONG", 'long_name');
 define("CATEGORIES_BRANCH", 'branch');
 define("CATEGORIES_ORG", 'org');
 
-define("COMMAND_TABLE", 'command');
-define("COMMAND_MEMBER_ID", 'mem_id');
-define("COMMAND_CODE", 'code');
-define("COMMAND_EXPIRE", 'expire');
-define("COMMAND_NAME", 'name');
-define("COMMAND_VALUE", 'value');
-
-define("COMMAND_NAME_PASSWORD", 'password');
 
 define("CM_TABLE", "category_member");
 define("CM_ID", "id");

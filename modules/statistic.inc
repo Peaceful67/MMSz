@@ -1,7 +1,5 @@
 <?php
 
-include_once CLASSES . 'PHPExcel.php';
-include_once CLASSES . 'PHPExcel/Writer/Excel2007.php';
 include_once CLASSES . 'ExcelHelper.php';
 
 $downloads = [
@@ -13,6 +11,7 @@ $downloads = [
     5 => ["Taglista", "Tag neve, Email, Születetett, Város, Egyesület"],
     6 => ["SiR versenyzők", "Tag neve, Egyesület, Születési idő, Születési hely, Nem, Anyja neve, Település, Irsz., Lakcím, Amatőr"],
     7 => ["Offline egyesületek", "Még egy tagnak sincs jelszava, tehát nem használják a tagnyilvántartót"],
+    8 => ["Tavalyi taglista", "Tavaly év végi aktív tagok listája"],
 //    8 =>  ["Összes FAI tag", "Minden olyan tag, akinek van FAI ID-je"],
 //    9 =>  ["Fizetett FAI tag", "Minden olyan tag, akinek van FAI ID-je és befizette a díjat"],
     10 => ["Tavalyi tagok", "Egyesületenkénti kimutatás tagokról (xlsx)"],
@@ -243,81 +242,30 @@ if (isset($download)) {
             logger($member_id, -1, LOGGER_STATISTIC, "SiR Versenyzők");
             exit(0);
         case 8:
-            $filename = TMP_DIR . "all_fai_members" . date("Y-m-d_H-i-s") . ".xls";
-            header('Content-Type:   application/vnd.ms-excel; charset=utf-8');
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            /*
-              $objPHPExcel = new PHPExcel();
-              $objPHPExcel->getProperties()->setCreator(getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' Tagnyilvántartó');
-
-
-              $objPHPExcel->setActiveSheetIndex(0);
-              $objPHPExcel->getActiveSheet()->setTitle($mem[MEMBER_KERNEV] . ' ' . $mem[MEMBER_VEZNEV] . ' ' . $this_year);
-
-
-              $objPHPExcel->getActiveSheet()->setCellValue('A1', 'FAI ID');
-              $objPHPExcel->getActiveSheet()->setCellValue('A2', $mem[MEMBER_LICENCE]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('B1', 'Licence Number');
-              $objPHPExcel->getActiveSheet()->setCellValue('B2', 'HUN-' . $mem_id);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('C1', 'Validity From');
-              $objPHPExcel->getActiveSheet()->setCellValue('C2', date('d.m.Y'));
-
-              $objPHPExcel->getActiveSheet()->setCellValue('D1', 'Validity To');
-              $objPHPExcel->getActiveSheet()->setCellValue('D2', '31.12.' . date('Y', time()));
-
-              $objPHPExcel->getActiveSheet()->setCellValue('E1', 'Air Sport Discipline');
-              $objPHPExcel->getActiveSheet()->setCellValue('E2', 'Aeromodelling and Spacemodelling');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('F1', 'First Name');
-              $objPHPExcel->getActiveSheet()->setCellValue('F2', $mem[MEMBER_KERNEV]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('G1', 'Last Name');
-              $objPHPExcel->getActiveSheet()->setCellValue('G2', $mem[MEMBER_VEZNEV]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('H1', 'Gender');
-              $objPHPExcel->getActiveSheet()->setCellValue('H2', $mem[MEMBER_SEX]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('I1', 'Date of Birth');
-              $objPHPExcel->getActiveSheet()->setCellValue('I2', date('d.m.Y', strtotime($mem[MEMBER_BORN])));
-
-              $objPHPExcel->getActiveSheet()->setCellValue('J1', 'Nationality');
-              $objPHPExcel->getActiveSheet()->setCellValue('J2', 'HUN');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('K1', 'Country of Residence');
-              $objPHPExcel->getActiveSheet()->setCellValue('K2', 'HUN');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('L1', 'Address1');
-              $objPHPExcel->getActiveSheet()->setCellValue('L2', $mem[MEMBER_ADDR_STREET]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('M1', 'Address2');
-              $objPHPExcel->getActiveSheet()->setCellValue('M2', $mem[MEMBER_ADDR_POST]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('N1', 'Address3');
-              $objPHPExcel->getActiveSheet()->setCellValue('N2', $mem[MEMBER_ADDR_CITY]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('O1', 'Country of addresse');
-              $objPHPExcel->getActiveSheet()->setCellValue('O2', 'Hungary');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('P1', 'E-mail address');
-              $objPHPExcel->getActiveSheet()->setCellValue('P2', $mem[MEMBER_EMAIL]);
-
-              $objPHPExcel->getActiveSheet()->setCellValue('Q1', 'Phone (home)');
-              $objPHPExcel->getActiveSheet()->setCellValue('Q2', '');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('R1', 'Phone (office)');
-              $objPHPExcel->getActiveSheet()->setCellValue('R2', '');
-
-              $objPHPExcel->getActiveSheet()->setCellValue('S1', 'Phone (mobile)');
-              $objPHPExcel->getActiveSheet()->setCellValue('S2', '');
-
-              $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
-
-              $objWriter->save($filename);
-             */
-            logger($member_id, -1, LOGGER_STATISTIC, "Összes FAI tag");
-
+            logger($member_id, -1, LOGGER_STATISTIC, "Tavalyi taglista");
+            $filename = 'TavalyiTaglista_' . date("Y-m-d_H-i-s") . '.xlsx';
+            $helper = new ExcelHelper('Taglista', $filename);
+            $last_year = intval($this_year) - 1;
+            $last_year .= '-12-31';
+            $helper->insertHeaderRow([
+                'Tag neve',
+                'Egyesület',
+            ]);
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.* '
+                    . ' FROM `' . MEMBER_TABLE . '`,`' . ROLE_TABLE . '` WHERE '
+                    . '`' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`=`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` AND '
+                    . '`' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`!=0 AND '
+                    . '("' . $last_year . '" BETWEEN `' . ROLE_TABLE . '`.`' . ROLE_FROM . '` AND `' . ROLE_TABLE . '`.`' . ROLE_TO . '`) '
+                    . ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '` '
+                    . ' ORDER BY `' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '`;';
+            $res = $mysqliLink->query($sql);
+            while ($res AND $row = $res->fetch_assoc()) {
+                $helper->insertRow([
+                    $row[MEMBER_VEZNEV] . ' ' . $row[MEMBER_KERNEV],
+                    getMemberClubNamesByDate($row[MEMBER_ID], $last_year),
+                ]);
+            }
+            $helper->save();
             exit(0);
         case 9:
             $filename = "paid_fai_members" . date("Y-m-d_H-i-s") . ".csv";
@@ -328,42 +276,40 @@ if (isset($download)) {
             logger($member_id, -1, LOGGER_STATISTIC, "Fizetett FAI tagok");
             exit(0);
         case 10:
-            $filename = 'TavalyiTagok.xlsx';
-            header("Content-type: application/vnd.ms-excel");
-            header("Content-Disposition: attachment; filename=$filename");
+            logger($member_id, -1, LOGGER_STATISTIC, "Tavalyi egyesületi tagadatok");
+            $filename = 'TavalyiTagok_' . date("Y-m-d_H-i-s") . '.xlsx';
+            $helper = new ExcelHelper('Tagadatok', $filename);
             $last_year = intval($this_year) - 1;
             $last_year .= '-12-31';
-            $objPHPExcel = new PHPExcel();
-            $objPHPExcel->getProperties()->setCreator(getOptionValue(OPTIONS_NAME_COMPANY_NAME) . ' Tagnyilvántartó');
-            $objPHPExcel->setActiveSheetIndex(0);
-            $objPHPExcel->getActiveSheet()->setTitle('Tagadatok ' . $last_year . ' végén.');
-            $row = 1; // 1-based index
             $total_mem = 0;
             $total_paid = 0;
             $total_fai = 0;
             $clubs = getClubNameList();
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(0, $row, 'Egyesület neve');
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(1, $row, 'Aktív tagok száma');
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(2, $row, 'Rendezett tagdíjak száma');
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(3, $row, 'FAI tagdíjat kért');
-            $row++;
+            $helper->insertHeaderRow([
+                'Egyesület neve',
+                'Aktív tagok száma',
+                'Rendezett tagdíjak száma',
+                'Rendezett tagdíjak száma'
+            ]);
             foreach ($clubs as $club_id => $club_name) {
                 $total_mem += $club_members = count(getClubMembers($club_id, $last_year));
                 $total_paid += $paid_members = countPaidMembersOfClub($club_id, $last_year);
                 $total_fai += $fai_members = countFaiMembersOfClub($club_id, $last_year);
-                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(0, $row, $club_name); // Egyesület neve
-                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(1, $row, $club_members); // Aktív tagok száma
-                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(2, $row, $paid_members); // Tagdíj rendezett tagok száma
-                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(3, $row, $fai_members); // FAI tagdíjat kért tagok
-                $row++;
+                $helper->insertRow([
+                    $club_name,
+                    $club_members,
+                    $paid_members,
+                    $fai_members
+                ]);
+               
             }
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(0, $row, 'Összesen'); // Egyesület neve
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(1, $row, $total_mem); // Aktív tagok száma
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(2, $row, $total_paid); // Tagdíj rendezett tagok száma
-            $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(3, $row, $total_fai); // FAI tagdíjat kért tagok
-            $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
-            $objWriter->save('php://output');
-            logger($member_id, -1, LOGGER_STATISTIC, "Tavalyi egyesületi tagadatok");
+            $helper->insertRow([
+                 'Összesen',
+                $total_mem,
+                $total_paid,
+                $total_fai
+            ]);
+            $helper->save();
             exit(0);
     }
 }
