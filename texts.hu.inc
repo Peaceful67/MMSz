@@ -16,14 +16,18 @@ $access = array(
     ACCESS_PUBLIC => 'Bárki',
     ACCESS_USER => 'Tag',
     ACCESS_CLUBLEADER => 'Vezető',
-    ACCESS_MMSZ => "MMSz adminisztrátor",
-    ACCESS_ADMIN => 'Rendszer adminisztrátor',
+    ACCESS_MMSZ => "Adminisztrátor",
+    ACCESS_ADMIN => 'Admin',
     ACCESS_PAID => 'Aktív',
     ACCESS_CLUB_DELEGATE => 'Küldött',
     ACCESS_MMSZ_PRESIDENT => 'Elnökségi tag',
     ACCESS_CLUB_PRESIDENT => 'Elnök',
-    ACCESS_CATEGORY_LEADER => 'Szakágvezető',
+    ACCESS_BRANCH_LEADER => 'Szakágvezető',
     ACCESS_NOBODY => 'Senki',
+    ACCESS_MANAGE_NEW => 'Új tag felvétel',
+    ACCESS_MANAGE_EDIT => 'Tag szerkesztése',
+    ACCESS_MANAGE_FAI => 'FAI jóváhagyás',
+    ACCESS_MANAGE_ALL => 'Minden tag',
 );
 
 $fee_type = array(

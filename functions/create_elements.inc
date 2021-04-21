@@ -6,4 +6,7 @@ include_once ELEMENTS . 'Szamlazz.php';
 include_once ELEMENTS . 'Help.inc';
 include_once ELEMENTS . 'Email.inc';
 include_once ELEMENTS . 'EmailMember.inc';
+include_once ELEMENTS . 'Crontab.inc';
+include_once ELEMENTS . 'View.inc';
+
 

@@ -21,7 +21,7 @@ foreach ($admin_menu as $key => $menu) {
     }
 }
 
-output_selector($menu_arr, 'module_help');
+output_selector($menu_arr, 'module_help', true);
 if ($selected_module_help == -1) {
     o('</form>');
     return;

@@ -10,11 +10,11 @@ foreach ($main_menu_group_default as $group_item) {
             . ');';
     $mysqliLink->query($sql);
 }
-
+/*
 foreach ($admin_menu_default as $menu_item) {
     insert_menu_item($menu_item);
 }
-
+*/
 /*
 foreach ($default_associations as $key => $value) {
     $sql = 'INSERT INTO `' . ASSOCIATIONS_TABLE . '` '

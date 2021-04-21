@@ -11,7 +11,7 @@ function getFMsOfMember($mem_id) {
     global $mysqliLink;
     $ret = array();
     $sql = 'SELECT * FROM `' . FM_TABLE . '` WHERE '
-            . ' `' . FM_MEMEBER_ID . '`=' . $mem_id;
+            . ' `' . FM_MEMEBER_ID . '`=' . $mem_id . ' ORDER BY `' . FM_ID . '` DESC;';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
         $ret[] = $row;
@@ -112,6 +112,7 @@ function getUnpaidFMOfMember($id) { // FM_ID, FEE_TYPE, FEE_NAME, FEE_FROM, FEE_
     }
     return $ret;
 }
+
 function countPaidMembersOfClub($club_id, $date) {
     global $mysqliLink;
     if (!isset($date)) {
@@ -120,13 +121,13 @@ function countPaidMembersOfClub($club_id, $date) {
     }
 //    $fee = getFee(FEE_TYPE_ORGANIZATION, FEE_ORG_NAME_FAI, $date);
 //    $fee_id = $fee[FEE_ID];
-    $sql = 'SELECT * FROM (`'.FM_TABLE.'` INNER JOIN `'.ROLE_TABLE.'` AS `club_mem` ON ('
-        .'`club_mem`.`'.ROLE_CLUB.'`='.$club_id.' AND `'.FM_TABLE.'`.`'.FM_MEMEBER_ID.'`=`club_mem`.`'.ROLE_MEMBER.'` AND `club_mem`.`permission` !=0 )'
-        .' INNER JOIN `'.FEE_TABLE.'` AS `fee_assoc` ON ('
-        .'`fee_assoc`.`'.FEE_TYPE.'`='.FEE_TYPE_MEMBERSHIP.' AND `'.FM_TABLE.'`.`'.FM_FEE_ID.'`=`fee_assoc`.`'.FEE_ID.'`))'
-        .' WHERE `'.FM_TABLE.'`.`'.FM_PAY_ID.'` !=0 AND '
-            . '("'.$date.'" BETWEEN `'.FM_TABLE.'`.`'.FM_FROM.'` AND `'.FM_TABLE.'`.`'.FM_TO.'`) '
-            . 'GROUP BY `'.FM_TABLE.'`.`'.FM_MEMEBER_ID.'`;';
+    $sql = 'SELECT * FROM (`' . FM_TABLE . '` INNER JOIN `' . ROLE_TABLE . '` AS `club_mem` ON ('
+            . '`club_mem`.`' . ROLE_CLUB . '`=' . $club_id . ' AND `' . FM_TABLE . '`.`' . FM_MEMEBER_ID . '`=`club_mem`.`' . ROLE_MEMBER . '` AND `club_mem`.`permission` !=0 )'
+            . ' INNER JOIN `' . FEE_TABLE . '` AS `fee_assoc` ON ('
+            . '`fee_assoc`.`' . FEE_TYPE . '`=' . FEE_TYPE_MEMBERSHIP . ' AND `' . FM_TABLE . '`.`' . FM_FEE_ID . '`=`fee_assoc`.`' . FEE_ID . '`))'
+            . ' WHERE `' . FM_TABLE . '`.`' . FM_PAY_ID . '` !=0 AND '
+            . '("' . $date . '" BETWEEN `' . FM_TABLE . '`.`' . FM_FROM . '` AND `' . FM_TABLE . '`.`' . FM_TO . '`) '
+            . 'GROUP BY `' . FM_TABLE . '`.`' . FM_MEMEBER_ID . '`;';
     $ret = 0;
     $res = $mysqliLink->query($sql);
     if ($res) {
@@ -134,6 +135,7 @@ function countPaidMembersOfClub($club_id, $date) {
     }
     return $ret;
 }
+
 function getUnpaidFMOfMemberFeeType($id, $ft) { // FM-ID, FEE_TYPE, FEE_NAME, FEE_FROM, FEE_TO, FEE_SUM
     global $mysqliLink;
     $ret = array();
@@ -238,6 +240,13 @@ function getFeeIds($type, $from, $to) {
         }
     }
     return $ret;
+}
+
+function isFeeNameUsed($name) {
+    global $mysqliLink;
+    $sql = 'SELECT * FROM `' . FEE_TABLE . '` WHERE `' . FEE_NAME . '`=' . $name;
+    $res = $mysqliLink->query($sql);
+    return ($res AND $res->num_rows > 0);
 }
 
 function getFeeIdsToday($type) {
@@ -489,7 +498,7 @@ function getFees($type, $name) {
     $ret = array();
     $sql = 'SELECT * FROM `' . FEE_TABLE . '` WHERE '
             . '`' . FEE_TYPE . '`="' . $type . '" AND '
-            . '`' . FEE_NAME . '`="' . $name . '" ORDER BY `' . FEE_TO . '` ASC';
+            . '`' . FEE_NAME . '`="' . $name . '" ORDER BY `' . FEE_TO . '` DESC';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
         $ret[] = array($row[FEE_ID], $row[FEE_FROM], $row[FEE_TO], $row[FEE_SUM]);
@@ -663,7 +672,11 @@ function getFaiPaymentDate($mem_id) {
         return '';
     }
     $pay = getPaymentById($pay_id);
-    return date('Y-m-d', strtotime($pay[PAYMENT_TIME]));
+    if (empty($pay)) {
+        return '';
+    } else {
+        return date('Y-m-d', strtotime($pay[PAYMENT_TIME]));
+    }
 }
 
 function getFaiPaymentEnfOfYear($mem_id) {
@@ -677,5 +690,5 @@ function getFaiPaymentEnfOfYear($mem_id) {
         return '';
     }
     $pay = getPaymentById($pay_id);
-    return date('Y', strtotime($pay[PAYMENT_TIME])).'-12-31';
+    return date('Y', strtotime($pay[PAYMENT_TIME])) . '-12-31';
 }

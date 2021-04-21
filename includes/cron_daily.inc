@@ -1,12 +1,25 @@
 <?php
+
 logger(-1, -1, LOGGER_CRONTAB, "Napi rutin");
 
-$sql = 'SELECT * FROM `'.ROLE_TABLE.'` WHERE `'.ROLE_PERMISSION.'`!=0 '
-        . 'AND (CURRENT_DATE BETWEEN `'.ROLE_FROM.'` AND `'.ROLE_TO.'`);';
-$res = $mysqliLink->query($sql);
-while($res AND $row = $res->fetch_assoc()) {
-    $mysqliLink->query('DELETE FROM `'.ROLE_TABLE.'` WHERE `'.ROLE_MEMBER.'`='.$row[ROLE_MEMBER].' '
-            . ' AND `'.ROLE_PERMISSION.'`=0 ;');
-}
+$cron_tasks = [
+    [
+        'day' => 30,
+        'name' => 'cleanup_roles',
+    ],
+];
 
-    
+$cronTab = new Crontab();
+
+foreach ($cron_tasks as $task) {
+    if($cronTab->isTaskToDo($task['day'], $task['name'])) {
+        include_once FUNCTIONS.'cron_tasks.inc';
+        $method = 'cron_'.$task['name'];
+        if(function_exists($method)) {
+            logger(-1, -1, LOGGER_CRONTAB, 'Végrehajtott feladat: '.$method);
+            $method();
+        } else {
+            error_log('Cron daily: wrong method name:'.$method);
+        }
+    }
+}

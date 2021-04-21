@@ -1,5 +1,6 @@
 <?php
 
+
 if (isset($list_create_bill)) {
     redirect("start_payment");
 }
@@ -10,11 +11,8 @@ if (!isset($check_all)) {
 if (!isset($check_all_prior)) {
     $check_all_prior = '';
 }
-$output .= '<form  method="post">';
+
 include_once INCLUDES . 'search_bill_members.inc';
-
-$output .= '<br><div class="lists">';
-
 $fms2bill_sum = 0;
 $fms2bill_num = 0;
 
@@ -32,15 +30,17 @@ while ($res AND $row = $res->fetch_assoc()) {
         $all_fms2bill[] = $fm2bill;
     }
 }
+
 if (count($all_fms2bill) > 0) {
+
     if (!isset($check_all)) {
         $check_all = '';
     }
     if (!isset($check_all_prior)) {
         $check_all_prior = $check_all;
     }
-
-    $output .= '<input type="hidden" name="check_all_prior" value="' . ($check_all == "on" ? "on" : "off") . '" >';
+    $check_all_prior = $check_all == "on" ? "on" : "off";
+    $view->putHidden('check_all_prior');
     foreach ($all_fms2bill as $fm2bill) {
         $chk = FM_CHECKBOX . '[' . $fm2bill[0] . ']';
         if ($turn_on OR ( (isset($$chk) AND ( $$chk) == "on") AND ! $turn_off)) {
@@ -50,67 +50,66 @@ if (count($all_fms2bill) > 0) {
         }
     }
     if ($fms2bill_sum > 0) {
-        $output .= '<div class="keret">';
-        $output .= '&nbsp;&nbsp;<input value="Fizetés"  type="submit" name="list_create_bill" '
-                . 'onClick="return confirm(\'Biztosan el akarod indítani a ' . $fms2bill_sum . ' Ft összegű fizetést?\')">';
-        $output .= '&nbsp;&nbsp;tételszám: ' . $fms2bill_num . ',&nbsp;&nbsp;összeg: ' . $fms2bill_sum . ' Ft<br>';
-        $output .= '</div>';
+        $view->newKeret();
+        $view->newDiv('row');
+        $view->submitButton('list_create_bill', 'Fizetés', 0, 'A ' . $fms2bill_sum . ' Ft összegű fizetés indítása.', 'Biztosan el akarod indítani a ' . $fms2bill_sum . ' Ft összegű fizetést?');
+        $view->info('Tételszám: ' . $fms2bill_num . ',&nbsp;&nbsp;összeg: ' . $fms2bill_sum . ' Ft');
+        $view->endDiv();
+        $view->endKeret();
     }
-
-    $output .= '<table border="1"><caption>Csak a meghatározott díjakkal rendelkezők jelennek meg !</caption>';
-    $output .= '<tr><th>Sorszám</th><th>Név</th><th>Született</th><th>Díjak&nbsp;&nbsp;&nbsp;'
-            . '<input type="checkbox" name="check_all" ' . ($check_all == "on" ? "checked" : "") . ' onchange="submit();">'
-            . '</th></tr>';
+    $view->newTable('Csak a szűrési feltételeknek megfelelő beállított díjakkal rendelkezők jelennek meg !');
+    $view->putThead('', ['Azonosító', 'Név', 'Született',
+        '<div class="mx-3"><label class="form-check-label" for="check_all"><input type="checkbox" class="form-check-input" name="check_all" id="check_all" ' . ($check_all == "on" ? "checked" : "") . ' onchange="submit();">Összes díj</label></div>']);
     foreach ($all_fms2bill as $fm2bill) {
         $fm_id = $fm2bill[0];
+        $disabled_msg = isReadyForFAI($fm2bill);
+        $chk = FM_CHECKBOX . '[' . $fm2bill[0] . ']';
+        if (!isset($$chk) OR $turn_off) {
+            $$chk = 'off';
+        }
+        if ($turn_on OR $ $chk == 'on') {
+            $$chk = 'checked';
+        }
+        if (!empty($disabled_msg)) {
+            $$chk = 'disabled';
+        }
         $mem_id = getFmById($fm_id)[FM_MEMEBER_ID];
         $mem = retriveMember(getFmById($fm_id)[FM_MEMEBER_ID]);
-        $output .= "<tr>";
-        $output .= "<td>" . $mem[MEMBER_ID] . "</td>";
-        $output .= '<td>' . $mem[MEMBER_VEZNEV] . " " . $mem[MEMBER_KERNEV] . "</td>";
-        $output .= '<td>' . $mem[MEMBER_BORN] . "</td>";
-        $output .= '<td>';
-
-        $chk = FM_CHECKBOX . '[' . $fm2bill[0] . ']';
-        if (!isset($$chk)) {
-            $$chk = '';
-        }
-        $output .= '<pre><input type="checkbox" name="' . $chk . '" ';
-        $disabled_msg = isReadyForFAI($fm2bill);
-        if (!empty($disabled_msg)) {
-            $output .= ' disabled ';
-        }
-        if (($turn_on OR ( $$chk) == "on") AND ! $turn_off) {
-            $output .= ' checked ';
-        }
-        $output .= ' onchange="submit();" >';
-        $output .= '&#9;';
-        $output .= $fee_type[$fm2bill[1]][0] . '&#9;';
+        $view->newTableTr($$chk == 'on' ? 'bg-success' : '');
+        $view->putElement("<td>" . $mem[MEMBER_ID] . "</td>");
+        $view->putElement('<td>' . $mem[MEMBER_VEZNEV] . " " . $mem[MEMBER_KERNEV] . "</td>");
+        $view->putElement('<td>' . $mem[MEMBER_BORN] . "</td>");
+        $view->newElement('<td>');
+        //     $view->newElement('<pre>');
+        $view->newDiv('mx-3');
+        $view->putElement('<input type="checkbox" class="form-check-input" id="' . $chk . '" name="' . $chk . '" ' . $$chk . ' onChange="submit();"/>');
+        $view->endDiv()->newDiv('mx-3');
+        $fm2bill_text = $fee_type[$fm2bill[1]][0].' / ';
         switch ($fm2bill[1]) {
             case FEE_TYPE_CLUB:
-                $output .= $club_categories[$fm2bill[2]];
+                $fm2bill_text .= $club_categories[$fm2bill[2]];
                 break;
             case FEE_TYPE_MEMBERSHIP:
-                $output .= $member_types[$fm2bill[2]];
+                $fm2bill_text .= $member_types[$fm2bill[2]];
                 break;
             case FEE_TYPE_INSURANCE:
-                $output .= $member_insurances[$fm2bill[2]];
+                $fm2bill_text .= $member_insurances[$fm2bill[2]];
                 break;
             case FEE_TYPE_ORGANIZATION:
-                $output .= $organizations[$fm2bill[2]];
+                $fm2bill_text .= $organizations[$fm2bill[2]];
                 break;
         }
-        $output .= '&#9;' . $fm2bill[3] . ':' . $fm2bill[4] . '&#9;';
-        $output .= $fm2bill[5] . ' Ft</pre>';
+        $fm2bill_text .= ' / '.$fm2bill[3] . ':' . $fm2bill[4] .' / '. $fm2bill[5] . ' Ft';
+        $view->putElement($fm2bill_text);
         if (!empty($disabled_msg)) {
-            $output .= '<font color="red"> ' . $disabled_msg . '</font>';
+            $view->danger($disabled_msg);
         }
+        $view->endElement('</td>');
+        $view->endTableTr();
     }
-    $output .= "</table>";
+    $view->endTable();
     $_SESSION[SESSION_FEE_TO_BILL] = serialize($collected_fms);
 } else {
-    warning("A szűrési feltételek szerint nincs fizethető díj");
+    $view->warning("A szűrési feltételek szerint nincs fizethető díj");
 }
-$output .= "</form>";
-$output .= "</div>";
 

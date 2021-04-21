@@ -1,5 +1,6 @@
 <?php
 
+$view = new View();
 if (isset($delete_last)) {
     $sql = 'DELETE FROM `' . FEE_TABLE . '` WHERE `' . FEE_ID . '`="' . $delete_last . '"';
     $mysqliLink->query($sql);
@@ -30,16 +31,16 @@ if (isset($submit_fee)) {
             logger($member_id, -1, LOGGER_FEE_EDIT, ' A ' . $edited_names[$selected_name] . ' díj ' . $fee_from . '-' . $fee_to . ' időszakú felvitele. Azonosító: ' . $l_id);
             unset($fee_sum);
         } else {
-            warning('Add meg az összeget !');
+            $view->danger('Add meg az összeget !');
         }
     } else {
-        warning('Válassz díjtípus !');
+        $view->warning('Válassz díjtípus !');
     }
     unset($fee_from);
 }
 
 if (!isset($selected_name))
-    $selected_name = -2;
+    $selected_name = -1;
 if (!isset($editing_fee_id))
     $editing_fee_id = -1;
 if (!isset($fee_sum))
@@ -52,37 +53,34 @@ if ($prior_name != $selected_name) {
     $editing_fee_id = -1;
     $fee_sum = 0;
 }
-$output .= '<div class="keret"><form  method="post">';
-$output .= '<input type="hidden" name="editing_fee_id" value="' . $editing_fee_id . '" >';
-$output .= '<input type="hidden" name="prior_name" value="' . $selected_name . '" >';
+$prior_name = $selected_name;
+$view->newKeret();
+$view->putHidden('editing_fee_id');
+$view->putHidden('prior_name');
 if ($editing_fee_id < 0) {
-    $output .= '<label>' . $fee_type[$edited_type][FEE_TYPE_NAME] . ': </label>'
-            . '<select id="selected_name" name="selected_name" onChange="submit();">';
-    $output .= '<option value="-1">Válassz !</option>';
-    foreach ($edited_names as $id => $name) {
-        $output .= '<option value="' . $id . '" ' . (($selected_name == $id) ? " selected " : "") . '>' . $name . '</option>';
-    }
-    $output .= '</select>';
+    $view->submitDropDownChooser($fee_type_names[$edited_type], [-1 => 'Válassz!!!'] + $edited_names, 'selected_name', true);
     if ($selected_name >= 0) {
         $fees = getFees($edited_type, $selected_name);
         $last_fee_id = -1;
         foreach ($fees as $fee_item) {
-            $output .= '<br><label>Rögzítve:</label>' . $fee_item[1] . ' : ' . $fee_item[2] . ' = ' . $fee_item[3] . ' Ft ';
-            $output .= '<button type="submit" name="edit_fee" value="' . $fee_item[0] . '">'
-                    . '<img src="' . IMAGES . 'edit.jpg" title="Szerkesztés: ' . $fee_item[0] . '"></button>';
-            $last_fee_id = $fee_item[0];
+            $view->newDiv('row');
+            $view->putElement('Rögzítve: '.$fee_item[1] . ' : ' . $fee_item[2] . ' = ' . $fee_item[3] . ' Ft ' );
+            $view->submitEdit('edit_fee', $fee_item[0]);
+            if ($last_fee_id < 0) {
+                $last_fee_id = $fee_item[0];
+                if (isFeeDeleteable($last_fee_id)) {
+                    $view->submitDelete('delete_last', $last_fee_id);
+                }
+            }
+            $view->endDiv();
         }
-        if ($last_fee_id > 0 AND isFeeDeleteable($last_fee_id)) {
-            $output .= '<button type="submit"  name="delete_last" value="' . $last_fee_id . '">'
-                    . '<img src="' . IMAGES . 'delete.jpg" title="Törlés: ' . $last_fee_id . '"></button>';
-        }
+
         $first_undefined = getFirstUndefinedFeeDate($edited_type, $selected_name);
         if (!isset($fee_from)) {
             $fee_from = $first_undefined;
         } else {
             $fee_from = max($fee_from, $first_undefined);
         }
-        $output .= '<br><label>Új időszak: </label>';
         $continues_period = true;
         if ($fee_type[$edited_type][FEE_TYPE_PERIOD] == FEE_PERIOD_DAY) {
             $free_from = $today;
@@ -92,21 +90,26 @@ if ($editing_fee_id < 0) {
             $continues_period = false;
         }
         if (!$continues_period) {
-            $output .= '<input type="date" name="fee_from" value="' . $fee_from . '" onChange="submit();">';
+            $view->inputDate('fee_from');
         } else {
-            $output .= $fee_from;
-            $output .= '<input type="hidden" name="fee_from" value="' . $fee_from . '" >';
+            $view->putElement('Új időszak: '.$fee_from );
+            $view->putHidden('fee_from');
         }
-        $output .= ' : ' . addPeriodToDate($fee_from, $fee_type[$edited_type][FEE_TYPE_PERIOD]) . '<br>';
-        $output .= '<label>Új ' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj : </label>'
-                . '<input type="number" name="fee_sum" size="5" value="' . $fee_sum . '"> Ft';
-        $output .= '&nbsp;&nbsp;&nbsp;<input type="submit" name="submit_fee" value="Rögzít">';
+        $view->putElement('Új időszak'. addPeriodToDate($fee_from, $fee_type[$edited_type][FEE_TYPE_PERIOD]) );
+        $view->inputNumber('fee_sum', 'Új ' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj', 'Ft');
+        $view->submitButton('submit_fee', 'Rögzít');
     }
 } else {
     $fee = getFeeById($editing_fee_id);
+    $view->putElement('Időszak: '.$fee[FEE_FROM] . ':' . $fee[FEE_TO]);
+    $view->inputNumber('fee_sum', 'Új ' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj', 'Ft');    
+    $view->submitButton('submit_fee', 'Módosít');
+  /*
     $output .= '<label>Időszak: </label>' . $fee[FEE_FROM] . ':' . $fee[FEE_TO] . '<br>';
     $output .= '<label>' . $fee_periods[$fee_type[$edited_type][FEE_TYPE_PERIOD]] . ' díj : </label>'
             . '<input type="number" name="fee_sum" size="5" value="' . $fee_sum . '"> Ft';
     $output .= '&nbsp;&nbsp;&nbsp;<input type="submit" name="submit_fee" value="Módosít">';
+   * 
+   */
 }
-$output .= '</form></div>';
+$view->endKeret();

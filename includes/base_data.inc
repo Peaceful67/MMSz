@@ -18,23 +18,26 @@ if (!isset($email)) {
 if (!isset($born)) {
     $born = '0000-00-00';
 }
+if (!isset($is_male)) {
+    $is_male = 'off';
+}
 
 if (isset($base_data_save)) {
     $error = false;
     if (strlen($kernev) < 3) {
-        warning("Túl rövid keresztnév");
+        $view->danger("Túl rövid keresztnév");
         $error = true;
     }
     if (strlen($veznev) < 3) {
-        warning("Túl rövid vezetéknév");
+        $view->danger("Túl rövid vezetéknév");
         $error = true;
     }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        warning("Helytelen email cím !");
+        $view->danger("Helytelen email cím !");
         $error = true;
     }
     if (!validateDate($born)) {
-        warning("Helytelen születési dátum !");
+        $view->danger("Helytelen születési dátum !");
         $error = true;
     }
     if (!isset($already_override) OR $already_override != 'on') {
@@ -45,9 +48,9 @@ if (isset($base_data_save)) {
             $ids = '';
             foreach ($already_members as $already_id => $already_mem) {
                 error_log('Already: ' . $already_id);
-                $ids .= $already_id . '  ';
+                $ids .= $already_id . ', ';
             }
-            warning('A rendszer szerint ez a tag a ' . $ids . ' azonsítójú tagként már létezik');
+            $view->danger('A rendszer szerint ez a tag a ' . $ids . ' azonsítójú tagként már létezik');
             $error = true;
         }
     }
@@ -55,10 +58,11 @@ if (isset($base_data_save)) {
     if (!$error) {
         if ($base_data_id <= 0) {
             $edit_member = $base_data_id = createNewMember();
-            logger($member_id, $base_data_id, LOGGER_MEMBER_MOD, ' azonosítójú tag létrehozása');
+            logger($member_id, $base_data_id, LOGGER_MEMBER_MOD, ' tag létrehozása');
+
             if (isOnlyClubleader()) {
                 $clubs = getClubsOfLeader($member_id);
-                if (count($clubs) > 0) { 
+                if (count($clubs) > 0) {
                     reset($clubs);
                     $club_id = key($clubs);
                 } else {
@@ -69,8 +73,9 @@ if (isset($base_data_save)) {
                 setClubOfNewMember($base_data_id, 0);
             }
         } else {
-            logger($member_id, $base_data_id, LOGGER_MEMBER_MOD, " azonosítójú tag adatmódosítása");
+            logger($member_id, $base_data_id, LOGGER_MEMBER_MOD, "Tag alapadat módosítása");
         }
+        $sex = (isset($is_male)AND $is_male == 'on') ? 'M' : 'F';
         $sql = 'UPDATE `' . MEMBER_TABLE . '` SET ';
         $sql .= ' `' . MEMBER_VEZNEV . '` ="' . $veznev . '" ,';
         $sql .= ' `' . MEMBER_KERNEV . '` ="' . $kernev . '" ,';
@@ -86,9 +91,18 @@ if (isset($base_data_save)) {
         $sql .= ' `' . MEMBER_TEL . '` ="' . $telefon . '" ,';
         $sql .= ' `' . MEMBER_HOMEPAGE . '` ="' . $homepage . '" ,';
         $sql .= ' `' . MEMBER_NICKNAME . '` ="' . $nickname . '" ,';
+        $sql .= ' `' . MEMBER_LICENCE . '` ="' . $international_licence . '" ,';
         $sql .= ' `' . MEMBER_SEX . '` ="' . $sex . '" ';
-        $sql .= ' WHERE `' . MEMBER_ID . '`="' . $base_data_id . '"';
+        $sql .= ' WHERE `' . MEMBER_ID . '`=' . $base_data_id . ';';
         $mysqliLink->query($sql);
+        if (isset($is_inform) AND $is_inform == 'on') { // Ha módosítunk, biztosan nem jövünk ide, mert meg sem jeleni a checkbox
+            $email = new Email(EMAIL_CONTEXT_INFORM_NEW_MEMBER, $edit_member);
+            $email->insertToBody(1, getOptionValue(OPTIONS_NAME_COMPANY_LONG_NAME));
+            $email->insertToBody(2, $_SERVER['HTTP_HOST']);
+            $email->insertToBody(3, getMemberName($member_id));
+            $email->sendEmail([$base_data_id => '']);
+            logger($member_id, $base_data_id, LOGGER_MEMBER_MOD, ' emailes kiértesítése regisztrálásáról');
+        }
         if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) == 1 AND isFaiMember($base_data_id)) {
             updateFaiMember($base_data_id);
         }
@@ -117,41 +131,77 @@ if ($base_data_id < 0) {
 } else {
     $m = retriveMember($base_data_id);
 }
-$isMale = ($m[MEMBER_SEX] != "F");
-$output .= '<div class="keret"><div class="editor">';
-$output .= '<form  method="post">';
-$output .= printPermissions($base_data_id);
+
+$view->newKeret();
+$view->putPrevent();
+$view->info('Szerepek: '.printRoles($base_data_id) );
 if ($already > 0) {
-    $output .= '<br><font color="red"><label>Azonos név elfogadása:</label></font><input type="checkbox" name="already_override">';
+    $view->warning('<label>Azonos név elfogadása:</label></font><input type="checkbox" name="already_override">');
 }
-$output .= '<br><label for="veznev">Vezetéknév: </label><input type="text" style="border-color:red"  name="veznev" value="' . $m[MEMBER_VEZNEV] . '"><br>';
-$output .= '<label for="kernev">Keresztnév: </label><input type="text" style="border-color:red"  name="kernev" value="' . $m[MEMBER_KERNEV] . '"><br>';
-$output .= '<label for="szulev">Születési dátum: </label><input type="date" style="border-color:red" name="born" value="' . $m[MEMBER_BORN] . '"><br>';
+$veznev = $m[MEMBER_VEZNEV];
+$kernev = $m[MEMBER_KERNEV];
+$born = $m[MEMBER_BORN];
+$birth_city = $m[MEMBER_BIRTH_CITY];
+$mother = $m[MEMBER_MOTHER];
+$addr_post = $m[MEMBER_ADDR_POST];
+$addr_city = $m[MEMBER_ADDR_CITY];
+$addr_street = $m[MEMBER_ADDR_STREET];
+$telefon = $m[MEMBER_TEL];
+$email = $m[MEMBER_EMAIL];
+$homepage = $m[MEMBER_HOMEPAGE];
+$nickname = $m[MEMBER_NICKNAME];
+$is_male = ($m[MEMBER_SEX] == "M") ? 'on' : 'off';
+$international_licence = $m[MEMBER_LICENCE];
+$view->newDiv('row align-items-end');
+$view->newDiv('col-6')->inputText('veznev', 'Név', 'Vezetéknév')->endDiv();
+$view->newDiv('col-4')->inputText('kernev', '', 'Keresztnév')->endDiv();
+$view->endDiv()->newDiv('row align-items-end');
+$view->newDiv('col-6')->inputDate('born', 'Születési dátum')->endDiv();
+$view->newDiv('col-6')->inputEmail('email', 'Email')->endDiv();
+$view->endDiv();
 if ($base_data_id == $member_id) { // Sajat adatokat szerkeszt
-    $output .= '<label >Születési hely: </label><input type="text" maxlength="32" name="birth_city" value="' . $m[MEMBER_BIRTH_CITY] . '"><br>';
-    $output .= '<label >Anyja neve: </label><input type="text" maxlength="32" name="mother" value="' . $m[MEMBER_MOTHER] . '"><br>';
+    $view->newDiv('row align-items-end');
+    $view->newDiv('col-6')->inputText('birth_city', 'Születési hely', 'Város')->endDiv();
+    $view->newDiv('col-6')->inputText('mother', 'Anyja neve', 'Lánykori')->endDiv();
+    $view->endDiv();
 }
-$output .= '<label for="addr_post">Írányítószám: </label><input type="text" name="addr_post" value="' . $m[MEMBER_ADDR_POST] . '"><br>';
-$output .= '<label for="addr_city">Város :</label><input type="text" name="addr_city" value="' . $m[MEMBER_ADDR_CITY] . '"><br>';
-$output .= '<label for="addr_street">Lakcím: </label><input type="text" name="addr_street" value="' . $m[MEMBER_ADDR_STREET] . '"><br>';
-$output .= '<label for="telefon">Telefon: </label><input type="text" name="telefon" value="' . $m[MEMBER_TEL] . '"><br>';
-$output .= '<label for="email">Email :</label><input type="text" style="border-color:red"  name="email" value="' . $m[MEMBER_EMAIL] . '"><br>';
-$output .= '<label>Honlap: </label><input type="text" name="homepage" value="' . $m[MEMBER_HOMEPAGE] . '"><br>';
-$output .= '<label>Becenév: </label><input type="text" name="nickname" value="' . $m[MEMBER_NICKNAME] . '"><br>';
-$output .= '<label>Nem: </label>Férfi: <input type="radio" name="sex" value="M" ' . ($isMale ? ' checked ' : '') . '> ';
-$output .= 'Nő: <input type="radio" name="sex" value="F" ' . (!$isMale ? ' checked ' : '') . '> <br>';
-$output .= '<label>Klub: </label>' . getMemberClubNames($base_data_id) . '<br>';
-$output .= '<label>Kategóriák: </label>' . getListMemberCategories($base_data_id) . '<br>';
-$output .= '<label>Nemzetközi azonosító: </label>';
-$fai_payment = getFaiPaymentDate($base_data_id);
-$fai_mem = popFaiRow($base_data_id);
-if (empty($fai_payment) OR empty($fai_mem)) {
-    $output .= $m[MEMBER_LICENCE] . '+';
+$view->newDiv('row align-items-end');
+$view->newDiv('col-6')->inputNumber('addr_post', 'Írányítószám')->endDiv();
+$view->newDiv('col-6')->inputText('addr_city', 'Város', 'Város')->endDiv();
+$view->endDiv()->newDiv('row align-items-end');
+$view->newDiv('col-6')->inputText('addr_street', 'Lakcím', 'Utca, házszám')->endDiv();
+$view->newDiv('col-6')->inputText('telefon', 'Telefon', 'Lehetőleg mobil')->endDiv();
+$view->endDiv()->newDiv('row align-items-end');
+$view->newDiv('col-6')->inputText('homepage', 'Honlap', 'URL')->endDiv();
+$view->newDiv('col-6')->inputText('nickname', 'Becenév', 'Nickname')->endDiv();
+$view->endDiv();
+$view->inputSwitchCheckbox('is_male', 'Férfi', 'Nő', 'Nem');
+
+if ($base_data_id < 0) {
+    $is_inform = 'on';
+    $view->inputCheckbox('is_inform', 'Tag értesítése emailben');
 } else {
-    $fai_print = getOptionValue(OPTIONS_NAME_FAI_PRINT) . $fai_mem[FAI_IDLICENCE];
-    $output .= '<a href="' . $fai_print . '" target="_blank">' . $fai_mem[FAI_LICENCEE] . '</a>';
+    $view->putText(getMemberClubNames($base_data_id), 'Egyesület');
+    $view->putText(getListMemberCategories($base_data_id), 'Kategória');
+    if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) > 0) {
+        $view->newDiv('form-inline');
+        $fai_payment = getFaiPaymentDate($base_data_id);
+        $fai_mem = popFaiRow($base_data_id);
+        if (empty($fai_payment) OR empty($fai_mem)) {
+            if (empty($m[MEMBER_LICENCE])) {
+                $view->putText('Nincs', 'Nemzetközi azonosító');
+            } else {
+                $view->putText($m[MEMBER_LICENCE], 'Nemzetközi azonosító');
+            }
+        } else {
+            $fai_print = getOptionValue(OPTIONS_NAME_FAI_PRINT) . $fai_mem[FAI_IDLICENCE];
+            $view->putText('<a href="' . $fai_print . '" target="_blank">' . $fai_mem[FAI_LICENCEE] . '</a>', 'Nemzetközi azonosító');
+        }
+        $view->endDiv();
+    } else {
+        $view->inputText('international_licence', 'Nemzetközi', 'Azonosító');
+    }
 }
-$output .= '<br>';
 $fms2bill = getUnpaidFMOfMember($base_data_id);
 $fms2bill_sum = 0;
 $fms2bill_num = 0;
@@ -162,13 +212,10 @@ if (!empty($fms2bill)) {
 }
 
 if ($fms2bill_sum > 0) {
-    $output .= '<input value="Fizetés:' . $fms2bill_sum . ' Ft"  type="submit" name="create_bill"'
-            . ' onClick="return confirm(\'Biztosan el akarod a ' . $fms2bill_sum . ' összegű fizetést?\')">&nbsp;&nbsp;&nbsp;';
+    $view->submitButton('create_bill', 'Fizetés', -1, $fms2bill_sum . ' Ft összegű fizetés indítása', 'Biztosan el akarod a ' . $fms2bill_sum . ' összegű fizetést?');
 } else {
-    $output .= '<input value="Rögzítés"  type="submit" name="base_data_save">';
+    $view->submitButton('base_data_save', 'Rögzítés', $base_data_id, $base_data_id < 0 ? 'Új tag felvitele' : 'Adatok módosítása');
 }
-$output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
-$output .= '<input type="hidden" name="already" value="' . $already . '">';
-
-$output .= '</form></div></div>';
-
+$view->putHidden('edit_member');
+$view->putHidden('already');
+$view->endKeret();

@@ -20,7 +20,7 @@ if (!isset($selected_club)) {
     }
 }
 
-$sql = 'SELECT `' . MEMBER_TABLE. '`.* FROM ((`' . MEMBER_TABLE . '`';
+$sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM ((`' . MEMBER_TABLE . '`';
 
 if ($selected_club > 0) {
     $sql .= ' INNER JOIN `' . ROLE_TABLE . '` ON (`' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`="' . $selected_club . '" '
@@ -44,7 +44,7 @@ if ($selected_fee >= 0) {
 }
 
 if (strlen($search) < 3 AND ! empty($search)) {
-    warning('Legalább 3 karakter adj meg a szűréshez');
+    $view->danger('Legalább 3 karakter adj meg a szűréshez');
 }
 if (strlen($search) >= 3) {
     $sql .= ' WHERE (`' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '` LIKE "%' . $search . '%"  OR '
@@ -56,68 +56,21 @@ $sql .= ' GROUP BY `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`'
 
 $res = $mysqliLink->query($sql);
 $total_member = $res ? $res->num_rows : 0;
-$output .= '<div class="keret"><div class="search"> 
-
-<label for="search">Név: </label>
-<input type="text" name="search"  id="search" value="' . $search . '"  size="10">';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Találat :' . $total_member . ' tag&nbsp;&nbsp;&nbsp;&nbsp';
-$output .= '<input type="submit" name="search_submit" value="Szűrés">';
+$view->newKeret();
+$view->newDiv('row');
+$view->inputText('search', 'Név');
+$view->submitButton('search_submit', 'Szűrés', 0, 'Szűrés a megadott feltételek szerint.');
+$view->success('Találat: ' . $total_member . ' tag');
+$view->endDiv()->newDiv('row');
 if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
-    $output .= '<br><br>Egyesület: <select  name="selected_club" onChange="submit();">';
-    $output .= '<option value="0">Válassz egyesületet !</option>';
     $clubs = getClubNameList();
-    foreach ($clubs as $club_id => $club_name) {
-        $output .= '<option value="' . $club_id . '" ' . (($club_id == $selected_club) ? "selected" : "") . '>' . $club_name . '</option>';
-    }
-    $output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp';
+    $view->inputClub('Egyesület', [0 => 'Válassz!!!'] + $clubs, 'selected_club', true);
 } else {
     $selected_club = putSelectionOfClub('selected_club');
 }
-$output .= 'Díj tipus: ';
-$output .= '<select name="selected_fee" onChange="submit();">';
-$output .= '<option value="-1" ' . (($selected_fee == -1) ? "selected" : "") . '>Összes</option>';
-foreach ($fee_type as $type_key => $type_name) {
-    $output .= '<option value="' . $type_key . ' " ' . (($selected_fee == $type_key) ? "selected" : "") . '>' . $type_name[0] . '</option>';
-}
-
-if (isset($pager)) {
-    switch ($pager) {
-        case '<<':
-            $listed_member = 0;
-            break;
-        case '<':
-            $listed_member -= PAGE_MEMBERS;
-            if ($listed_member < 0) {
-                $listed_member = 0;
-            }
-            break;
-        case '>':
-            $listed_member += PAGE_MEMBERS;
-            if ($listed_member + PAGE_MEMBERS >= $total_member) {
-                $listed_member = $total_member - PAGE_MEMBERS;
-            }
-            break;
-        case '>>':
-            $listed_member = $total_member - PAGE_MEMBERS;
-            break;
-
-        default:
-            break;
-    }
-}
-
-
-$output .= '<input type="hidden" name="listed_member" value="' . $listed_member . '">    ';
-$output .= '<input type="hidden" name="total_member" value="' . $total_member . '">    ';
-
-if ($total_member > PAGE_MEMBERS) {
-    $output .= '&nbsp;&nbsp;&nbsp;&nbspLapozás:<input type="submit" name="pager" value="<<">    ';
-    $output .= '<input type="submit" name="pager" value="<">    ';
-    $output .= $listed_member + 1 . '/' . $total_member;
-    $output .= '<input type="submit" name="pager" value=">">    ';
-    $output .= '<input type="submit" name="pager" value=">>">    ';
-}
-
-$output .= '</div>';
-$output .= '</div>';
+$view->submitDropDownChooser('Díj tipus', [-1 => 'Összes'] + $fee_type, 'selected_fee');
+$view->endDiv();
+$view->putHidden('listed_member');
+$view->putHidden('total_member');
+$view->endKeret();
 

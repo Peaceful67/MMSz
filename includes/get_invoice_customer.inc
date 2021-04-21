@@ -28,9 +28,8 @@ if (!isset($invoice_addr_street)) {
 if (!isset($invoice_tax)) {
     $invoice_tax = '';
 }
-
-$output .= '<div class="keret">';
-$output .= '<h4>Számla Vevőadatok</h4>';
+$view->newKeret();
+$view->putElement('<h4>Számla Vevőadatok</h4>');
 /*
   $output .= '<label>Saját név:</label><input type="radio" name="radio_customer" value="' . RADIO_CUSTOMER_SELF . '"  onChange="submit();" '
   . (($radio_customer == RADIO_CUSTOMER_SELF) ? ' checked ' : '') . '>';
@@ -83,17 +82,11 @@ if (isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ)) {
     $clubs = getClubsMember($member_id);
 }
 if (count($clubs) > 1) {
-    $output .= '<label>Egyesület:</label>'
-            . '<select id="selected_club" name="selected_club" onchange="submit();">';
-//    $output .= '<option value="-1">Válassz egyesületet !</option>';
-    foreach ($clubs as $club_id => $club_name) {
-        $output .= '<option value="' . $club_id . '" ' . (($club_id == $selected_club) ? "selected" : "") . '>' . $club_name . '</option>';
-    }
-    $output .= '</select><br>';
+    $view->inputClub('Egyesület', [-1=>'Válassz!!!'] + $clubs, 'selected_club', true);
 } else {
     $selected_club = key($clubs);
     if ($selected_club == NULL) {
-        warning('Nincs kiválasztható egyesület a számlázáshoz !');
+        $view->danger('Nincs kiválasztható egyesület a számlázáshoz !');
     }
 }
 
@@ -104,13 +97,19 @@ if ($selected_club >= 0) {
     $invoice_addr_city = $invoice_club[CLUB_ADDR_CITY];
     $invoice_addr_street = $invoice_club[CLUB_ADDR_STREET];
     $invoice_tax = $invoice_club[CLUB_TAX];
+    $invoice_email = $invoice_club[CLUB_EMAIL];
 } else {
     $invoice_name = '';
+    $invoice_addr_post = '';
+    $invoice_addr_city = '';
+    $invoice_addr_street = '';
+    $invoice_tax = '';
+    $invoice_email = '';
 }
-$output .= '<label>Név:</label><input type="text" name="invoice_name" value="' . $invoice_name . '" ' . (empty($invoice_name) ? '' : 'readonly') . '><br>';
-$output .= '<label>Irsz:</label><input type="text" name="invoice_addr_post" value="' . $invoice_addr_post . '" ' . (empty($invoice_addr_post) ? '' : 'readonly') . '><br>';
-$output .= '<label>Város:</label><input type="text" name="invoice_addr_city" value="' . $invoice_addr_city . '" ' . (empty($invoice_addr_city) ? '' : 'readonly') . '><br>';
-$output .= '<label>Cím:</label><input type="text" name="invoice_addr_street" value="' . $invoice_addr_street . '" ' . (empty($invoice_addr_street) ? '' : 'readonly') . '><br>';
-$output .= '<label>Adószám:</label><input type="text" name="invoice_tax" value="' . $invoice_tax . '" ' . (empty($invoice_tax) ? '' : 'readonly') . '>';
-$output .= '</div>';
-$output .= '<br><br>';
+$view->inputText('invoice_name', 'Név');
+$view->inputText('invoice_addr_post', 'Irsz');
+$view->inputText('invoice_addr_city', 'Város');
+$view->inputText('invoice_addr_street', 'Cím');
+$view->inputText('invoice_tax', 'Adószám');
+$view->inputText('invoice_email', 'Email cím');
+$view->endKeret();

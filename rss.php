@@ -1,10 +1,31 @@
 <?php
 
+$member_id = -1;
 include_once 'params.inc';
 include_once FUNCTIONS . 'init.inc';
 
 $output = '<?xml version="1.0"?>';
-
+if (isset($_GET['online'])) {
+    include_once FUNCTIONS . 'vote_functions.inc';
+    $xml_online = new SimpleXMLElement("<?xml version=\"1.0\"?><online></online>");
+    $online_array = array();
+    $cPoll = new CongressPoll();
+    $cPollOption = new CongressPollOption();
+    foreach ($cPoll->getPollsVoting() as $poll_id => $poll_title) {
+        $cPoll->setSelectedPollId($poll_id);
+        if ($cPoll->isPollPublic()) {
+            $votes = $cPoll->getVotes();
+            $options = countVotes($votes);
+            $online_array[$poll_id]['title'] = $poll_title;
+            foreach ($options as $option_id => $num) {
+                $online_array[$poll_id]['option_' . $option_id]['option'] = $cPollOption->getTitle($option_id);
+                $online_array[$poll_id]['option_' . $option_id]['num'] = $num;
+            }
+        }
+    }
+    array_to_xml($online_array, $xml_online, 'votes');
+    $output = $xml_online->asXML();
+}
 if (isset($_GET['categories'])) {
     $xml_cats = new SimpleXMLElement("<?xml version=\"1.0\"?><categories></categories>");
     $cats_array = array();
@@ -16,10 +37,10 @@ if (isset($_GET['categories'])) {
         $file_en = RULES . '_' . $cat_id . '_EN.pdf';
         $file_hu = RULES . '_' . $cat_id . '_HU.pdf';
         if (is_file($file_en)) {
-            $cats_array[$cat_id]['document_en'] = URL_RULES.'_' . $cat_id . '_EN.pdf';
+            $cats_array[$cat_id]['document_en'] = URL_RULES . '_' . $cat_id . '_EN.pdf';
         }
         if (is_file($file_hu)) {
-            $cats_array[$cat_id]['document_hu'] = URL_RULES.'_' . $cat_id . '_HU.pdf';
+            $cats_array[$cat_id]['document_hu'] = URL_RULES . '_' . $cat_id . '_HU.pdf';
         }
     }
     array_to_xml($cats_array, $xml_cats, 'category');
@@ -125,14 +146,15 @@ if (isset($_GET["officers"])) {
     $output .= '</officers>';
 }
 theEnd($output);
-include_once INCLUDES . 'crontab.inc';
+
+//include_once INCLUDES . 'crontab.inc';
 
 function array_to_xml($array, &$xml_user_info, $item_name) {
     foreach ($array as $key => $value) {
         if (is_array($value)) {
             if (!is_numeric($key)) {
                 $subnode = $xml_user_info->addChild("$key");
-                array_to_xml($value, $subnode, $item_name0);
+                array_to_xml($value, $subnode, $item_name);
             } else {
                 $subnode = $xml_user_info->addChild($item_name);
                 array_to_xml($value, $subnode, $item_name);

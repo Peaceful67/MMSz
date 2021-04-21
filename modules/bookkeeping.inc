@@ -8,26 +8,21 @@ if (!isset($selected_bk)) {
     $selected_bk = BK_ONLINE;
 }
 
-if(isset($print_bill)) {
+if (isset($print_bill)) {
     downloadPdfOfBill($print_bill);
     setBillPrinted($print_bill);
 }
-$output .= '<div class="lists"><form method="post">';
-$output .= '<select name="selected_bk" onchange="submit();">';
-$output .= '<option value="' . BK_ALL . '" ' . (($selected_bk == BK_ALL) ? "selected" : "") . '>Összes</option>';
-$output .= '<option value="' . BK_OFFLINE . '" ' . (($selected_bk == BK_OFFLINE) ? "selected" : "") . '>Átadott</option>';
-$output .= '<option value="' . BK_ONLINE . '" ' . (($selected_bk == BK_ONLINE) ? "selected" : "") . '>Rendezetlen</option>';
-$output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp;';
 if (!isset($search_from)) {
-    $search_from = date('Y-m-d', strtotime($today.' -1 month'));
+    $search_from = date('Y-m-d', strtotime($today . ' -1 month'));
 }
 if (!isset($search_to)) {
     $search_to = $today;
 }
-$output .= '<label >Időszak: </label>
-            <input type="date" name="search_from"  value="' . $search_from . '" onchange="submit();">
-            <input type="date" name="search_to"  value="' . $search_to . '" onchange="submit();"><br>';
-
+$view->newDiv('row align-items-end');
+$view->submitDropDownChooser('', [BK_ALL => 'Összes', BK_OFFLINE => 'Átadott', BK_ONLINE => 'Rendezetlen'], 'selected_bk');
+$view->inputDate('search_from', 'Időszak');
+$view->inputDate('search_to');
+$view->endDiv();
 $sql = 'SELECT * FROM `' . BILLING_TABLE . '` '
         . 'WHERE `' . BILLING_PAYMENT_ID . '`!="0" ';
 switch ($selected_bk) {
@@ -41,34 +36,37 @@ switch ($selected_bk) {
     default:
         break;
 }
-$sql .= ' AND (`'.BILLING_TIME.'` BETWEEN "'.$search_from.' 00:00:00" AND "'.$search_to.' 23:59:59" )';
+$sql .= ' AND (`' . BILLING_TIME . '` BETWEEN "' . $search_from . ' 00:00:00" AND "' . $search_to . ' 23:59:59" )';
 $sql .= ' GROUP BY  `' . BILLING_NUMBER . '` ORDER BY `' . BILLING_TIME . '` DESC';
 $res = $mysqliLink->query($sql);
 if ($res AND $res->num_rows > 0) {
     while ($row = $res->fetch_assoc()) {
         $number = $row[BILLING_NUMBER];
         $payment = getPaymentByBillNumber($number);
-        $output .= '<br><button name="print_bill" value="' . $number . '"><img src="' . IMAGES . 'print.jpg" title="Nyomtatás"></button><b>' . $number.'</b>';
         $printed = current(getBillsByNumber($number))[BILLING_OFFLINE];
+        $view->newDiv('row d-flex align-items-center');
+        $view->submitPrint('print_bill', $number, ($printed == 0 ? 'Tétel nyomtatása és ezzel a könyvelésnek átadottnak rögzítve' : 'Tétel ismételt nyomtatása'));
+        $view->newDiv('col');
         if ($printed > 0) {
-            $output .= '&nbsp;&nbsp;Nyomtatva: ' . $printed;
+            $view->success('Nyomtatva: ' . $printed);
         }
-        $output .= '<br><label>Kiállítva: </label>'.$row[BILLING_TIME].'&nbsp;&nbsp;&nbsp;'
-                .getMemberName($row[BILLING_CREATOR]).' ˙('.$row[BILLING_CREATOR].')';
-        $output .= '<br><label>Beérkezett: </label>' . $payment[PAYMENT_TIME] . ', '
-                . '<label>Összeg: </label>' . getSumOfBills($number) . ' Ft<br>';
-        if($payment[PAYMENT_BANK_REFNO] != 0) {
-            $output .= '<label>Kártyás fizetés, bankazonosító: </label>'.$payment[PAYMENT_BANK_REFNO].'<br>';
+        $view->putText($row[BILLING_TIME] . '&nbsp;&nbsp;&nbsp;'
+                . getMemberName($row[BILLING_CREATOR]) . ' ˙(' . $row[BILLING_CREATOR] . ')', 'Kiállítva');
+        $view->putText($payment[PAYMENT_TIME], 'Beérkezett');
+        $view->putText(getSumOfBills($number) . ' Ft', 'Összeg');
+        if ($payment[PAYMENT_BANK_REFNO] != 0) {
+            $view->putText($payment[PAYMENT_BANK_REFNO], 'Kártyás fizetés, bankazonosító');
         }
-        $output .= '<b>Tételek : </b><br>';
+        $view->endDiv()->newDiv('col');
+        $view->putLabel('Tételek', true);
         foreach (billItems($number) as $bill) {
             $fm = getFmById($bill[BILLING_FM_ID]);
             $fee = getFeeById($fm[FM_FEE_ID]);
-            $output .= FM_to_String($fm[FM_ID], ', ') . '<br>';
+            $view->putText(FM_to_String($fm[FM_ID]));
         }
-        $output .= '<br><hr>';
+        $view->endDiv();
+        $view->endDiv()->putElement('<hr>');
     }
 } else {
-    warning('Jelenleg nincs ilyen elem');
+    $view->warning('Jelenleg nincs ilyen elem');
 }
-$output .= '</form></div>';

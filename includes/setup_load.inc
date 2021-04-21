@@ -1,21 +1,39 @@
 <?php
 
-
 $sql = 'SELECT * FROM `' . SETUP_GROUP_TABLE . '`  ORDER BY `' . SETUP_GROUP_WEIGHT . '` ASC;';
 $main_menu_group = array();
 $result = $mysqliLink->query($sql);
-if ($result) {
+if ($result AND $result->num_rows > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
         $main_menu_group[] = $row;
+    }
+} else {
+    error_log('reload menu groups');
+    foreach ($main_menu_group_default as $group_item) {
+        $sql = 'INSERT INTO `' . SETUP_GROUP_TABLE . '` ('
+                . '`' . SETUP_GROUP_ID . '`, `' . SETUP_GROUP_NAME . '`, `' . SETUP_GROUP_WEIGHT . '` '
+                . ' ) VALUES ('
+                . '"' . $group_item[SETUP_GROUP_ID] . '", "' . $group_item[SETUP_GROUP_NAME] . '", "' . $group_item[SETUP_GROUP_WEIGHT] . '" '
+                . ');';
+        $mysqliLink->query($sql);
+        $main_menu_group[] = $group_item;
     }
 }
 
 $sql = 'SELECT * FROM `' . SETUP_MOD_TABLE . '`     WHERE 1 ORDER BY `' . SETUP_MOD_WEIGHT . '` ;';
 $admin_menu = array();
 $result = $mysqliLink->query($sql);
-if ($result) {
+if ($result AND $result->num_rows > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
         $admin_menu[$row[SETUP_MOD_ID]] = $row;
+    }
+} else {
+    error_log('reload menus');
+    include_once FUNCTIONS.'setup_functions.inc';
+    foreach ($admin_menu_default as $menu_item) {
+        if ($menu_item[SETUP_MOD_ENABLED] == 1) {
+            insert_menu_item($menu_item);
+        }
     }
 }
 

@@ -162,8 +162,6 @@ function createOneBill($fm_id, $billing_number) {
 function pay_bills($number, $bank_ref = 0) {
     global $member_id;
     global $mysqliLink;
-    global $today;
-    global $output;
     if (!isset($member_id)) {
         $member_id = 0;
     }

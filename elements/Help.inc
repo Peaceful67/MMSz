@@ -70,4 +70,16 @@ class Help extends BasicElement {
         return !empty($this->tableRow);
     }
 
+    public function getItems() {
+        
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
+    }
+
 }

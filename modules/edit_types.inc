@@ -1,20 +1,13 @@
 <?php
 
+
 if (isset($select_edit_fee_type)) {
     $_SESSION[SESSION_FEETYPE2EDIT] = $select_edit_fee_type;
 } else {
     $select_edit_fee_type = isset($_SESSION[SESSION_FEETYPE2EDIT]) ? $_SESSION[SESSION_FEETYPE2EDIT] : -1;
 }
-
-$output .= '<div class="editor"><form method="POST">';
-$output .= '<label>Típus: </label><select name="select_edit_fee_type" onChange="submit();">';
-$output .= '<option value=-1 ' . (($select_edit_fee_type == -1) ? ' selected ' : '') . '>Válassz !</option>';
-foreach ($fee_type as $key => $value) {
-    $output .= '<option value=' . $key . '  ' . (($select_edit_fee_type == $key) ? ' selected ' : '') . '>'
-            . $value[0] . '</option>';
-}
-$output .= '</select>';
-$output .= '<br><br>';
+$view->newKeret();
+$view->submitDropDownChooser('Típus', [-1 => 'Válassz!!!'] + $fee_type_names, 'select_edit_fee_type', true);
 $et_type = $select_edit_fee_type;
 
 if (isset($delete)) {
@@ -22,7 +15,7 @@ if (isset($delete)) {
             . ' `' . TYPES_TYPE . '`=' . $et_type
             . ' AND `' . TYPES_TYPE_ID . '`=' . $delete . ';';
     $mysqliLink->query($sql);
-    logger($member_id, -1, LOGGER_TYPES, $delete. ' azonosítójó tipus törölve.');
+    logger($member_id, -1, LOGGER_TYPES, $delete . ' azonosítójó tipus törölve.');
     include INCLUDES . 'setup_load.inc';
 }
 
@@ -33,7 +26,7 @@ if (isset($modify)) {
             . ' WHERE `' . TYPES_TYPE . '`=' . $et_type
             . ' AND `' . TYPES_TYPE_ID . '`=' . $modify . ';';
     $mysqliLink->query($sql);
-    logger($member_id, -1, LOGGER_TYPES, $modify. ' azonosítójó tipus módosítva.');
+    logger($member_id, -1, LOGGER_TYPES, $modify . ' azonosítójó tipus módosítva.');
     include INCLUDES . 'setup_load.inc';
 }
 
@@ -43,7 +36,7 @@ if (isset($add_new)) {
             . '(`' . TYPES_TYPE_ID . '`, `' . TYPES_TYPE_NAME . '`, `' . TYPES_TYPE . '`) '
             . ' VALUES (' . $new_id . ', "Nevezd át !!!", ' . $et_type . ');';
     $mysqliLink->query($sql);
-    logger($member_id, -1, LOGGER_TYPES, $add_new . $mysqliLink->insert_id.' azonosítójó tipus létrehozva.');
+    logger($member_id, -1, LOGGER_TYPES, $add_new . $mysqliLink->insert_id . ' azonosítójó tipus létrehozva.');
     include INCLUDES . 'setup_load.inc';
 }
 
@@ -78,30 +71,27 @@ switch ($select_edit_fee_type) {
         break;
 }
 if ($et_type >= 0) {
-    $output .= '<input type="submit" name="add_new" value="Új felvétele">&nbsp;&nbsp;&nbsp;&nbsp;';
-    $output .= '<br><br>';
+    $view->submitAdd('add_new');
 
     foreach ($et_list as $key => $value) {
-        $output .= $key . ':&nbsp;&nbsp;&nbsp;&nbsp;';
-        $output .= '<input type="text" name="name_' . $key . '" value="' . $value . '">&nbsp;&nbsp;&nbsp;';
-        $output .= '<button  type="submit" name="modify" value="' . $key . '" >'
-                . '<img src="' . IMAGES . 'save.jpg" title="Módosít"></button>';
+        $var_name = 'name_' . $key;
+        $$var_name = $value;
+        $view->newDiv('form-inline');
+        $view->inputText($var_name, $key);
+        $view->submitSave('modify', $key, 'Módosít');
         switch ($et_type) {
             case FEE_TYPE_LICENCES:
                 if (isLicenceDeleteable($key)) {
-                    $output .= '&nbsp;&nbsp;&nbsp;<button  type="submit" name="delete" value="' . $key . '" >'
-                            . '<img src="' . IMAGES . 'delete.jpg" title="Töröl"></button>';
+                    $view->submitDelete('delete', $key);
                 }
                 break;
             default:
                 if (isFeeTypeDeleteable($et_type, $key)) {
-                    $output .= '&nbsp;&nbsp;&nbsp;<button  type="submit" name="delete" value="' . $key . '" >'
-                            . '<img src="' . IMAGES . 'delete.jpg" title="Töröl"></button>';
+                    $view->submitDelete('delete', $key);
                 }
                 break;
         }
-        $output .= '<br>';
+        $view->endDiv();
     }
 }
-
-$output .= '</form></div>';
+$view->endKeret();

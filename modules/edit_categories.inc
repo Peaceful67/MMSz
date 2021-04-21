@@ -1,13 +1,14 @@
 <?php
 
+
 if (isset($save_category)) {
     if ($cat_branch < 0) {
-        warning("Válassz szakágat !");
+        $view->danger("Válassz szakágat !");
     } elseif (empty($short_name)) {
-        warning("Legalább a rövid nevet add meg !");
+        $view->danger("Legalább a rövid nevet add meg !");
     } else {
         if (isCategoryNameUsed($short_name, $cat_branch, $category_id)) {
-            warning("Ebben a szakágban ez a név már használatban van !");
+            $view->danger("Ebben a szakágban ez a név már használatban van !");
         } else {
             if (isset($category_id)) {
                 $sql = 'UPDATE ' . CATEGORIES_TABLE . ' SET ';
@@ -38,7 +39,7 @@ if (isset($save_category)) {
             move_uploaded_file($_FILES["rule_hu_upload"]["tmp_name"], $file);
             logger($member_id, -1, LOGGER_CATEGORY_MOD, "A " . $category_id . " azonosítójú kategóriához tartozó magyar szabályzat feltöltése");
         } else {
-            warning("A feltöltött fájl nem pdf !");
+            $view->warning("A feltöltött fájl nem pdf !");
         }
     }
     if (isset($_FILES["rule_en_upload"])AND ! empty($_FILES["rule_en_upload"]["tmp_name"])) {
@@ -47,7 +48,7 @@ if (isset($save_category)) {
             move_uploaded_file($_FILES["rule_en_upload"]["tmp_name"], $file);
             logger($member_id, -1, LOGGER_CATEGORY_MOD, "A " . $category_id . " azonosítójú kategóriához tartozó angol szabályzat feltöltése");
         } else {
-            warning("A feltöltött fájl nem pdf !");
+            $view->warning("A feltöltött fájl nem pdf !");
         }
     }
     unset($category_id);
@@ -97,86 +98,62 @@ if (!isset($cat_branch))
 if (!isset($selected_cat)) {
     $selected_cat = -1;
 }
-
-$output .= '<div class="keret"><div class="editor"><form id="edit_categories" method="post" enctype="multipart/form-data">';
-if (isset($category_id)) {
-    $output .= '<input type="hidden" name="category_id" value="' . $category_id . '">';
-}
 $leaded_brances = getBranchesOfLeader($member_id);
-if(isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ) OR isPermitted(ACCESS_MMSZ_PRESIDENT)) {
+if (isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ) OR isPermitted(ACCESS_MMSZ_PRESIDENT)) {
     $leaded_brances = $branches;
 }
 if (empty($leaded_brances)) {
-    warning('Jogosulatlan hozzáférés !');
+    $view->danger('Jogosulatlan hozzáférés !');
     return;
-} elseif (count($leaded_brances) == 1) {
+}
+$view->putHidden('category_id');
+$view->newKeret();
+if (count($leaded_brances) == 1) {
     reset($leaded_brances);
     $cat_branch = key($leaded_brances);
-    $output .= '<input type="hidden" name="cat_branch" value="' . $cat_branch . '">';
-    $output .= '<label>Szakág: </label>' . $branches[$cat_branch] . '<br>';
+    $view->putHidden('cat_branch');
+    $view->putText($branches[$cat_branch], 'Szakág');
 } else {
-    $output .= '<label>Szakág: </label><select name="cat_branch">';
-    $output .= '<option value = "-1">Válassz !</option>';
-    foreach ($branches as $index => $branch) {
-        if (isset($leaded_brances[$index])) {
-            $output .= '<option value="' . $index . '" ' . ($index == $cat_branch ? 'selected' : '') . '>' . $branch . '</option>';
-        }
-    }
-    $output .= '</select><br>';
-    $output .= '<label>Szervezet: </label><select name="cat_org">';
-    $output .= '<option value = "-1">Válassz !</option>';
-    foreach ($organizations as $index => $org) {
-        $output .= '<option value="' . $index . '" ' . ($index == $cat_org ? 'selected' : '') . '>' . $org . '</option>';
-    }
-    $output .= '</select><br>';
+    $view->submitDropDownChooser('Szakág', [-1 => 'Válassz !!!'] + $branches, 'cat_branch', true);
+    $view->submitDropDownChooser('Szervezet', [-1 => 'Nincs megadva'] + $organizations, 'cat_org', true);
 }
-$output .= '<label for="short_name">Rövid név :</label>';
-$output .= '<input type="text" size="8" name="short_name" value="' . $short_name . '"><br>';
-$output .= '<label for="long_name">Hosszú név :</label>';
-$output .= '<input type="text" size="32" name="long_name" value="' . $long_name . '"><br>';
-$output .= '<label>Szabályzat magyar:</label>';
+$view->inputText('short_name', 'Rövid név');
+$view->inputText('long_name', 'Hosszú név');
+
+$view->inputFile('Magyar szabályzat', 'rule_hu_upload');
 if (isset($category_id) AND is_file(RULES . '_' . $category_id . '_HU.pdf')) {
-    $output .= '<button  type="submit" name="delete_rule_hu" value="' . $category_id . '" onClick="return confirm(\'Biztosan tölni akarod a szabályzatot ?\')"><img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+    $view->submitDelete('delete_rule_hu', $category_id, 'Magyar szabályzat törlése', 'Biztosan törölni akarod a szabályzatot ?');
 }
 
-$output .= '<input type="file" name="rule_hu_upload"/>';
-$output .= '<br><label>Szabályzat angol:</label>';
+$view->inputFile('Angol szabályzat', 'rule_en_upload');
 if (isset($category_id) AND is_file(RULES . '_' . $category_id . '_EN.pdf')) {
-    $output .= '<button  type="submit" name="delete_rule_en" value="' . $category_id . '" onClick="return confirm(\'Biztosan tölni akarod a szabályzatot ?\')"><img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+    $view->submitDelete('delete_rule_en', $category_id, 'Angol szabályzat törlése', 'Biztosan törölni akarod a szabályzatot ?');
 }
 
-$output .= '<input type="file" name="rule_en_upload"/>';
-$output .= '<br>';
 if (isset($edit_category)) {
-    $output .= '<input type = "submit" name = "save_category" value = "Módosítás">';
-    $output .= '&nbsp;&nbsp;&nbsp;<input type = "submit" name = "new_category" value = "Új kategória">';
+    $view->submitButton('save_category', 'Módosítás');
+    $view->submitButton('new_category', 'Új kategória');
 } else {
-    $output .= '<input type = "submit" name = "save_category" value = "Felvitel">';
+    $view->submitButton('save_category', 'Felvitel');
 }
-$output .= '</div></div>';
-$output .= '<br><div class = "lists">';
-$output .= '<h2>Kategóriák</h2><table><tr>';
-$output .= '<th>';
-if (empty($leaded_brances)) {
-    warning('Jogosulatlan hozzáférés');
-} elseif (count($leaded_brances) == 1) {
+$view->endDiv();
+$view->putElement('<h2>Kategóriák</h2>');
+$view->newDiv('table-responsive-sm');
+$view->newElement('<table class="table table-striped table-bordered">');
+$view->newTableTr();
+$view->putElement('<th scope="col">');
+if (count($leaded_brances) == 1) {
     reset($leaded_brances);
     $selected_cat = key($leaded_brances);
-    $output .= $branches[$selected_cat];
+    $view->put($branches[$selected_cat]);
 } else {
-    $output .= '<select name = "selected_cat" onChange = "submit();">';
-    $output .= '<option value = "-1">Összes</option>';
-    foreach ($branches as $index => $branch) {
-        if (isset($leaded_brances[$index])) {
-            $output .= '<option value = "' . $index . '" ' . ($index == $selected_cat ? 'selected' : '') . '>' . $branch . '</option>';
-        }
-    }
-    $output .= '</select>';
+    $view->submitDropDownChooser('', [-1 => 'Összes'] + $leaded_brances, 'selected_cat', true);
 }
-$output .= '</th>';
-$output .= '<th>Hosszú név</th>';
-$output .= '<th>Rövid név</th>';
-$output .= '<th>Műveletek</th></tr>';
+$view->endElement('</th>');
+$view->putElement('<th scope="col">Hosszú név</th>');
+$view->putElement('<th scope="col">Rövid név</th>');
+$view->putElement('<th scope="col">Műveletek</th>');
+$view->endTableTr();
 $sql = 'SELECT * FROM ' . CATEGORIES_TABLE . ' WHERE ';
 if ($selected_cat < 0) {
     $sql .= ' 1 ';
@@ -187,34 +164,37 @@ $sql .= ' ORDER BY ' . CATEGORIES_SHORT;
 $res = $mysqliLink->query($sql);
 while ($res AND $row = $res->fetch_assoc()) {
     $cat_id = $row [CATEGORIES_ID];
-    $output .= "<tr>";
-    $output .= '<td>' . $branches[$row[CATEGORIES_BRANCH]];
+    $view->newTableTr();
+    $view->putElement('<td>' . $branches[$row[CATEGORIES_BRANCH]]);
     if ($row[CATEGORIES_ORG] >= 0) {
-        $output .= ', ';
+        $view->put(', ');
         if (isset($organizations[$row[CATEGORIES_ORG]])) {
-            $output .= $organizations[$row[CATEGORIES_ORG]];
+            $view->put($organizations[$row[CATEGORIES_ORG]]);
         }
     }
-    $output .= '</td>';
-    $output .= '<td>' . $row[CATEGORIES_LONG] . "</td>";
-    $output .= "<td>" . $row[CATEGORIES_SHORT] . "</td>";
-    $output .= '<td>';
+    $view->put('</td>');
+    $view->putElement('<td>' . $row[CATEGORIES_LONG] . "</td>");
+    $view->putElement("<td>" . $row[CATEGORIES_SHORT] . "</td>");
+    $view->newElement('<td>');
     if (!isCategoryInUse($row[CATEGORIES_ID])) {
-        $output .= '<button type = "submit" name = "delete_category" value = "' . $row[CATEGORIES_ID] . '" onClick = "return confirm(\'Biztosan tölni akarod a kategóriát ?\')"><img src = "' . IMAGES . 'delete.jpg" title = "Törlés"></button>';
+        $view->submitDelete('delete_category', $row[CATEGORIES_ID], 'Kategória törlése', 'Biztosan tölni akarod a kategóriát ?');
     }
-    $output .= '<button type = "submit" name = "edit_category" value = "' . $row[CATEGORIES_ID] . '"><img src = "' . IMAGES . 'edit.jpg" title = "Szerkesztés"></button>';
+    $view->submitEdit('edit_category', $row[CATEGORIES_ID]);
     $file_en = RULES . '_' . $cat_id . '_EN.pdf';
     $file_hu = RULES . '_' . $cat_id . '_HU.pdf';
     if (is_file($file_en)) {
-        $output .= '<a title = "Angol nyelvű szabályzat" target = "_blank" href = "' . $file_en . '"><img src = "' . IMAGES . 'pdf.jpg"></a>';
+        $view->viewEyeLink($file_en, 'Angol nyelvű szabályzat');
     } else {
-        $output .= '<img title = "Nincs feltöltve angol nyelvű szabályzat" src = "' . IMAGES . 'empty.jpg">';
+        $view->viewEyeSlash('Nincs feltöltve angol nyelvű szabályzat');
     }
     if (is_file($file_hu)) {
-        $output .= '<a title = "Magyar nyelvű szabályzat" target = "_blank" href = "' . $file_hu . '"><img src = "' . IMAGES . 'pdf.jpg"></a>';
+        $view->viewEyeLink($file_hu, 'Magyar nyelvű szabályzat');
     } else {
-        $output .= '<img title = "Nincs feltöltve magyar nyelvű szabályzat" src = "' . IMAGES . 'empty.jpg">';
+        $view->viewEyeSlash('Nincs feltöltve magyar nyelvű szabályzat');
     }
-    $output .= "</td></tr>";
+    $view->endElement('</td>');
+    $view->endTableTr();
 }
-$output .= '</table></form></div>';
+$view->endElement('</table>');
+$view->endDiv();
+$view->endKeret();

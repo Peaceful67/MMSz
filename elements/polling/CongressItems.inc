@@ -8,6 +8,7 @@ define("CONGRESS_ITEMS_DESCRIPTION", 'desc');
 define("CONGRESS_ITEMS_CLOSED", 'closed');
 define("CONGRESS_ITEMS_OPTIONS", 'options');
 define("CONGRESS_ITEMS_DEPENDECY", 'dependency');
+define("CONGRESS_ITEMS_VARIABLES", 'variables');
 
 class CongressItems extends BasicElement {
 
@@ -24,6 +25,7 @@ class CongressItems extends BasicElement {
             CONGRESS_ITEMS_DESCRIPTION,
             CONGRESS_ITEMS_CLOSED,
             CONGRESS_ITEMS_OPTIONS,
+            CONGRESS_ITEMS_VARIABLES,
             CONGRESS_ITEMS_DEPENDECY,
         ]);
         $this->createTableIfNotExists(
@@ -34,6 +36,7 @@ class CongressItems extends BasicElement {
                 . CONGRESS_ITEMS_DESCRIPTION . '` text NOT NULL, `'
                 . CONGRESS_ITEMS_CLOSED . '` timestamp(1) NULL DEFAULT NULL ,`'
                 . CONGRESS_ITEMS_OPTIONS . '` int(11) NOT NULL,`'
+                . CONGRESS_ITEMS_VARIABLES . '` varchar(256) NOT NULL DEFAULT "",`'
                 . CONGRESS_ITEMS_DEPENDECY . '` varchar(256) NOT NULL, '
                 . 'UNIQUE KEY `' . CONGRESS_ITEMS_ID . '` (`' . CONGRESS_ITEMS_ID . '`)'
                 . ') ENGINE=InnoDB DEFAULT CHARSET=utf8;');
@@ -42,11 +45,13 @@ class CongressItems extends BasicElement {
 
     function setSelectedCongress($selectedCongress) {
         $this->selectedCongress = $selectedCongress;
+        return $this;
     }
 
     function setSelectedItem($itemId) {
-        $this->selectedItem = $itemId;
         $this->itemId = $itemId;
+        $this->getItemById($itemId);
+        return $this;
     }
 
     function getSelectionOfCongress() {
@@ -58,15 +63,32 @@ class CongressItems extends BasicElement {
         return $ret;
     }
 
-    function getSelectionOfCongressOpen() {
+    function getSelectionOfCongressOnline() {
+        global $mysqliLink;
         $ret = array();
-        $items = $this->getElementsBy(CONGRESS_ITEMS_CONGRESS_ID, $this->selectedCongress);
+        $sql = 'SELECT * FROM `' . CONGRESS_ITEMS_TABLE . '` WHERE'
+                . ' `' . CONGRESS_ITEMS_CONGRESS_ID . '`=' . $this->selectedCongress . ' AND '
+                . ' `' . CONGRESS_ITEMS_CLOSED . '` IS NOT NULL;';
+        $res = $mysqliLink->query($sql);
+        while ($res AND $row = $res->fetch_assoc()) {
+            $ret[$row[CONGRESS_ITEMS_ID]] = $row[CONGRESS_ITEMS_TITLE];
+        }
+        return $ret;
+    }
+
+    function getSelectionOfItemIdCongressClose($congress_id) {
+        $ret = array();
+        $items = $this->getElementsBy(CONGRESS_ITEMS_CONGRESS_ID, $congress_id);
         foreach ($items as $item) {
-            if (is_null($item[CONGRESS_ITEMS_CLOSED])) {
-                $ret[$item[CONGRESS_ITEMS_ID]] = $item[CONGRESS_ITEMS_TITLE];
+            if (!is_null($item[CONGRESS_ITEMS_CLOSED])) {
+                $ret[] = $item[CONGRESS_ITEMS_ID];
             }
         }
         return $ret;
+    }
+
+    function getCongressId() {
+        return $this->getValue(CONGRESS_ITEMS_CONGRESS_ID);
     }
 
     function getCongressItemTitleById($itemId) {
@@ -80,8 +102,8 @@ class CongressItems extends BasicElement {
 
     function addItem($congresOptions) {
         $newItem = $this->insertElement([
-            CONGRESS_ITEMS_TITLE => 'Napirend címe',
-            CONGRESS_ITEMS_DESCRIPTION => 'Napirend részletes leírása',
+            CONGRESS_ITEMS_TITLE => '',
+            CONGRESS_ITEMS_DESCRIPTION => '',
             CONGRESS_ITEMS_CONGRESS_ID => $this->selectedCongress,
             CONGRESS_ITEMS_OPTIONS => $congresOptions,
         ]);
@@ -90,16 +112,15 @@ class CongressItems extends BasicElement {
     }
 
     function modifyItemTitle($title) {
-        $this->updateElement(CONGRESS_ITEMS_TITLE, $title);
+        $this->updateValue(CONGRESS_ITEMS_TITLE, $title);
     }
 
     function modifyItemDescription($desc) {
-  //      error_log("Modify desc:" . $this->itemId);
-        $this->updateElement(CONGRESS_ITEMS_DESCRIPTION, $desc);
+        $this->updateValue(CONGRESS_ITEMS_DESCRIPTION, $desc);
     }
 
     function setItemOption($option) {
-        $this->updateElement(CONGRESS_ITEMS_OPTIONS, $option);
+        $this->updateValue(CONGRESS_ITEMS_OPTIONS, $option);
     }
 
     function getItemOption() {
@@ -122,16 +143,24 @@ class CongressItems extends BasicElement {
         return (($this->getItemOption() & CONGRESS_OPTIONS_MULTICHOICE) > 0) ? true : false;
     }
 
+    function isItemYesNo() {
+        return (($this->getItemOption() & CONGRESS_OPTIONS_YES_NO) > 0) ? true : false;
+    }
+
+    function isItemAbstain() {
+        return (($this->getItemOption() & CONGRESS_OPTIONS_ABSTAIN_ENABLED) > 0) ? true : false;
+    }
+
     function getCongressItem() {
-        return $this->getItemById($this->selectedItem);
+        return $this->getItemById($this->itemId);
     }
 
     function getCongressItemDescription() {
-        return ($this->getItemById($this->selectedItem)[CONGRESS_ITEMS_DESCRIPTION]);
+        return ($this->getItemById($this->itemId)[CONGRESS_ITEMS_DESCRIPTION]);
     }
 
     function setDependency($arrItems) {
-        $this->updateElement(CONGRESS_ITEMS_DEPENDECY, serialize($arrItems));
+        $this->updateValue(CONGRESS_ITEMS_DEPENDECY, serialize($arrItems));
     }
 
     function getDependency() {
@@ -142,9 +171,11 @@ class CongressItems extends BasicElement {
             return unserialize($dependency);
         }
     }
+
     function getClose() {
         return $this->getValue(CONGRESS_ITEMS_CLOSED);
     }
+
     function isItemClosed($itemId) {
         $item = $this->getItemById($itemId);
         return(!is_null($item[CONGRESS_ITEMS_CLOSED]));
@@ -152,62 +183,72 @@ class CongressItems extends BasicElement {
 
     function setItemClosed($item_id) {
         $this->getItemById($item_id);
-        $this->setTime(CONGRESS_ITEMS_CLOSED);
-        $congress = new CongressOnline();
+        $this->setTimeCurrent(CONGRESS_ITEMS_CLOSED);
     }
 
     function getPendingDependencies() {
         $depArr = $this->getDependency();
         $ret = '';
+        $otherItem = new CongressItems();
+        $otherPoll = new CongressPoll();
         foreach ($depArr as $itemId) {
-            if (!$this->isItemClosed($itemId)) {
-                $ret .= $this->getItemById($itemId)[CONGRESS_ITEMS_TITLE] . ';';
+            if (!$otherItem->isItemClosed($itemId)) {
+                $ret .= $otherItem->getItemById($itemId)[CONGRESS_ITEMS_TITLE] . ';';
+            } else {
+                $poll_id = $otherPoll->getPollIdByItem($itemId);
+                if (!($otherPoll->setSelectedPollId($poll_id)->isDecided())) {
+                    $ret .= $otherItem->getItemById($itemId)[CONGRESS_ITEMS_TITLE] . ':';
+                }
             }
         }
         return $ret;
     }
 
     function isReadyToVote() {
-        $ret = true;
+        $ret = array();
         if (strlen($this->getPendingDependencies()) > 0) {
-            //          error_log('isReadyToVote()' . 'Dependency');
-            return false;
+            $ret[] = 'Vannak függő, le nem zárt szavazások.';
         }
+
         $poll = new CongressPoll();
         $poll_id = $poll->getPollIdByItem($this->itemId);
         if ($poll_id < 0) {
-            //          error_log('isReadyToVote()' . 'Error, itemId:' . $this->itemId);
-            return false;
+            $ret[] = 'Nincs létrehozva határozati javaslat';
+            return $ret;
         }
-        $poll_option = new CongressPollOption();
-        $poll_option->setSelectedPoll($poll_id);
-        if (count($poll_option->getPollOptions()) < 2) {
-            //         error_log('isReadyToVote()' . 'less than 2');
-            return false;
+        if (time() > strtotime($poll->getPollToBeClosed())) {
+            $ret[] = 'A szavazás lezárása a múltba került.';
         }
-        //     error_log('isReadyToVote()' . ' Ready');
-        return true;
+        $poll->setSelectedPollId($poll_id);
+        if (!$poll->isPollYesNo()) {
+            $pollOption = new CongressPollOption();
+            $pollOption->setSelectedPoll($poll_id);
+            if (count($pollOption->getPollOptions()) < 2) {
+                $ret[] = 'Legalább két választási lehetőséget létre kell hozni';
+            }
+        }
+        return $ret;
     }
 
     function deleteCongressItem() {
         $this->removeItemFromDependecy();
-        $this->deleteElementBy($this->key, $this->selectedItem);
-        $this->selectedItem = $this->itemId = -1;
+        $this->deleteElementBy($this->key, $this->itemId);
+        $this->itemId = -1;
     }
 
     function deleteCongress($congress_id) {
         $this->deleteElementBy(CONGRESS_ITEMS_CONGRESS_ID, $congress_id);
-        $this->selectedItem = $this->itemId = -1;
+        $this->itemId = -1;
         $this->selectedCongress = -1;
     }
 
     function insertMadatoryItemToCongress() {
         $itemsOfCongress = new CongressItems();
         foreach ($this->getSelectionOfCongress() as $item_id => $item_title) {
-            if ($item_id != $this->selectedItem) {
+            if ($item_id != $this->itemId) {
                 $itemsOfCongress->setSelectedItem($item_id);
                 $depArr = $itemsOfCongress->getDependency();
-                $depArr[] = $this->selectedItem;
+                $depArr[] = $this->itemId;
                 $itemsOfCongress->setDependency($depArr);
             }
         }
@@ -219,13 +260,25 @@ class CongressItems extends BasicElement {
             $itemsOfCongress->setSelectedItem($item_id);
             $depArr = $itemsOfCongress->getDependency();
             foreach ($depArr as $id => $dep) {
-                if ($this->selectedItem == $dep) {
+                if ($this->itemId == $dep) {
                     unset($depArr[$id]);
                 }
             }
-            unset($depArr[$this->selectedItem]);
+            unset($depArr[$this->itemId]);
             $itemsOfCongress->setDependency($depArr);
         }
+    }
+
+    public function getItems() {
+        
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
     }
 
 }

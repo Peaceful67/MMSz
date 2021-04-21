@@ -34,6 +34,8 @@ define("CLUB_HOMEPAGE", "homepage");
 define("CLUB_BANK", "bank");
 define("CLUB_TAX", 'tax');
 define("CLUB_MANDATUM", 'mandat');
+define("CLUB_MANDATUM2", 'mandat2');
+define("CLUB_SUBCLUBS", 'sub_clubs');
 
 define("CATEGORIES_TABLE", 'categories');
 define("CATEGORIES_ID", "cat_id");

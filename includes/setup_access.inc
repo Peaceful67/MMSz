@@ -2,7 +2,7 @@
 
 define("CHECK_MOD_ACCESS", "mod_access_");
 $modify_access = array(
-    ACCESS_ADMIN, ACCESS_MMSZ, ACCESS_MMSZ_PRESIDENT, ACCESS_CLUBLEADER, ACCESS_CLUB_DELEGATE, ACCESS_PAID, ACCESS_CATEGORY_LEADER,
+    ACCESS_ADMIN, ACCESS_MMSZ, ACCESS_MMSZ_PRESIDENT, ACCESS_CLUBLEADER, ACCESS_CLUB_DELEGATE, ACCESS_PAID, ACCESS_BRANCH_LEADER,
 );
 
 if (isset($access_tab)) {
@@ -27,21 +27,20 @@ if (isset($access_tab)) {
 } 
 
 include INCLUDES . 'setup_load.inc';
-$output .= '<input type="hidden" name="access_tab" value="on">';
-$output .= '<table>'
-        . '<col width="16%"><col width="12%"><col width="12%"><col width="12%"><col width="12%"><col width="12%"><col width="12%"><col width="12%">'
-        . '<tr><th>ID</th>';
+$view->putHidden('access_tab', 'on'); // Az első betöltődéskor nem fut le
+$header = ['ID'];
 foreach ($modify_access as $modify) {
-    $output .= '<th>' . $access[$modify] . '</th>';
+    $header[] = $access[$modify];
 }
-$output .= '</tr>';
+$view->newTable('Modulok jogosultságai');
+$view->putThead('', $header);
 foreach ($admin_menu as $menu) {
-    $output .= '<tr>';
-    $output .= '<td>' . $menu[SETUP_MOD_ID] . '</td>';
+    $view->newTableTr();
+    $view->putElement('<td>' . $menu[SETUP_MOD_ID] . '</td>');
     foreach ($modify_access as $modify) {
-        $output .= '<td><input type="checkbox" name="' . CHECK_MOD_ACCESS . $menu[SETUP_MOD_ID] . '_' . $modify . '" '
-                . (($menu[SETUP_MOD_ACCESS] & $modify) > 0 ? 'checked' : '') . '  onChange="submit();"></td>';
+        $view->putElement('<td><input type="checkbox" class="form-check-input mx-3" name="' . CHECK_MOD_ACCESS . $menu[SETUP_MOD_ID] . '_' . $modify . '" '
+                . (($menu[SETUP_MOD_ACCESS] & $modify) > 0 ? 'checked' : '') . '  onChange="submit();"></td>');
     }
-    $output .= '</tr>';
+    $view->endTableTr();
 }
-$output .= '</table>';
+$view->endTableTr();

@@ -39,48 +39,114 @@ if (isset($phpinfo)) {
     $output .= ob_get_contents();
     ob_clean();
 }
-
+if (isset($relative)) {
+    include_once FUNCTIONS . 'docu_functions.inc';
+// $docuFile = new DocuFile();
+    $sql = 'SELECT * FROM `' . DOCU_FILE_TABLE . '`;';
+    $res = $mysqliLink->query($sql);
+    $changed = 0;
+    while ($res AND $row = $res->fetch_assoc()) {
+        $path = $row[DOCU_FILE_REAL_PATH];
+        if ($path[0] == '/') {
+            $changed++;
+            $new_path = substr(strstr($path, LOCALFILE_PATH, false), strlen(LOCALFILE_PATH) + 1);
+            error_log($new_path);
+            $mysqliLink->query('UPDATE `' . DOCU_FILE_TABLE . '` SET `' . DOCU_FILE_REAL_PATH . '`="' . $new_path . '" WHERE `' . DOCU_FILE_ID . '`=' . $row[DOCU_FILE_ID] . ';');
+        }
+    }
+    o('Átalakítva:' . $changed . ' tétel');
+}
+if (isset($anonim)) {
+    include_once FUNCTIONS . 'vote_functions.inc';
+    $congressPoll = new CongressPoll();
+    $congressDelegates = new CongressDelegates();
+    $congressPollVote = new CongressPollVote();
+    $num_votes = $changed_votes = $num_polls = 0;
+    $sql = 'SELECT * FROM `' . CONGRESS_POLL_TABLE . '` WHERE (`' . CONGRESS_POLL_OPTIONS . '`&' . CONGRESS_OPTIONS_BY_NAME . ')=0;';
+    $poll_res = $mysqliLink->query($sql);
+    while ($poll_res AND $row = $poll_res->fetch_assoc()) {
+        $poll_id = $row[CONGRESS_POLL_ID];
+        $congressDelegates->setCongressIdByPollId($poll_id);
+        $num_polls++;
+        $votes_of_options = array();
+        $sql = 'SELECT * FROM `' . CONGRESS_POLL_VOTE_TABLE . '` WHERE `' . CONGRESS_POLL_VOTE_POLL_ID . '`=' . $poll_id . ' AND `' . CONGRESS_POLL_VOTE_DELEGATE . '`>0;';
+        $res = $mysqliLink->query($sql);
+        while ($res AND $row = $res->fetch_assoc()) {
+            $option_id = $row[CONGRESS_POLL_VOTE_OPTION_ID];
+            $num_votes++;
+            if ($option_id > 0) {
+                $changed_votes++;
+                $mandat = $congressDelegates->getMandateNumber($row[CONGRESS_POLL_VOTE_DELEGATE]);
+                if (isset($votes_of_options[$option_id])) {
+                    $votes_of_options[$option_id] += max($mandat, 1);
+                } else {
+                    $votes_of_options[$option_id] = max($mandat, 1);
+                }
+//                $congressPollVote->updateAnonimCounter($poll_id, $option_id, max($mandat, 1));
+                $congressPollVote->removeVotedOption($row[CONGRESS_POLL_VOTE_ID]);
+            }
+        }
+        foreach ($votes_of_options as $option_id => $mandat) {
+            $congressPollVote->createAnonimCounter($poll_id, $option_id, $mandat);
+        }
+    }
+    output_label('Összes érintett napirend');
+    o($num_polls);
+    output_ln(2);
+    output_label('Összes érintett szavazás');
+    o($num_votes);
+    output_ln(2);
+    output_label('Módosított szavazás');
+    o($changed_votes);
+    output_ln(2);
+}
 if (isset($import)) {
     $sql = 'SELECT * FROM `TABLE 25` ';
     $eredm = $mysqliLink->query($sql);
-    if ($eredm) {
-        while ($row = $eredm->fetch_assoc()) {
-            $names = explode(' ', $row['Név']);           
-            $veznev = $names[0];
-            $kernev = $names[1];            
-            if(isset($names[2])) {
-                $kernev .= ' '.$names[2];
-            }
-            $birth_city = $row['Születési hely'];
-            $mother = $row['Anyja neve'];
-            $addr_city = $row['Település'];
-            $addr_post = $row['Irányítószám'];
-            $addr_street = $row['Cím'];
-            $email = $row['E-mail'];
-            $sex = 'M';
-            $born = DateTime::createFromFormat('Y.m.d', $row['Születési dátum'])->format('Y-m-d');
-            $base_data_id = createNewMember();
-            $sql = 'UPDATE `' . MEMBER_TABLE . '` SET ';
-            $sql .= ' `' . MEMBER_VEZNEV . '` ="' . $veznev . '" ,';
-            $sql .= ' `' . MEMBER_KERNEV . '` ="' . $kernev . '" ,';
-            $sql .= ' `' . MEMBER_BORN . '` ="' . $born . '" ,';
-                  $sql .= ' `' . MEMBER_BIRTH_CITY . '` ="' . $birth_city . '" ,';
-                $sql .= ' `' . MEMBER_MOTHER . '` ="' . $mother . '" ,';
-  
-            $sql .= ' `' . MEMBER_ADDR_POST . '` ="' . $addr_post . '" ,';
-            $sql .= ' `' . MEMBER_ADDR_CITY . '` ="' . $addr_city . '" ,';
-            $sql .= ' `' . MEMBER_ADDR_STREET . '` ="' . $addr_street . '" ,';
-            $sql .= ' `' . MEMBER_EMAIL . '` ="' . $email . '" ,';
-              $sql .= ' `' . MEMBER_HOMEPAGE . '` ="" ,';
-            $sql .= ' `' . MEMBER_NICKNAME . '` ="" ,';
-            $sql .= ' `' . MEMBER_SEX . '` ="' . $sex . '" ';
-            $sql .= ' WHERE `' . MEMBER_ID . '`="' . $base_data_id . '"';
-            setClubOfNewMember($base_data_id, 49);
-            error_log($sql);
-            $mysqliLink->query($sql);
+    while ($eredm AND $row = $eredm->fetch_assoc()) {
+        $club_id = 125; //getClubIdByClubName($row['egyesület']);
+        /*
+          $names = explode(' ', $row['Versenyző neve']);
+          $veznev = $names[0];
+          $kernev = $names[1];
+          if (isset($names[2])) {
+          $kernev .= ' ' . $names[2];
+          }
+         */
+        $veznev = $row['Vezetéknév'];
+        $kernev = $row['Keresztnév'];
+        $birth_city = $row['Születési hely'];
+        $mother = $row['Édesanyja neve'];
+        $addr_city = $row['Város'];
+        $addr_post = $row['Irányítószám'];
+        $addr_street = $row['Lakcím'];
+        $email = $row['E-mail'];
+        $telefon = $row['Telefonszám'];
+        $sex = ($row['Nem'] == 'nő') ? 'F' : 'M';
+//        $born = DateTime::createFromFormat('Y.m.d', $row['Születési ideje'])->format('Y-m-d');
+        $born = '2000-01-01';
+        $base_data_id = createNewMember();
+        $sql = 'UPDATE `' . MEMBER_TABLE . '` SET ';
+        $sql .= ' `' . MEMBER_VEZNEV . '` ="' . $veznev . '" ,';
+        $sql .= ' `' . MEMBER_KERNEV . '` ="' . $kernev . '" ,';
+        $sql .= ' `' . MEMBER_BORN . '` ="' . $born . '" ,';
+        $sql .= ' `' . MEMBER_BIRTH_CITY . '` ="' . $birth_city . '" ,';
+        $sql .= ' `' . MEMBER_MOTHER . '` ="' . $mother . '" ,';
+
+        $sql .= ' `' . MEMBER_ADDR_POST . '` ="' . $addr_post . '" ,';
+        $sql .= ' `' . MEMBER_ADDR_CITY . '` ="' . $addr_city . '" ,';
+        $sql .= ' `' . MEMBER_ADDR_STREET . '` ="' . $addr_street . '" ,';
+        $sql .= ' `' . MEMBER_EMAIL . '` ="' . $email . '" ,';
+        $sql .= ' `' . MEMBER_TEL . '` ="' . $telefon . '" ,';
+        $sql .= ' `' . MEMBER_HOMEPAGE . '` ="" ,';
+        $sql .= ' `' . MEMBER_NICKNAME . '` ="" ,';
+        $sql .= ' `' . MEMBER_SEX . '` ="' . $sex . '" ';
+        $sql .= ' WHERE `' . MEMBER_ID . '`="' . $base_data_id . '"';
+        if ($club_id > 0) {
+            setClubOfNewMember($base_data_id, $club_id);
         }
-    } else {
-        error_log('Nincs eredmeny');
+//        error_log($sql);
+        $mysqliLink->query($sql);
     }
 }
 
@@ -215,7 +281,8 @@ $output .= '<label>Napi rutin:</label><input type="submit" value="Futtatás" nam
 $output .= '<label>Adattablak létrehozása:</label><input type="submit" value="Indít" name="create_tables"><br>';
 $output .= '<label>FAI teszt:</label><input type="submit" value="Indít"  name="fai_test">';
 $output .= '<br>';
-
+$output .= '<label>Szavazások anonimizálása:</label><input type="submit" value="Indít" name="anonim"><br>';
+$output .= '<label>Fájlelérés relatív:</label><input type="submit" value="Indít" name="relative"><br>';
 $output .= '<label>Évnyitás:</label>';
 if (isset($fees_created) AND $fees_created) {
     $output .= '<input type="submit" value="Nyitás" name="new_year">';

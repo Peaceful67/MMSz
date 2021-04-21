@@ -1,0 +1,81 @@
+@page {
+    sheet-size: 85mm 53mm;
+}
+
+body {
+    background: url(comp_perm_background.jpg);
+    background-repeat: no-repeat;
+    background-size: 1093px 678px;
+    margin: 0px;
+    padding: 0px;
+}
+
+.mmsz_hun {
+    margin: 0px;
+    position:  fixed;
+    top:5mm;
+    left:25mm;
+    font-size: 11px;
+}
+.mmsz_id {
+    position:  fixed;
+    top:10mm;
+    left:27mm;
+    font-size: 8px;
+}
+
+.avatar {
+    position:  fixed;
+    top:3mm;
+    left:3mm;
+    margin: 0px;
+}
+.name {
+    position: fixed;
+    top:27mm;
+    left:4mm;
+    font-size: 14px;  
+}
+.born {
+    position: fixed;
+    top:33mm;
+    left:4mm;
+    font-size: 8px;  
+}
+.branch {
+    position: fixed;
+    top:14mm;
+    left:25mm;
+    font-size: 8px;  
+}
+.valid {
+    position: fixed;
+    top:18mm;
+    left:25mm;
+    font-size: 8px;  
+}
+.created {
+    position: fixed;
+    top:22mm;
+    left:25mm;
+    font-size: 8px;  
+}
+
+.club {
+    position: fixed;
+    top:36mm;
+    left:4mm;
+    font-size: 8px;
+}
+.year {
+    position: fixed;
+    top:18mm;
+    left:35mm;
+    font-size: 20px;
+}
+.extension {
+    position: fixed;
+    top:48mm;
+    left:4mm;
+    font-size: 8px;
+}

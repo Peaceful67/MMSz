@@ -1,7 +1,7 @@
 <?php
 
 define("CAT_CHECKNAME", 'cat_chk_');
-if (!isset($selected_branch)) {
+if (!isset($selected_branch) OR isset($cat_reset)) {
     $selected_branch = -1;
 }
 if (!isset($prior_branch)) {
@@ -30,42 +30,34 @@ if ($selected_branch >= 0) {
     if ($old_categories != $new_categories) {
         logger($member_id, -1, LOGGER_CATEGORY_MOD, $category_member_id . " azonosítójú kategória módosítása: régi:" . $old_categories . ', új:' . $new_categories);
     }
-//    reloadEditMember();
 }
 
+$view->putPrevent();
+$view->newKeret('kategoriak');
 
-
-$output .= '<div class="keret">';
-$output .= '<lablel>Rögzített kategóriák: </label>';
-$output .= getListMemberCategories($category_member_id) . '<br>';
-
-$output .= '<form method="post">';
-$output .= '<div class="kategoriak">';
-$member_categories = getMemberCategories($category_member_id);
-$output .= '<label>Szakág:</label><select name="selected_branch" onChange="submit();">';
-$output .= '<option value ="-1" ' . (($selected_branch == -1) ? "selected" : "") . '>Válassz !</option>';
-foreach ($branches as $br_index => $br) {
-    $output .= '<option value="' . $br_index . '" ' . (($selected_branch == $br_index) ? "selected" : "") . '>' . $br . '</option>';
-}
-$output .= '</select>';
-
+$view->putText(getListMemberCategories($category_member_id), 'Kategóriák');
+$view->inputSelector('Szakág', $branches, 'branch', true);
 
 if ($selected_branch >= 0) {
     $categories = getCategories($selected_branch);
-    $output .= '<ul>';
-    foreach ($categories as $cat_id => $cat_name) {
-        $cat_long = getCategoryById($cat_id)[CATEGORIES_LONG];
-        $chk_name = CAT_CHECKNAME . $cat_id;
-        $checked = (in_array($cat_id, $member_categories)) ? 'checked' : '';
-        $output .= '<li><input type="checkbox" name="' . $chk_name . '" ' . $checked . ' onChange="submit();" ><a title="' . $cat_long . '">' . $cat_name . '</a></li>';
+    $member_categories = getMemberCategories($category_member_id);
+    if (count($categories) > 0) {
+        $view->newElement('<ul class="list-group list-group-striped">');
+        foreach ($categories as $cat_id => $cat_name) {
+            $cat_long = getCategoryById($cat_id)[CATEGORIES_LONG];
+            $chk_name = CAT_CHECKNAME . $cat_id;
+            $$chk_name = (in_array($cat_id, $member_categories)) ? 'on' : 'off';
+            $view->newElement('<li class="list-group-item">');
+            $view->inputCheckbox($chk_name, $cat_name, true);
+            $view->endElement('</li>');
+        }
+        $view->endElement('</ul>');
+    } else {
+        $view->warning($branches[$selected_branch]. ' szakágnak nincsenek megadva kategóriák!');
     }
-    $output .= '</ul>';
 }
-$output .= '<input type="hidden" name="prior_branch" value="' . $prior_branch. '">';
-$output .= '<input type="hidden" name="category_member_id" value="' . $category_member_id . '">';
-$output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
-$output .= '</div>';
-$output .= '</form>';
-//$output .= 'Átvett kategória: ' . retriveMember($category_member_id)[MEMBER_KATEG] . '<br>';
-$output .= '</div>';
+$view->putHidden('prior_branch');
+$view->putHidden('category_member_id');
+$view->putHidden('edit_member');
+$view->endKeret();
 

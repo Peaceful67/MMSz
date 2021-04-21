@@ -13,9 +13,17 @@ if (isset($poll_save)) {
     if (isset($poll_description)) {
         $congressPoll->setPollDescription($poll_description);
     }
+    if (isset($selected_max_option)) {
+        $congressPoll->setMaxOption($selected_max_option);
+    } else {
+        $selected_max_option = $congressPoll->getMaxOption();
+    }
+    $tbc = $to_be_closed_date . ' ' . $to_be_closed_time;
+    $congressPoll->setPollToBeClosed($tbc);
 } else {
     $poll_title = $congressPoll->getPollTitle();
     $poll_description = $congressPoll->getPollDescription();
+    $selected_max_option = $congressPoll->getMaxOption();
 }
 if (isset($poll_option_add)) {
     $congressPollOption->addPollOption();
@@ -23,58 +31,80 @@ if (isset($poll_option_add)) {
 if (isset($poll_option_del)) {
     $congressPollOption->delPollOption($poll_option_del);
 }
-o('<div class="keret editor">');
-output_label('<b>Gyűlés címe</b>');
-o($congressOnline->getCongressTitle() . '<br>');
-output_label('<b>Napirendi pont</b>');
-$output .= $congressItems->getCongressItemTitle();
-output_ln();
-o($congressItems->getCongressItemDescription());
-o('</div>');
+$view->newKeret();
+$view->putText($congressOnline->getCongressTitle(), 'Gyűlés címe', true);
+$view->putText($congressItems->getCongressItemTitle(), 'Napirendi pont', true);
+$view->putText($congressItems->getCongressItemDescription());
+$view->endKeret();
 
-o('<div class="keret editor">');
-o('<h3>Szavazás szerkesztése</h3>');
-output_label('Cím');
-o('<input type="text" name="poll_title" value="' . $poll_title . '">');
-output_ln();
-output_label('Szavazás');
-o('<input type="text" size="80" maxlenght="250" name="poll_description" value="' . $poll_description . '">');
-output_ln();
-output_label('Lehetőségek');
-output_add('poll_option_add');
-output_spaces(5);
-o($congressPoll->isPollMultiChoice() ? 'Több válasz is kiválasztható' : 'Csak egy válasz lehetséges');
-output_ln();
+$view->newKeret();
+$view->putElement('<h4>Határozat előkészítése</h4>');
+$view->putPrevent();
+$view->inputText('poll_title', 'Határozati javaslat címe');
+$view->inputTextArea('poll_description', 'Határozati javaslat szövege');
+
+$to_be_closed = strtotime($congressPoll->getPollToBeClosed());
+if (empty($to_be_closed)) {
+    $to_be_closed = strtotime('+7 days', $now);
+}
+if ($to_be_closed < $now) {
+    $view->warning('A lezárás nem lehet a múltban, javasolt zárás egy hét múlva.');
+    $to_be_closed = strtotime('+7 days', $now);
+}
+$to_be_closed_date = date('Y-m-d', $to_be_closed);
+$to_be_closed_time = date('H:i', $to_be_closed);
+$view->newDiv('row');
+$view->inputDate('to_be_closed_date', 'Lezárás legkésőbbi időpontja');
+$view->inputText('to_be_closed_time');
+$view->endDiv();
+
 $pollOptions = $congressPollOption->getPollOptions();
-if (empty($pollOptions)) {
-    o('Még nincs megadva szavazati lehetőség');
-    output_ln();
+if ($congressPoll->isPollMultiChoice()) {
+    $pollOptionsMax = [0 => 'Korlátlan'];
+    $max_i = 1;
+    foreach ($pollOptions as $opt) {
+        $pollOptionsMax[$max_i] = $max_i;
+        $max_i++;
+    }
+    $view->inputDropDownChooser('Legtöbb kiválasztható', $pollOptionsMax, 'selected_max_option');
+    $poll_type_text = 'Több válasz is kiválasztható,';
 } else {
-    foreach ($pollOptions as $optionId => $option) {
-        $congressPollOption->setSelectedPollOption($optionId);
-        if (isset($poll_save)) {
+    $poll_type_text = 'Csak egy válasz lehetséges, ';
+}
+$poll_type_text .= ($congressPoll->isPollAbstain() ? 'tartózkodás engedélyezett' : 'tartózkodás nem engedélyezett');
+if ($congressPoll->isPollYesNo()) {
+    $poll_type_text .= ', eldöntendő szavazás (Igen/Nem)';
+    $view->putText($poll_type_text, 'Szavazás típusa');
+} else {
+    $view->putText($poll_type_text, 'Szavazás típusa');
+    $view->submitAdd('poll_option_add', -1, 'Szavazati lehetőség hozzáadása');
+    if (empty($pollOptions)) {
+        $view->warning('Még nincs megadva szavazati lehetőség');
+    } else {
+        foreach ($pollOptions as $optionId => $option) {
+            $congressPollOption->setSelectedPollOption($optionId);
+            if (isset($poll_save)) {
+                $var_name = 'poll_option_title_' . $optionId;
+                if (isset($$var_name) AND ( $$var_name != $congressPollOption->getPollOptionTitle())) {
+                    $congressPollOption->setPollOptionTitle($$var_name);
+                }
+                $var_name = 'poll_option_desc_' . $optionId;
+                if (isset($$var_name) AND ( $$var_name != $congressPollOption->getPollOptionDescription())) {
+                    $congressPollOption->setPollOptionDescription($$var_name);
+                }
+            }
+            $view->newDiv('row');
+            $view->submitDelete('poll_option_del', $optionId);
             $var_name = 'poll_option_title_' . $optionId;
-            if (isset($$var_name) AND ( $$var_name != $congressPollOption->getPollOptionTitle())) {
-                $congressPollOption->setPollOptionTitle($$var_name);
-            }
+            $$var_name = $congressPollOption->getPollOptionTitle();
+            $view->inputText($var_name, 'Szavazat');
             $var_name = 'poll_option_desc_' . $optionId;
-            if (isset($$var_name) AND ( $$var_name != $congressPollOption->getPollOptionDescription())) {
-                $congressPollOption->setPollOptionDescription($$var_name);
-            }
+            $$var_name = $congressPollOption->getPollOptionDescription();
+            $view->inputText($var_name, 'Megjegyzés');
+            $view->endDiv();
         }
-        output_button('poll_option_del', $optionId, 'delete.jpg');
-        output_spaces(5);
-        o('Szavazat:');
-        o('<input type="text" name="poll_option_title_' . $optionId . '" value="' . $congressPollOption->getPollOptionTitle() . '">');
-        output_spaces(5);
-        o('Megjegyzés:');
-        o('<input type="text" name="poll_option_desc_' . $optionId . '" value="' . $congressPollOption->getPollOptionDescription() . '">');
-        output_ln();
     }
 }
-
-o('<button name="poll_edit_exit">Vissza</button>');
-output_spaces(5);
-output_save('poll_save');
-output_spaces(5);
-o('</div>');
+$view->submitBack('poll_edit_exit', 'Visszatérés a határozati javaslat szerkesztésből');
+$view->submitSave('poll_save', 0, 'A szerkesztett határozati javaslat adatainak menétése');
+$view->endKeret();

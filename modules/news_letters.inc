@@ -1,5 +1,6 @@
 <?php
 
+
 define("ADDR_CHK", "addr_chk_");
 $selected_group = array(
     -1 => array("Válassz", "Kiknek az email címeit kéred"),
@@ -26,9 +27,6 @@ if (!isset($selected_newsletter)) {
 if (!isset($old_selected_addr)) {
     $old_selected_addr = $selected_addr;
 }
-if (!isset($radio_news_letter)) {
-    $radio_news_letter = "addresses";
-}
 if (!isset($email_subject)) {
     $email_subject = '';
 }
@@ -38,34 +36,24 @@ if (!isset($email_body)) {
 $sql = 'SELECT * FROM `' . NEWSLETTER_TABLE . '` ;';
 $res = $mysqliLink->query($sql);
 $newsletters = array();
+$newsletter_total = array();
 while ($res AND $row = $res->fetch_assoc()) {
-    $newsletters[$row[NEWSLETTER_ID]] = $row;
+    $newsletters[$row[NEWSLETTER_ID]] = $row[NEWSLETTER_SUBJECT];
+    $newsletters_total[$row[NEWSLETTER_ID]] = $row;
 }
 if (isset($resend)) {
-    $email_subject = $newsletters[$resend][NEWSLETTER_SUBJECT];
-    $email_body = $newsletters[$resend][NEWSLETTER_BODY];
+    $email_subject = $newsletters_total[$resend][NEWSLETTER_SUBJECT];
+    $email_body = $newsletters_total[$resend][NEWSLETTER_BODY];
     $selected_newsletter = -1;
-    $radio_news_letter = "email";
+    $radio_news_letter = "off";
 }
-
-$output .= '<form method="post">';
-$output .= '<label>Hírlevelek: </label><select name="selected_newsletter" onChange="submit();">';
-$output .= '<option value=-1 ' . (-1 == $selected_newsletter ? 'selected' : '') . '>Új hírlevél készítése</option>';
-foreach ($newsletters as $key => $letter) {
-    $output .= '<option value="' . $key . '" ' . ($selected_newsletter == $key ? "selected" : "") . '>'
-            . $letter[NEWSLETTER_TIME] . ' / ' . $letter[NEWSLETTER_SUBJECT] . '</option>';
-}
-$output .= '</select>';
+$view->newDiv('row');
+$view->submitDropDownChooser('Hírlevelek', [-1 => 'Új hírlevél készítése'] + $newsletters, 'selected_newsletter');
 if ($selected_newsletter < 0) {
-    $output .= '</br></br><label>Címzettek: </label><select name="selected_addr" onChange="submit();">';
-    foreach ($selected_group as $key => $opt) {
-        $output .= '<option value="' . $key . '" ' . ($selected_addr == $key ? "selected" : "") . '>' . $opt[0] . '</option>';
-    }
-    $output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp;' . $selected_group[$selected_addr][1] . '</br>';
-    $output .= 'Csak címek:<input type="radio" name="radio_news_letter" value="addresses" onChange="submit();" ' . (($radio_news_letter == "addresses") ? " checked " : "") . '>';
-    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;Email:<input type="radio" name="radio_news_letter" value="email" onChange="submit();" ' . (($radio_news_letter == "email") ? " checked " : "") . '><br>';
-    $output .= '<br>';
-
+    $view->submitDropDownChooser('Címzettek', $selected_group, 'selected_addr');
+    $view->putModalToggler('modal_addr', 'Egyéni', 'A címzett tagok egyéni kijelölése, megtekintése');
+    $view->endDiv();
+    $view->submitSwitchCheckbox('chk_only_addresses', 'Címek lekérdezése', 'Körlevél küldés', 'Művelet');
     $sql = 'SELECT * FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_EMAIL . '`!="" ORDER BY `' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '`';
     $res = $mysqliLink->query($sql);
     $all = array();
@@ -90,8 +78,8 @@ if ($selected_newsletter < 0) {
             }
         }
     }
-    $output .= '<div class="email_address">';
-    $output .= '<ul>';
+    $view->newModalMembers('modal_addr', 'A kijelölt címzett tagok');
+    $view->newElement('<ul>');
     $selected_num = 0;
     foreach ($all as $id) {
         $mem = retriveMember($id);
@@ -102,39 +90,40 @@ if ($selected_newsletter < 0) {
         } else {
             $checked = '';
         }
-        $output .= '<li><input type="checkbox" name="' . $chk . '" ' . $checked . ' "  onChange="submit();">'
-                . '<a title="(' . $mem[MEMBER_ID] . ')  ' . $mem[MEMBER_EMAIL] . '">'
-                . $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . '</a></li>';
+        $view->newElement('<li class="list-group-item">');
+        $view->putElement('<input type="checkbox" name="' . $chk . '" ' . $checked . ' "  onChange="submit();" class="mx-1">'
+                . '<a data-toogle="tooltip" title="Szül:' . $mem[MEMBER_BORN] . '">'
+                . $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . '  (' . $mem[MEMBER_ID] . ') / ' . $mem[MEMBER_EMAIL] . '</a>');
+        $view->endElement('</li>');
     }
-    $output .= '</ul>';
-    $output .= '</div><div = class="email_body">';
-    $output .= 'Címzettek száma: ' . $selected_num . '<br><br>';
-    if ($radio_news_letter == "addresses") {
+    $view->endElement('</ul>');
+    $view->endModal();
+    $view->info('Címzettek száma: ' . $selected_num);
+    if ($chk_only_addresses == "on") {
         foreach ($all as $id) {
             $chk = ADDR_CHK . $id;
             if (isset($$chk) AND $ $chk == 'on') {
                 $mem = retriveMember($id);
-                $output .= $mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . ' < ' . trim($mem[MEMBER_EMAIL]) . ' >;';
+                $view->putElement($mem[MEMBER_VEZNEV] . ' ' . $mem[MEMBER_KERNEV] . ' < ' . trim($mem[MEMBER_EMAIL]) . ' >;');
             }
         }
-        $output .= '<input type="hidden" name="email_body" value="' . $email_body . '">';
-        $output .= '<input type="hidden" name="email_subject" value="' . $email_subject . '">';
+        $view->putHidden('email_body');
+        $view->putHidden('email_subject');
     } else {
-        $output .= '<input placeholder="Tárgy..." size="64" max_length="128" type="text" name="email_subject" value="' . $email_subject . '">&nbsp;&nbsp;&nbsp;&nbsp;';
+        $view->newDiv('row');
+        $view->inputText('email_subject', '', 'Körlevél tárgya...');
         if ($selected_num > 0) {
-            $output .= '<input type="submit" name="send_letter" value="Küldés" '
-                    . 'onClick="return confirm(\'Biztosan ki akarsz küldeni  ' . $selected_num . ' darab emailt ?\')">';
+            $view->submitButton('send_letter', 'Küldés', -1, 'Körlevelek kiküldése', 'Biztosan ki akarsz küldeni  ' . $selected_num . ' darab emailt ?');
         }
-        $output .= '<br><br><textarea name="email_body" rows="36" cols="100">' . $email_body . '</textarea>';
+        $view->endDiv();
+        $view->inputTextArea('email_body', '');
+        $view->info(REPLACE_NAME.' : a címzett neve<br> '.REPLACE_ID.' : a címzett '. getOptionValue(OPTIONS_NAME_COMPANY_NAME).' azonosítója.');
     }
-    $output .= '</div>';
-    $output .= '<input type="hidden" name="old_selected_addr" value="' . $old_selected_addr . '">';
-    $output .= '</form>';
-
+    $view->putHidden('old_selected_addr');
     if (isset($send_letter)) {
         unset($send_letter);
         if (empty($email_subject)) {
-            warning("Nem adtad meg a körlevél tárgyát !");
+            $view->danger("Nem adtad meg a körlevél tárgyát !");
         } else {
             $sent_num = 0;
             $news_id = create_newsletter($email_subject, $email_body);
@@ -147,20 +136,22 @@ if ($selected_newsletter < 0) {
                 }
             }
             start_sending_newsletters();
-            warning($sent_num . ' darab körlevél kiküldése elindítva !');
+            $view->success($sent_num . ' darab körlevél kiküldése elindítva !');
         }
     }
 } else { // List newsletters
-    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button  name="resend" value=' . $selected_newsletter . '>Újra küldés</button></br></br>';
+    $view->submitButton('resend', 'Újra küldés', $selected_newsletter, 'A már egyszer kiküldött email ismételt elküldése');
+    $view->endDiv();
+    $view->putText(getMemberName($newsletters_total[$selected_newsletter][NEWSLETTER_CREATOR]), 'Küldő');
+    $view->putText($newsletters_total[$selected_newsletter][NEWSLETTER_SUBJECT], 'Tárgy');
+    $view->putText($newsletters_total[$selected_newsletter][NEWSLETTER_BODY], 'Tartalom');
+    $prev_addr = '';
     $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `' . NLM_NEWSLETTER_ID . '`=' . $selected_newsletter . ' ;';
     $res = $mysqliLink->query($sql);
-    $output .= '<label>Küldő:</label>' . getMemberName($newsletters[$selected_newsletter][NEWSLETTER_CREATOR]) . '<br><br>';
-    $output .= '<label>Tárgy:</label>' . $newsletters[$selected_newsletter][NEWSLETTER_SUBJECT] . '<br><br>';
-    $output .= '<label>Tartalom:</label>' . $newsletters[$selected_newsletter][NEWSLETTER_BODY] . '<br><br>';
-    $output .= '<label>Címzettek:</label><br>';
     while ($res AND $row = $res->fetch_assoc()) {
         $mem_id = $row[NLM_MEMBER];
-        $output .= getMemberName($row[NLM_MEMBER]) . ' / ' . getMemberEmail($row[NLM_MEMBER]) . ' : ' . (0 == strtotime($row[NLM_SENT]) ? 'Várakozik' : $row[NLM_SENT]) . '<br>';
+        $prev_addr .= getMemberName($row[NLM_MEMBER]) . ' / ' . getMemberEmail($row[NLM_MEMBER]) . ' : ' . (0 == strtotime($row[NLM_SENT]) ? 'Várakozik' : $row[NLM_SENT]) . '<br>';
     }
+    $view->putText($prev_addr, 'Címzettek');
 }
 

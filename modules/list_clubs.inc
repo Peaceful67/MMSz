@@ -1,11 +1,26 @@
 <?php
 
+if (isset($edit_subclubs)) {
+    $edit_club = $edit_subclubs;
+    include_once INCLUDES . 'edit_subclubs.inc';
+    if (isset($edit_subclubs)) {
+        $view->putHidden('edit_subclubs');
+        return;
+    }
+}
+
 if (isset($new_club)) {
     $edit_club = -1;
     include_once INCLUDES . 'club_editor.inc';
 } elseif (isset($edit_club)) {
     include_once INCLUDES . 'club_editor.inc';
 }
+
+if (isset($edit_club)) {
+    $view->putHidden('edit_club');
+    return;
+}
+
 if (isset($delete_club)) {
     $sql = 'DELETE FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_ID . '`="' . $delete_club . '"';
     $mysqliLink->query($sql);
@@ -20,26 +35,30 @@ if (!isset($act_club)) {
 }
 $col_width = array('5%;', '35%;', '40%;', '10%;', '10%;');
 $del_act = $del_max = 0;
-foreach(getClubNameList() as $cl_id => $cl_name ) {
-    $del_act += getNumberOfDelegateClub($cl_id);
-    $del_max += getMaxNumberOfDelegateClub($cl_id);
+$numberOfDelegate = array();
+$maxNumberOfDelegate = array();
+foreach (getClubNameList() as $cl_id => $cl_name) {
+    $del_act += $numberOfDelegate[$cl_id] = intval(getNumberOfDelegateClub($cl_id));
+    $del_max += $maxNumberOfDelegate[$cl_id] = intval(getMaxNumberOfDelegateClub($cl_id));
 }
-
 $res = $mysqliLink->query('SELECT * FROM `' . CLUB_TABLE . '` WHERE ' . ($act_club == "on" ? ('`' . CLUB_ACT . '`="1"') : '1') . ' ORDER BY `' . $order_by . '`');
-$output .= '<br><form method="post"> '
-        . 'Aktív egyesületek küldöttei: '.$del_act.'/'.$del_max.'<br><br>'
-        . '<input type="submit" name="new_club" value="Új felvitele">'
-        . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-        . ' <input type="checkbox" name="act_club" ' . ($act_club == "on" ? "checked" : "") . ' onchange="submit();">'
-        . 'Csak aktív egyesületek'
-        . '<div class="lists"> <table> <thead>';
-$output .= '<tr><th style="width:' . $col_width[0] . '">Nr.</th><th style="width:' . $col_width[1] . '">Név</th>'
-        . '<th style="width:' . $col_width[2] . '">Cím</th><th style="width:' . $col_width[3] . '">Tagok</th>'
-        . '<th style="width:' . $col_width[4] . '">Művelet</th></tr></thead><tbody>';
+$view->info('Aktív egyesületek küldöttei: ' . $del_act . '/' . $del_max);
+$view->newDiv('row m-sm-1');
+$view->submitAdd('new_club', -1, 'Új egyesület felvétele');
+$view->inputCheckbox('act_club', 'Csak az aktív egyesületek listázása', true);
+$view->endDiv();
+$view->newDiv('table-responsive');
+$view->newElement('<table class="table table-striped table-bordered" ><caption>Egyesületek listája</caption>');
+$view->newElement('<thead class="thead-dark">');
+$view->newTableTr();
+$view->putElement('<th scope="col">Nr.</th><th scope="col">Név</th><th scope="col">Cím</th><th scope="col">Tagok</th><th scope="col">Művelet</th>');
+$view->endTableTr();
+$view->endElement('</thead>')->newElement('<tbody>');
 
 while ($res AND $row = $res->fetch_assoc()) {
     $files = scandir(DOCUMENTS);
-    $needle = 'club_' . $row[CLUB_ID] . '_';
+    $club_id = $row[CLUB_ID];
+    $needle = 'club_' . $club_id . '_';
     $docus = ' ';
     foreach ($files as $f) {
         if (substr($f, 0, strlen($needle)) == $needle) {
@@ -47,25 +66,33 @@ while ($res AND $row = $res->fetch_assoc()) {
         }
     }
 
-    $output .= '<tr style="color: ' . (($row[CLUB_ACT] == 1) ? 'green' : 'red') . ';">';
-    $output .= '<td>' . $row[CLUB_ID] . '. ';
-    if(isClubMembership($row[CLUB_ID])>0) {
-        $output .= '<image src="' . IMAGES . 'ok.jpg">';
+    $view->newElement('<tr ' . ((isClubMembership($club_id) > 0) ? 'class="table-success"' : '') . '>');
+    /*
+      . ((!is_null($row[CLUB_SUBCLUBS]) AND ! empty($row[CLUB_SUBCLUBS])) ? ' background-color:orange;' : '')
+      . '">';
+     */
+    $view->putElement('<td>' . $club_id . '</td>');
+    $view->putElement('<td>' . $row[CLUB_NAME] . '</td>');
+    $view->putElement('<td>' . $row[CLUB_ADDR_POST] . ' ' . $row[CLUB_ADDR_CITY] . ', ' . $row[CLUB_ADDR_STREET] . '</td>');
+    $num_members = getNumMemberOfClub($club_id);
+    if (!isset($numberOfDelegate[$club_id])) {
+        $numberOfDelegate[$club_id] = 0;
     }
-    $output .= '</td>';
-    $output .= '<td>' . $row[CLUB_NAME] . '</td>';
-    $output .= '<td>' . $row[CLUB_ADDR_POST] . ' ' . $row[CLUB_ADDR_CITY] . ', ' . $row[CLUB_ADDR_STREET] . '</td>';
-    $num_members = getNumMemberOfClub($row[CLUB_ID]);    
-    $output .= '<td>'  
-            . $num_members 
-            . delegatesNumberToString($row[CLUB_ID])
-            . '</td>';
-    $output .= '<td>';
-    $output .= '<button  type="submit" name="edit_club" value="' . $row[CLUB_ID] . '"><img src="' . IMAGES . 'edit.jpg" title="Szerkesztés"></button>';
-    if (!isClubUsed($row[CLUB_ID])) {
-        $output .= '<button  type="submit" name="delete_club" value="' . $row[CLUB_ID] . '" onClick="return confirm(\'Biztosan tölni akarod a ' . $row[CLUB_ID] . ' azonosítójú egyesületet?\')"><img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+    if (($row[CLUB_MANDATUM] > 0) AND $numberOfDelegate[$club_id] > 1) {
+        $member_background = ' style="color:red;" ';
+    } else {
+        $member_background = '';
     }
-    $output .= $docus.'</td>';
-    $output .= "</tr>";
+    $view->putElement('<td' . $member_background . '>'
+            . (($row[CLUB_ACT]) ? ($num_members . green_red_String($numberOfDelegate[$club_id], $maxNumberOfDelegate[$club_id])) : 'Inaktív')
+            . '</td>');
+    $view->putElement('<td>');
+    $view->submitEdit('edit_club', $row[CLUB_ID]);
+    if (!isClubUsed($club_id)) {
+        $view->submitDelete('delete_club', $row[CLUB_ID], 'Törlés', 'Biztosan tölni akarod a ' . $club_id . ' azonosítójú egyesületet?');
+    }
+    $output .= $docus . '</td>';
+    $view->endTableTr();
 }
-$output .= "</tbody></table></div></form>";
+$view->endElement('</tbody>');
+$view->endElement('</table>')->endDiv();

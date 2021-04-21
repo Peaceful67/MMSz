@@ -4,18 +4,15 @@ if (!isset($selected_cat)) {
     $selected_cat = -1;
 }
 
-$output .= '<br><div class = "lists"><form id="edit_categories" method="post" >';
-$output .= '<h2>Kategóriák</h2><table><tr>';
-$output .= '<th><select id = "selected_act" name = "selected_cat" onChange = "submit();">';
-$output .= '<option value = "-1">Összes</option>';
-foreach ($branches as $index => $branch) {
-    $output .= '<option value = "' . $index . '" ' . ($index == $selected_cat ? 'selected' : '') . '>' . $branch . '</option>';
-}
-$output .= '</select></th>';
-$output .= '<th>Hosszú név</th>';
-$output .= '<th>Vezető</th>';
-$output .= '<th>Rövid név</th>';
-$output .= '<th>Szabályzatok</th></tr>';
+$view->newDiv('table-responsive-sm');
+$view->newElement('<table class="table table-striped table-bordered">');
+$view->newTableTr();
+$view->newElement('<th>')->submitDropDownChooser('', [-1 => 'Összes'] + $branches, 'selected_cat', true)->endElement('</th>');
+$view->putElement('<th>Hosszú név</th>');
+$view->putElement('<th>Vezető</th>');
+$view->putElement('<th>Rövid név</th>');
+$view->putElement('<th>Szabályzatok</th>');
+$view->endTableTr();
 $sql = 'SELECT * FROM ' . CATEGORIES_TABLE . ' WHERE ';
 if ($selected_cat < 0) {
     $sql .= ' 1 ';
@@ -26,32 +23,33 @@ $sql .= ' ORDER BY ' . CATEGORIES_SHORT;
 $res = $mysqliLink->query($sql);
 while ($res AND $row = $res->fetch_assoc()) {
     $cat_id = $row [CATEGORIES_ID];
-    $output .= "<tr>";
-    $output .= '<td>' . $branches[$row[CATEGORIES_BRANCH]];
+    $view->newTableTr();
+    $view->putElement('<td>' . $branches[$row[CATEGORIES_BRANCH]]);
     if ($row[CATEGORIES_ORG] >= 0) {
-        $output .= ', ';
+        $view->put(', ');
         if (isset($organizations[$row[CATEGORIES_ORG]])) {
-            $output .= $organizations[$row[CATEGORIES_ORG]];
+            $view->put($organizations[$row[CATEGORIES_ORG]]);
         }
     }
-    $output .= "</td>";
-    $output .= '<td>' . $row[CATEGORIES_LONG] . "</td>";
-    $output .= "<td>" . getNameOfCatLeaders($row[CATEGORIES_ID]) . "</td>";
-    $output .= "<td>" . $row[CATEGORIES_SHORT] . "</td>";
-    $output .= '<td>';
+    $view->put("</td>");
+    $view->putElement('<td>' . $row[CATEGORIES_LONG] . "</td>");
+    $view->putElement("<td>" . getNameOfCatLeaders($row[CATEGORIES_ID]) . "</td>");
+    $view->putElement("<td>" . $row[CATEGORIES_SHORT] . "</td>");
+    $view->newElement('<td>');
     $file_en = RULES . '_' . $cat_id . '_EN.pdf';
     $file_hu = RULES . '_' . $cat_id . '_HU.pdf';
     if (is_file($file_en)) {
-        $output .= '<a title = "Angol nyelvű szabályzat" target = "_blank" href = "' . $file_en . '"><img src = "' . IMAGES . 'pdf.jpg"></a>';
+        $view->viewEyeLink($file_en, 'Angol nyelvű szabályzat');
     } else {
-        $output .= '<img title = "Nincs feltöltve angol nyelvű szabályzat" src = "' . IMAGES . 'empty.jpg">';
+        $view->viewEyeSlash('Nincs feltöltve angol nyelvű szabályzat');
     }
     if (is_file($file_hu)) {
-        $output .= '<a title = "Magyar nyelvű szabályzat" target = "_blank" href = "' . $file_hu . '"><img src = "' . IMAGES . 'pdf.jpg"></a>';
+        $view->viewEyeLink($file_hu, 'Magyar nyelvű szabályzat');
     } else {
-        $output .= '<img title = "Nincs feltöltve magyar nyelvű szabályzat" src = "' . IMAGES . 'empty.jpg">';
+        $view->viewEyeSlash('Nincs feltöltve magyar nyelvű szabályzat');
     }
-    $output .= "</td></tr>";
+    $view->endElement('</td>');
+    $view->endTableTr();
 }
-$output .= '</table></form></div>';
+$view->endElement('</table>')->endDiv();
 

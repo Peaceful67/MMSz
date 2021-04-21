@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--code by webdevtrick ( https://webdevtrick.com) -->
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel='stylesheet' href='design/css/bootstrap.min.css'>
+        <link rel="stylesheet" href="design/horizontal.css">
+        <link rel="stylesheet" href="design/general.css">
+
+    </head>
+    <body>
+        <div class="container">
+            <a  data-toogle="tooltip" title="KIegészítő infó">Az alap szöveg</a>
+            <div class="tooltip">
+                Baksa Zsolt
+                <span class="tooltiptext">Azonosító:1508<br>Szül:1967.08.21<br>Email:lo@lo.hu</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="input-group">
+                <div class="custom-file">
+                    <div class="custom-file m-2">
+                        <input type="file" class="custom-file-input form-control-file mx-2" id="customFile">
+                        <label class="custom-file-label" for="customFile">Válaszd ki a feltöltendő fájlt!</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" name="upload" id="upload">Feltöltés</button>
+                    </div>
+                </div> 
+            </div>
+        </div>
+        <div class="container">
+            <div class="keret">
+                <div class="row align-items-end">
+                    <div class="col-6">
+                        <div class = "form-inline-sm form-group m-2"><!-- 9 -->
+                            <label for="related" class="col-form-label label-md" > Érintett: </label>
+                            <input type="number" min="0" max="9999" size="4" style="width:5em;" onchange="saved = false;" class="form-control-sm mx-2" id="related" name="related" value="0">
+                        </div><!-- 9 -->
+                    </div><!-- 9 -->
+                    <div class="col-6">
+                        <div class = "form-check form-check-inline"><!-- 4 -->
+                            <label for="check_access_new" class="form-check-label"  >Előtag
+                                <input id = "check_access_new" onchange="saved = false;" type = "checkbox" name = "check_access_new"  class = "form-check-input"  >
+                                Új tag felvétel: </label>
+                        </div><!-- 3 -->
+                    </div><!-- 9 -->
+                </div>
+                <div class="form-check form-check-inline">
+
+                    <label class="col-form-label form-check-label label-md">Görög : 
+                        <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="2">Greek
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <label class="form-check-label label-md">Kínai :
+                        <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="3"> Chinese
+                    </label>
+                </div>
+            </div>
+        </div>
+
+
+        <div class = "shadow p-1 m-2 rounded"><!-- 4 -->
+            <div class = "keret"><!-- 5 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_0" class="col-form-label label-md"> Versenyrendező: </label>
+                    <input id = "lm_chk_0"  onchange="saved = false;" type = "checkbox" name = "lm_chk_0"  class = "form-check-input form-control-sm mx-1"  >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_0" name="date_from_0" value="2021-04-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_0" name="date_to_0" value="2024-04-02" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_1" class="col-form-label label-md"> OB rendező: </label>
+                    <input id = "lm_chk_1"  onchange="saved = false;" type = "checkbox" name = "lm_chk_1"  class = "form-check-input form-control-sm mx-1"  >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_1" name="date_from_1" value="2021-04-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_1" name="date_to_1" value="2024-04-02" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_2" class="col-form-label label-md"> VB rendező: </label>
+                    <input id = "lm_chk_2"  onchange="saved = false;" type = "checkbox" name = "lm_chk_2"  class = "form-check-input form-control-sm mx-1" checked >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_2" name="date_from_2" value="2021-02-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_2" name="date_to_2" value="2024-03-14" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_3" class="col-form-label label-md"> Szakágvezető: </label>
+                    <input id = "lm_chk_3"  onchange="saved = false;" type = "checkbox" name = "lm_chk_3"  class = "form-check-input form-control-sm mx-1"  >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_3" name="date_from_3" value="2021-04-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_3" name="date_to_3" value="2024-04-02" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_4" class="col-form-label label-md"> Légtérgazdaa: </label>
+                    <input id = "lm_chk_4"  onchange="saved = false;" type = "checkbox" name = "lm_chk_4"  class = "form-check-input form-control-sm mx-1"  >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_4" name="date_from_4" value="2021-04-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_4" name="date_to_4" value="2024-04-02" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_5" class="col-form-label label-md"> Kutyabáb: </label>
+                    <input id = "lm_chk_5"  onchange="saved = false;" type = "checkbox" name = "lm_chk_5"  class = "form-check-input form-control-sm mx-1"  >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_5" name="date_from_5" value="2021-04-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_5" name="date_to_5" value="2024-04-02" >
+                </div><!-- 6 -->
+                <div class = "form-inline form-group m-2"><!-- 6 -->
+                    <label for="lm_chk_6" class="col-form-label label-md"> Játékvezető: </label>
+                    <input id = "lm_chk_6"  onchange="saved = false;" type = "checkbox" name = "lm_chk_6"  class = "form-check-input form-control-sm mx-1" checked >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_from_6" name="date_from_6" value="2020-09-02" >
+                    <input type="date" onchange="saved = false;" class="form-control-md mx-2" id="date_to_6" name="date_to_6" value="2024-03-14" >
+                </div><!-- 6 -->
+                <button type="submit" class="btn btn-primary mx-2" name="lm_save" value="-1" onclick="saved = true;">Rögzítés</button>
+            </div><!-- 5 -->
+        </div><!-- 4 -->
+
+        <script src='design/js/jquery-3.6.0.slim.min.js'></script>
+        <script src='design/js/bootstrap.min.js'></script>
+        <script src='design/js/functions.js'></script>
+
+    </body>
+</html>

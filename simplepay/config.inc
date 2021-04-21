@@ -10,9 +10,9 @@ if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         'USD_SECRET_KEY' => "", //secret key for account ID (USD)
         'CURL' => true, //use cURL or not
         'SANDBOX' => true, //true: sandbox transaction, false: live transaction
-        'PROTOCOL' => 'http', //http or https
-        'BACK_REF' => $_SERVER['HTTP_HOST'] . '?simplepay=card_backref', //url of payment backref page
-        'TIMEOUT_URL' => $_SERVER['HTTP_HOST'] . '?sp_timeout=1', //url of payment timeout page
+        'PROTOCOL' => $_SERVER['REQUEST_SCHEME'], //http or https
+        'BACK_REF' => $_SERVER['HTTP_HOST']. '?simplepay=card_backref', //url of payment backref page
+        'TIMEOUT_URL' => $_SERVER['HTTP_HOST']. '?sp_timeout=1', //url of payment timeout page
         'GET_DATA' => $_GET,
         'POST_DATA' => $_POST,
         'SERVER_DATA' => $_SERVER,
@@ -38,7 +38,7 @@ if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         'USD_SECRET_KEY' => "", //secret key for account ID (USD)
         'CURL' => true, //use cURL or not
         'SANDBOX' => false, //true: sandbox transaction, false: live transaction
-        'PROTOCOL' => 'http', //http or https
+        'PROTOCOL' => $_SERVER['REQUEST_SCHEME'], //http or https
         'BACK_REF' => $_SERVER['HTTP_HOST'] . '?simplepay=card_backref', //url of payment backref page
         'TIMEOUT_URL' => $_SERVER['HTTP_HOST'] . '?sp_timeout=1', //url of payment timeout page
         'GET_DATA' => $_GET,
@@ -57,6 +57,7 @@ if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         'DEBUG_ALU' => false, //ALU debug into log file
     );
 }
+
 $payment_status = array(
     'SUCCESSFUL_CARD_AUTHORIZATION' => '<font color="orange">Sikeres kártya ellenőrzés !</font>',
     'IN_PROGRESS' => '<font color="orange">Feldolgozás alatt, megerősítésre vár !</font>',

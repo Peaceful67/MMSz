@@ -3,6 +3,9 @@
 if (!isset($selected_club)) {
     $selected_club = -1;
 }
+if ($selected_club < 0 AND isset($_SESSION[SESSION_SELECTED_CLUB])) {
+    $selected_club = $_SESSION[SESSION_SELECTED_CLUB];
+}
 if (!isset($selected_branch)) {
     $selected_branch = -1;
 }
@@ -69,30 +72,41 @@ if (isset($roles_save)) {
 
         if (isset($catleader_role_id) AND $catleader_role_id == -1) {
             if (isset($check_access_catleader) AND $check_access_catleader == 'on') {
+                $catleader_permission = ACCESS_BRANCH_LEADER;
+                $catleader_permission |= (isset($check_access_new) AND $check_access_new == 'on') ? ACCESS_MANAGE_NEW : 0;
+                $catleader_permission |= (isset($check_access_edit) AND $check_access_edit == 'on') ? ACCESS_MANAGE_EDIT : 0;
+                $catleader_permission |= (isset($check_access_fai) AND $check_access_fai == 'on') ? ACCESS_MANAGE_FAI : 0;
+                $catleader_permission |= (isset($check_access_all) AND $check_access_all == 'on') ? ACCESS_MANAGE_ALL : 0;
                 if ($access_catleader_from < $access_catleader_to) {
                     $sql = 'INSERT INTO `' . ROLE_TABLE . '` (`'
                             . ROLE_MEMBER . '`, `' . ROLE_CLUB
                             . '`, `' . ROLE_PERMISSION . '`, `' . ROLE_FROM . '`, `' . ROLE_TO
                             . '`) VALUES ("'
                             . $role_member_id . '", "' . $selected_branch . '", "'
-                            . ACCESS_CATEGORY_LEADER . '", "' . $access_catleader_from . '", "' . $access_catleader_to . '")';
+                            . $catleader_permission . '", "' . $access_catleader_from . '", "' . $access_catleader_to . '")';
                     $mysqliLink->query($sql);
-                    logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_CATEGORY_LEADER] . ') jogosultáságnak felvitele. Szakág:.' . $selected_branch . ', from:' . $access_catleader_from . ', to: ' . $access_catleader_to);
+                    logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_BRANCH_LEADER] . ') jogosultáságnak felvitele. Szakág:.' . $selected_branch . ', from:' . $access_catleader_from . ', to: ' . $access_catleader_to);
                 }
             }
         } elseif (isset($check_access_catleader) AND $check_access_catleader == 'on') {
             if ($access_catleader_from < $access_catleader_to) {
+                $catleader_permission = ACCESS_BRANCH_LEADER;
+                $catleader_permission |= (isset($check_access_new) AND $check_access_new == 'on') ? ACCESS_MANAGE_NEW : 0;
+                $catleader_permission |= (isset($check_access_edit) AND $check_access_edit == 'on') ? ACCESS_MANAGE_EDIT : 0;
+                $catleader_permission |= (isset($check_access_fai) AND $check_access_fai == 'on') ? ACCESS_MANAGE_FAI : 0;
+                $catleader_permission |= (isset($check_access_all) AND $check_access_all == 'on') ? ACCESS_MANAGE_ALL : 0;
                 $sql = 'UPDATE `' . ROLE_TABLE . '` SET '
+                        . '`' . ROLE_PERMISSION . '`=' . $catleader_permission . ', '
                         . '`' . ROLE_FROM . '`="' . $access_catleader_from . '", '
                         . '`' . ROLE_TO . '`="' . $access_catleader_to . '" '
                         . 'WHERE `' . ROLE_ID . '`=' . $catleader_role_id . ';';
                 $mysqliLink->query($sql);
-                logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_CATEGORY_LEADER] . ') jogosultáságnak módosítása. Szakág: ' . $selected_branch . ', from:' . $access_catleader_from . ', to: ' . $access_catleader_to);
+                logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_BRANCH_LEADER] . ') jogosultáságnak módosítása. Szakág: ' . $selected_branch . ', from:' . $access_catleader_from . ', to: ' . $access_catleader_to);
             }
         } elseif (isset($catleader_role_id)) {
             $sql = 'DELETE FROM `' . ROLE_TABLE . '` WHERE `' . ROLE_ID . '`="' . $catleader_role_id . '"';
             $mysqliLink->query($sql);
-            logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_CATEGORY_LEADER] . ') jogosultáságnak törlése. Szakág: ' . $selected_branch);
+            logger($member_id, $role_member_id, LOGGER_MEMBER_MOD, $role_member_id . ' azonosítójú felhasználó (' . $access[ACCESS_BRANCH_LEADER] . ') jogosultáságnak törlése. Szakág: ' . $selected_branch);
         }
     }
 
@@ -218,8 +232,7 @@ if (isset($roles_save)) {
 }
 
 $roles = getRoles($role_member_id);
-$output .= '<div class="keret">';
-$output .= '<form  method="post" enctype="multipart/form-data">';
+$view->newKeret()->putPrevent();
 
 if (isControllable(ACCESS_MMSZ)) {
     $role_on = false;
@@ -235,17 +248,12 @@ if (isControllable(ACCESS_MMSZ)) {
             break;
         }
     }
-    $output .= '<label></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kezdet'
-            . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vég<br>';
-    $output .= '<label>' . $access[ACCESS_MMSZ] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_mmsz" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_mmsz_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_mmsz_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="mmsz_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $mmsz_role_id = $role_id;
+    $check_access_mmsz = $role_on ? 'on' : 'off';
+    $access_mmsz_from = $role_from;
+    $access_mmsz_to = $role_to;
+    $view->inputRole('check_access_mmsz', 'access_mmsz_from', 'access_mmsz_to', $access[ACCESS_MMSZ]);
+    $view->putHidden('mmsz_role_id');
 }
 if (isControllable(ACCESS_MMSZ_PRESIDENT)) {
     $role_on = false;
@@ -261,80 +269,98 @@ if (isControllable(ACCESS_MMSZ_PRESIDENT)) {
             break;
         }
     }
-    $output .= '<label>' . $access[ACCESS_MMSZ_PRESIDENT] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_mmszpres" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_mmszpres_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_mmszpres_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="mmszpres_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $mmszpres_role_id = $role_id;
+    $check_access_mmszpres = $role_on ? 'on' : 'off';
+    $access_mmszpres_from = $role_from;
+    $access_mmszpres_to = $role_to;
+    $view->inputRole('check_access_mmszpres', 'access_mmszpres_from', 'access_mmszpres_to', $access[ACCESS_MMSZ_PRESIDENT]);
+    $view->putHidden('mmszpres_role_id');
 }
-if (isControllable(ACCESS_CATEGORY_LEADER)) {
-    $output .= '<hr>';
-    $output .= '<label>Szakág : </label>'
-            . '<select id="selected_branch" name="selected_branch" onchange="submit();">';
-    $output .= '<option value="-1">Válassz szakágat !</option>';
-    foreach ($branches as $branch_id => $branch_name) {
-        $output .= '<option value="' . $branch_id . '" ' . (($branch_id == $selected_branch) ? "selected" : "") . '>' . $branch_name . '</option>';
+if (isControllable(ACCESS_BRANCH_LEADER)) {
+    $roles = getBranchRoles($role_member_id, $selected_branch);
+    if ($selected_branch < 0) {
+        foreach ($roles as $r) {
+            if (($r[2] & ACCESS_BRANCH_LEADER) > 0) {
+                $selected_branch = $r[1];
+                break;
+            }
+        }
     }
-    $output .= '</select><br>';
+    $view->putElement('<hr/>');
+    $view->submitDropDownChooser('Szakág', [-1 => 'Válassz!!!'] + $branches, 'selected_branch', true);
     if ($selected_branch >= 0) {
-        $roles = getBranchRoles($role_member_id, $selected_branch);
         $role_on = false;
+        $role_new = false;
+        $role_edit = false;
+        $role_fai = false;
+        $role_all = false;
         $role_from = $beginingOfYear;
         $role_to = $endOfYear;
         $role_id = -1;
         foreach ($roles as $r) {
-            if (($r[2] & ACCESS_CATEGORY_LEADER) > 0) {
+            if ((($r[2] & ACCESS_BRANCH_LEADER) > 0) AND $selected_branch == $r[1]) {
                 $role_on = true;
+                $role_new = ($r[2] & ACCESS_MANAGE_NEW) > 0 ? true : false;
+                $role_edit = ($r[2] & ACCESS_MANAGE_EDIT) > 0 ? true : false;
+                $role_fai = ($r[2] & ACCESS_MANAGE_FAI) > 0 ? true : false;
+                $role_all = ($r[2] & ACCESS_MANAGE_ALL) > 0 ? true : false;
                 $role_from = $r[3];
                 $role_to = $r[4];
                 $role_id = $r[0];
                 break;
             }
         }
-        $output .= '<label>' . $access[ACCESS_CATEGORY_LEADER] . '</label>';
-        $output .= '<input type="checkbox" name="check_access_catleader" ' . ($role_on ? 'checked' : '') . '>'
-                . '<input type="date" name="access_catleader_from" size="10" value="' . $role_from . '">'
-                . '<input type="date" name="access_catleader_to" size="10" value="' . $role_to . '">'
-                . '<input type="hidden" name="catleader_role_id" value="' . $role_id . '">';
-        if ($role_on AND $today > $role_to) {
-            $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
+        $catleader_role_id = $role_id;
+        $check_access_catleader = $role_on ? 'on' : 'off';
+        $access_catleader_from = $role_from;
+        $access_catleader_to = $role_to;
+        $view->inputRole('check_access_catleader', 'access_catleader_from', 'access_catleader_to', $access[ACCESS_BRANCH_LEADER]);
+        $check_access_new = $role_new ? 'on' : 'off';
+        $view->inputCheckbox('check_access_new', $access[ACCESS_MANAGE_NEW]);
+        $check_access_edit = $role_edit ? 'on' : 'off';
+        $view->inputCheckbox('check_access_edit', $access[ACCESS_MANAGE_EDIT]);
+        if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) > 0) {
+            $check_access_fai = $role_fai ? 'on' : 'off';
+            $view->inputCheckbox('check_access_fai', $access[ACCESS_MANAGE_FAI]);
         }
-        $output .= '<br>';
+        $check_access_all = $role_all ? 'on' : 'off';
+        $view->inputCheckbox('check_access_all', $access[ACCESS_MANAGE_ALL]);
+        $view->putHidden('catleader_role_id');
     }
-    $output .= '<hr>';
+    $view->putElement('<hr/>');
 }
 $clubs = getClubNameList();
-if (isOnlyClubleader()) {
+$only_club_leader = isOnlyClubleader();
+if ($only_club_leader) {
     $clubs = getClubsOfLeader($member_id);
 }
 if (1 == count($clubs)) {
     reset($clubs);
     $selected_club = key($clubs);
     if ($selected_club > 0) {
-        $output .= '<label>Egyesület : </label>' . getClubName($selected_club) . '<br>';
-        $output .= '<input type="hidden" name="selected_club" value="' . $selected_club . '">';
+        $view->putText(getClubName($selected_club), 'Egyesület');
+        $view->putHidden('selected_club');
     }
 } else {
-    $output .= '<label>Egyesület : </label>'
-            . '<select id="selected_club" name="selected_club" onchange="submit();">';
-    $output .= '<option value="-1">Válassz egyesületet !</option>';
-
     $clubs_of_member = getClubsId($role_member_id);
     reset($clubs_of_member);
     $first_club = key($clubs_of_member);
     if ($selected_club < 0 && $first_club > 0) {
         $selected_club = $first_club;
     }
-    foreach ($clubs as $club_id => $club_name) {
-        $output .= '<option value="' . $club_id . '" ' . (($club_id == $selected_club) ? "selected" : "") . '>' . $club_name . '</option>';
-    }
-    $output .= '</select><br>';
+    $view->inputClub('Egyesület', [-1 => 'Válassz!!!'] + $clubs, 'selected_club', true);
 }
 
+$role_clubs = getClubsMember($role_member_id);
+if (!empty($role_clubs)) {
+    $view->newElement('(');
+    foreach ($role_clubs as $role_club_name) {
+        $view->putElement($role_club_name . ', ');
+    }
+    $view->endElement(')');
+}
+
+$_SESSION[SESSION_SELECTED_CLUB] = $selected_club;
 $roles = getClubRoles($role_member_id, $selected_club);
 if (isControllable(ACCESS_USER)) {
     $role_id = -1;
@@ -350,15 +376,12 @@ if (isControllable(ACCESS_USER)) {
             break;
         }
     }
-    $output .= '<label>' . $access[ACCESS_USER] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_user" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_user_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_user_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="user_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $user_role_id = $role_id;
+    $check_access_user = $role_on ? 'on' : 'off';
+    $access_user_from = $role_from;
+    $access_user_to = $role_to;
+    $view->inputRole('check_access_user', 'access_user_from', 'access_user_to', $access[ACCESS_USER]);
+    $view->putHidden('user_role_id');
 }
 if (isControllable(ACCESS_CLUBLEADER)) {
     $role_id = -1;
@@ -374,15 +397,12 @@ if (isControllable(ACCESS_CLUBLEADER)) {
             break;
         }
     }
-    $output .= '<label>' . $access[ACCESS_CLUBLEADER] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_clubleader" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_clubleader_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_clubleader_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="clubleader_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $clubleader_role_id = $role_id;
+    $check_access_clubleader = $role_on ? 'on' : 'off';
+    $access_clubleader_from = $role_from;
+    $access_clubleader_to = $role_to;
+    $view->inputRole('check_access_clubleader', 'access_clubleader_from', 'access_clubleader_to', $access[ACCESS_CLUBLEADER]);
+    $view->putHidden('clubleader_role_id');
 }
 if (isControllable(ACCESS_CLUB_PRESIDENT)) {
     $role_id = -1;
@@ -398,15 +418,12 @@ if (isControllable(ACCESS_CLUB_PRESIDENT)) {
             break;
         }
     }
-    $output .= '<label>' . $access[ACCESS_CLUB_PRESIDENT] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_clubpresident" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_clubpresident_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_clubpresident_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="clubpresident_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $clubpresident_role_id = $role_id;
+    $check_access_clubpresident = $role_on ? 'on' : 'off';
+    $access_clubpresident_from = $role_from;
+    $access_clubpresident_to = $role_to;
+    $view->inputRole('check_access_clubpresident', 'access_clubpresident_from', 'access_clubpresident_to', $access[ACCESS_CLUB_PRESIDENT]);
+    $view->putHidden('clubpresident_role_id');
 }
 if (isControllable(ACCESS_CLUB_DELEGATE)) {
     $role_id = -1;
@@ -422,15 +439,20 @@ if (isControllable(ACCESS_CLUB_DELEGATE)) {
             break;
         }
     }
-    $output .= '<label>' . $access[ACCESS_CLUB_DELEGATE] . '</label>';
-    $output .= '<input type="checkbox" name="check_access_clubdelegate" ' . ($role_on ? 'checked' : '') . '>'
-            . '<input type="date" name="access_clubdelegate_from" size="10" value="' . $role_from . '">'
-            . '<input type="date" name="access_clubdelegate_to" size="10" value="' . $role_to . '">'
-            . '<input type="hidden" name="clubdelegate_role_id" value="' . $role_id . '">';
-    if ($role_on AND $today > $role_to) {
-        $output .= '&nbsp;&nbsp;&nbsp;<font color="red">Lejárt</font>';
-    }
-    $output .= '<br>';
+    $clubdelegate_role_id = $role_id;
+    $check_access_clubdelegate = $role_on ? 'on' : 'off';
+    $access_clubdelegate_from = $role_from;
+    $access_clubdelegate_to = $role_to;
+    $view->inputRole('check_access_clubdelegate', 'access_clubpresident_from', 'access_clubdelegate_to', $access[ACCESS_CLUB_DELEGATE]);
+    $view->putHidden('clubdelegate_role_id');
+    /*
+      $mandat = getMandatOfClub($selected_club);
+      if ($mandat > 0) {
+      output_spaces(5);
+      o('Mandátum:' . $mandat);
+      }
+     * 
+     */
 }
 
 
@@ -444,7 +466,6 @@ if (isset($selected_club)) {
         unset($membership_to);
     }
 }
-
-$output .= '<input type="submit" name="roles_save" value="Rögzítés" >'
-        . '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
-$output .= '</form></div>';
+$view->submitButton('roles_save', 'Rögzítés');
+$view->putHidden('edit_member');
+$view->endKeret();

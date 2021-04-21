@@ -5,7 +5,7 @@ if (isset($delete_fm)) {
     $sql = 'DELETE FROM `' . FM_TABLE . '` WHERE `' . FM_ID . '`="' . $delete_fm . '" LIMIT 1';
     $mysqliLink->query($sql);
     logger($member_id, $fee_member_id, LOGGER_FM_EDIT, $fm[FM_FROM] . '-' . $fm[FM_TO]
-            . ' időszakbani tagságviszony törlése.');
+            . ' időszakbani díjtétel ('.$fm[FM_FEE_ID].') törlése.');
     reloadEditMember();
 }
 if (isset($fee_type_save)) {
@@ -24,7 +24,7 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $member_types[$fee[FEE_NAME]]);
                 unset($selected_member_period);
             } else {
-                warning("Már van nem törölhető " . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " tagsági díjtétel ebben az időszakban !");
+                $view->danger("Már van nem törölhető " . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " tagsági díjtétel ebben az időszakban !");
             }
         }
     }
@@ -42,7 +42,7 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $member_insurances[$fee[FEE_NAME]]);
                 unset($selected_insurance_period);
             } else {
-                warning("Már van nem törölhető biztosítási díjtétel ebben az időszakban !");
+                $view->danger("Már van nem törölhető biztosítási díjtétel ebben az időszakban !");
             }
         }
     }
@@ -60,7 +60,7 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $organizations[$fee[FEE_NAME]]);
                 unset($selected_organ_period);
             } else {
-                warning("Már van nem törölhető " . $fee_type[FEE_TYPE_ORGANIZATION][0] . " díjtétel ebben az időszakban !");
+                $view->danger("Már van nem törölhető " . $fee_type[FEE_TYPE_ORGANIZATION][0] . " díjtétel ebben az időszakban !");
             }
         }
     }
@@ -78,7 +78,7 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $associations[$fee[FEE_NAME]]);
                 unset($selected_assoc_period);
             } else {
-                warning("Már van nem törölhető " . $fee_type[FEE_TYPE_ASSOCIATION][0] . " díjtétel ebben az időszakban !");
+                $view->danger("Már van nem törölhető " . $fee_type[FEE_TYPE_ASSOCIATION][0] . " díjtétel ebben az időszakban !");
             }
         }
     }
@@ -96,7 +96,25 @@ if (isset($fee_type_save)) {
                         . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $occasions[$fee[FEE_NAME]]);
                 unset($selected_occasion_period);
             } else {
-                warning("Már van nem törölhető " . $fee_type[FEE_TYPE_OCCASION][0] . " díjtétel ebben az időszakban !");
+                $view->danger("Már van nem törölhető " . $fee_type[FEE_TYPE_OCCASION][0] . " díjtétel ebben az időszakban !");
+            }
+        }
+    }
+    if (isset($selected_administration) && $selected_administration >= 0) {
+        if ($selected_administration_period > 0) {
+            if (isFeeChangeableInFM($fee_member_id, $selected_administration_period)) {
+                deleteFeeNameIfExists($fee_member_id, FEE_TYPE_ADMINISTRATION, $selected_administration_period);
+                $fee = getFeeById($selected_administration_period);
+                $sql = 'INSERT INTO `' . FM_TABLE . '` (`' . FM_MEMEBER_ID . '`,`' . FM_FEE_ID . '` , `' . FM_FROM . '`, `' . FM_TO . '`)
+                    VALUES ("' . $fee_member_id . '","' . $selected_administration_period . '",'
+                        . ' "' . $fee[FEE_FROM] . '", "' . $fee[FEE_TO] . '")';
+                $mysqliLink->query($sql);
+                $isSucceed = true;
+                logger($member_id, $fee_member_id, LOGGER_FM_EDIT, $fee_type[FEE_TYPE_ADMINISTRATION][0]
+                        . ' ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $administrations[$fee[FEE_NAME]]);
+                unset($selected_administration_period);
+            } else {
+                $view->danger("Már van nem törölhető " . $fee_type[FEE_TYPE_ADMINISTRATION][0] . " díjtétel ebben az időszakban !");
             }
         }
     }
@@ -115,7 +133,7 @@ if (isset($fee_type_save)) {
                         . '(' . $selected_club_fee . ') ' . $fee[FEE_FROM] . '-' . $fee[FEE_TO] . ' időszakbani meghatározása: ' . $club_categories[$fee[FEE_NAME]]);
                 unset($selected_club_period);
             } else {
-                warning("Már van nem törölhető tagsági díjtétele ennek az egyesületnek ebben az időszakban !");
+                $view->danger("Már van nem törölhető tagsági díjtétele ennek az egyesületnek ebben az időszakban !");
             }
         }
     }
@@ -126,13 +144,11 @@ if (isset($fee_type_save)) {
         logger($member_id, $fee_member_id, LOGGER_MEMBER_MOD, "Új nemzetközi azonosító: " . $organ_licence);
     }
     if (!$isSucceed) {
-        warning("Nem történt rögzítés, mert nem módosítottál semmit !");
+        $view->danger("Nem történt rögzítés, mert nem módosítottál semmit !");
     }
 }
 
-$output .= '<form method="post">';
 include_once INCLUDES . 'edit_fees_member.inc';
 $deletable_fm = true;
 $sf_member = $fee_member_id;
 include_once INCLUDES . 'show_fees_member.inc';
-$output .= '</form>';

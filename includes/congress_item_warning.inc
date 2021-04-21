@@ -1,5 +1,4 @@
 <?php
-
 $delegates = (new CongressDelegates())->getMembersOfCongress($selected_congress_online);
 if (isset($warning_cancel)) {
     unset($warning_poll);
@@ -9,26 +8,22 @@ if (isset($warning_send)) {
     $congressEmail->sendEmail($delegates);
     unset($warning_poll);
     $save_comment = 0;
-    $congress_comment = '"'.$congressEmail->getEmailSubject() .'" tárgyú email a szavazásban résztveknek kiment.';
+    $congress_comment = '"'.$congressEmail->getEmailSubject() .'" tárgyú email a szavazásban résztvevőknek kiment.';
     return;
 }
 if (isset($warning_save)) {
     $congressEmail->saveEmail($email_subject, $email_body);
 }
-o('<h4>Napirend lezárására figyelmeztető email szerkesztése.</h4>');
-o('<div class="keret">');
-output_label('Lezárásra figyelmeztető email', true);
-output_spaces(5);
-o('<button name="warning_cancel">Vissza</button>');
-output_spaces(5);
-o('<button title="Levél kiküldése" name="warning_send" onClick="return confirm(\'Biztosan ki akarod küldeni a levelet a '. count($delegates).' tagnak ?\')">Küldés</button>');
-o('</div>');
-o('<div class="keret editor">');
-output_button('warning_save', 0, 'save.jpg');
-output_ln();
-output_label('Email tárgya', false);
-o('<input maxlenght="100" size="40" type="text" name="email_subject" value="'.$congressEmail->getEmailSubject().'">');
-output_ln();
-output_label('Email törzse', false);
-o('<textarea cols="150" rows="16" name="email_body">'.$congressEmail->getEmailBody().'</textarea>');
-o('</div>');
+$view->putPrevent();
+$view->putElement('<h4>Napirend lezárására figyelmeztető email szerkesztése.</h4>');
+$view->newKeret();
+$view->putLabel('Lezárásra figyelmeztető email');
+$view->submitButton('warning_send', 'Küldés', -1, 'Levél kiküldése', 'Biztosan ki akarod küldeni a levelet a '. count($delegates).' tagnak ?');
+$view->endKeret()->newKeret();
+$view->submitBack('warning_cancel', 'Visszatérés a figyelmeztető email szerkesztésből');
+$view->submitSave('warning_save', 0, 'Figyelmeztető email szövegének mentése');
+$email_subject = $congressEmail->getEmailSubject();
+$view->inputText('email_subject', 'Email tárgya');
+$email_body = $congressEmail->getEmailBody();
+$view->inputTextArea('email_body', 'Email törzse');
+$view->endKeret();

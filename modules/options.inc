@@ -1,26 +1,9 @@
 <?php
 
-if (!isset($expand_newsletter)) {
-    $expand_newsletter = 0;
-}
-if (!isset($expand_emails)) {
-    $expand_emails = 0;
-}
-if (!isset($expand_company)) {
-    $expand_company = 0;
-}
-if (!isset($expand_general)) {
-    $expand_general = 0;
-}
-if (!isset($expand_szamlazz)) {
-    $expand_szamlazz = 0;
-}
-if (!isset($expand_fai)) {
-    $expand_fai = 0;
-}
-if (!isset($role_as_member)) {
-    $role_as_member = $member_id;
-}
+define('DELEGATE_MODE_RANGE', 0);
+define('DELEGATE_MODE_LINEAR', 1);
+
+
 if (isset($delegate_add_member) AND isset($delegate_add_range)) {
     $ranges = unserialize(getOptionValue(OPTIONS_NAME_DELEGATE_RANGE));
     $ranges[$delegate_add_range] = intval($delegate_add_member, 10);
@@ -35,208 +18,263 @@ if (isset($delegate_remove_range)) {
     $new = serialize(array_values($ranges));
     changeValue($new, OPTIONS_NAME_DELEGATE_RANGE);
 }
-
+if (!isset($role_as_member)) {
+    $role_as_member = $member_id;
+}
 if (isset($save_options)) {
-    if ($expand_fai != 0) {
-        if (!isset($fai_ena)) {
-            $fai_ena = 'off';
-        }
-        changeValue($fai_ena, OPTIONS_NAME_FAI_ENABLED);
-        changeValue($fai_user, OPTIONS_NAME_FAI_AUTH_USER);
-        changeValue($fai_passwd, OPTIONS_NAME_FAI_AUTH_PASSWD);
-        changeValue($fai_url, OPTIONS_NAME_FAI_URL);
-        changeValue($fai_view, OPTIONS_NAME_FAI_VIEW);
-        changeValue($fai_print, OPTIONS_NAME_FAI_PRINT);
+    if (!isset($fai_ena)) {
+        $fai_ena = 'off';
     }
-    if ($expand_newsletter != 0) {
-        changeValue($max_newsletter, OPTIONS_NAME_MAX_NEWSLETTERS);
-        changeValue($next_newsletter, OPTIONS_NAME_SECONDS_BEFORE_NEXT_NEWSLETTER);
+    changeValue($fai_ena, OPTIONS_NAME_FAI_ENABLED);
+    changeValue($fai_user, OPTIONS_NAME_FAI_AUTH_USER);
+    changeValue($fai_passwd, OPTIONS_NAME_FAI_AUTH_PASSWD);
+    changeValue($fai_url, OPTIONS_NAME_FAI_URL);
+    changeValue($fai_view, OPTIONS_NAME_FAI_VIEW);
+    changeValue($fai_print, OPTIONS_NAME_FAI_PRINT);
+    changeValue($max_newsletter, OPTIONS_NAME_MAX_NEWSLETTERS);
+    changeValue($next_newsletter, OPTIONS_NAME_SECONDS_BEFORE_NEXT_NEWSLETTER);
+    changeValue($admin_email, OPTIONS_NAME_ADMIN_EMAIL);
+    changeValue($mmsz_email, OPTIONS_NAME_MMSZ_EMAIL);
+    changeValue($mmsz_elnok_email, OPTIONS_NAME_MMSZ_ELNOK_EMAIL);
+    changeValue($fai_notif_email, OPTIONS_NAME_FAI_NOTIF_EMAIL);
+    changeValue($email_sender, OPTIONS_NAME_EMAIL_SENDER);
+    changeValue($email_signature, OPTIONS_NAME_EMAIL_SIGNATURE);
+    changeValue($email_reply, OPTIONS_NAME_EMAIL_REPLY);
+    if (!isset($development)) {
+        $development = 'off';
     }
-    if ($expand_emails != 0) {
-        changeValue($admin_email, OPTIONS_NAME_ADMIN_EMAIL);
-        changeValue($mmsz_email, OPTIONS_NAME_MMSZ_EMAIL);
-        changeValue($mmsz_elnok_email, OPTIONS_NAME_MMSZ_ELNOK_EMAIL);
-        changeValue($fai_notif_email, OPTIONS_NAME_FAI_NOTIF_EMAIL);
-        changeValue($email_sender, OPTIONS_NAME_EMAIL_SENDER);
-        changeValue($email_signature, OPTIONS_NAME_EMAIL_SIGNATURE);
-        changeValue($email_reply, OPTIONS_NAME_EMAIL_REPLY);
+    if (!isset($error_log)) {
+        $error_log = 'off';
     }
-    if ($expand_general != 0) {
-        if (!isset($development)) {
-            $development = 'off';
-        }
-        if (!isset($help_enabled)) {
-            $help_enabled = 'off';
-        }
+    if (!isset($html_tabulated)) {
+        $html_tabulated = 'off';
+    }
+    if (!isset($error_session) OR $error_log == 'off') {
+        $error_session = 'off';
+    }
+    if (!isset($error_cookie) OR $error_log == 'off') {
+        $error_cookie = 'off';
+    }
+    if (!isset($help_enabled)) {
+        $help_enabled = 'off';
+    }
 
-        if (!isset($password_link)) {
-            $password_link = 'off';
-        }
-        if (!isset($delegate_mod)) {
-            $delegate_mod = 'off';
-        }
-        if ($delegate_mod == 'on') {
-            if (!isset($delegate_step)) {
-                $delegate_step = 10;
-            }
-            changeValue($delegate_step, OPTIONS_NAME_DELEGATE_STEP);
-        }
-        if ($role_as_member != $member_id) {
-            $_SESSION[SESSION_ROLE_AS] = $role_as_member;
-        }
-        changeValue($delegate_mod, OPTIONS_NAME_DELEGATE_MOD);
-        changeValue($development, OPTIONS_NAME_DEVELOPMENT);
-        changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
-        changeValue($help_enabled, OPTIONS_NAME_HELP_ENABLED);
+    if (!isset($password_link)) {
+        $password_link = 'off';
     }
-    if ($expand_company != 0) {
-        changeValue($company_name, OPTIONS_NAME_COMPANY_NAME);
-        changeValue($company_long, OPTIONS_NAME_COMPANY_LONG_NAME);
-        changeValue($company_addr, OPTIONS_NAME_COMPANY_ADDR);
-        changeValue($company_telefon, OPTIONS_NAME_COMPANY_TELEFON);
-        changeValue($company_bank_name, OPTIONS_NAME_COMPANY_BANK_NAME);
-        changeValue($company_bank_account, OPTIONS_NAME_COMPANY_BANK_ACCOUNT);
+    if (!isset($delegate_mod)) {
+        $delegate_mod = DELEGATE_MODE_LINEAR;
     }
-    if ($expand_szamlazz != 0) {
-        if (!isset($szamlazz_ena)) {
-            $szamlazz_ena = 'off';
+    if ($delegate_mod == DELEGATE_MODE_LINEAR) {
+        if (!isset($delegate_step)) {
+            $delegate_step = 10;
         }
-        changeValue($szamlazz_ena, OPTIONS_NAME_SZAMLAZZ_ENA);
-        changeValue($szamlazz_user, OPTIONS_NAME_SZAMLAZZ_USER);
-        changeValue($szamlazz_passwd, OPTIONS_NAME_SZAMLAZZ_PASSWD);
-        changeValue($szamlazz_prefix, OPTIONS_NAME_SZAMLAZZ_PREFIX);
+        changeValue($delegate_step, OPTIONS_NAME_DELEGATE_STEP);
     }
-    $expand_company = $expand_emails = $expand_fai = $expand_general = $expand_newsletter = $expand_szamlazz = 0;
+
+    changeValue($delegate_mod, OPTIONS_NAME_DELEGATE_MOD);
+    changeValue($development, OPTIONS_NAME_DEVELOPMENT);
+    changeValue($html_tabulated, OPTIONS_NAME_HTML_TABULATED);
+    changeValue($error_log, OPTIONS_NAME_ERROR_LOG);
+    changeValue($error_session, OPTIONS_NAME_ERROR_LOG_SESSIONS);
+    changeValue($error_cookie, OPTIONS_NAME_ERROR_LOG_COOKIE);
+    changeValue($password_link, OPTIONS_NAME_PASSWORD_LINK);
+    changeValue($help_enabled, OPTIONS_NAME_HELP_ENABLED);
+    changeValue($company_name, OPTIONS_NAME_COMPANY_NAME);
+    changeValue($company_long, OPTIONS_NAME_COMPANY_LONG_NAME);
+    changeValue($company_addr, OPTIONS_NAME_COMPANY_ADDR);
+    changeValue($company_telefon, OPTIONS_NAME_COMPANY_TELEFON);
+    changeValue($company_bank_name, OPTIONS_NAME_COMPANY_BANK_NAME);
+    changeValue($company_bank_account, OPTIONS_NAME_COMPANY_BANK_ACCOUNT);
+    changeValue($company_id_format, OPTIONS_NAME_COMPANY_ID_FORMAT);
+    if (!isset($szamlazz_ena)) {
+        $szamlazz_ena = 'off';
+    }
+    changeValue($szamlazz_ena, OPTIONS_NAME_SZAMLAZZ_ENA);
+    changeValue($szamlazz_user, OPTIONS_NAME_SZAMLAZZ_USER);
+    changeValue($szamlazz_passwd, OPTIONS_NAME_SZAMLAZZ_PASSWD);
+    changeValue($szamlazz_prefix, OPTIONS_NAME_SZAMLAZZ_PREFIX);
+
+    if ($role_as_member != $member_id AND $role_as_member > 0) {
+        $_SESSION[SESSION_ROLE_AS] = $role_as_member;
+        redirect('profile');
+        exit(0);
+    }
 }
+$view->putPrevent();
+$view->newKeret();
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#newsletter" '
+        . 'aria-expanded="false" aria-controls="newsletter">Körlevelek</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#emails" '
+        . 'aria-expanded="false" aria-controls="emails">Email címek</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#company" '
+        . 'aria-expanded="false" aria-controls="company">Szövetségi adatok</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#admin" '
+        . 'aria-expanded="false" aria-controls="admin">Fejlesztői</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#congress" '
+        . 'aria-expanded="false" aria-controls="congress">Gyűlés</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#szamlazz" '
+        . 'aria-expanded="false" aria-controls="szamlazz">Számlázz.hu</button>');
+$view->putElement('<button class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#fai" '
+        . 'aria-expanded="false" aria-controls="fai">FAI API</button>');
 
-$output .= '<div class="editor"><form method="POST">';
-$output .= '<input type="hidden" name="expand_newsletter" value="' . $expand_newsletter . '">';
-$output .= '<input type="hidden" name="expand_emails" value="' . $expand_emails . '">';
-$output .= '<input type="hidden" name="expand_company" value="' . $expand_company . '">';
-$output .= '<input type="hidden" name="expand_general" value="' . $expand_general . '">';
-$output .= '<input type="hidden" name="expand_szamlazz" value="' . $expand_szamlazz . '">';
-$output .= '<input type="hidden" name="expand_fai" value="' . $expand_fai . '">';
-$output .= '<label>Körlevél beállítások: </label>';
-if (0 == $expand_newsletter) {
-    $output .= '<button name="expand_newsletter" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
+
+$view->newDiv('collapse multi-collapse', 'newsletter');
+$view->newDiv('card card-body');
+$view->putText('<h4>Körlevelek<h4>');
+$max_newsletter = $options[OPTIONS_NAME_MAX_NEWSLETTERS];
+$next_newsletter = $options[OPTIONS_NAME_SECONDS_BEFORE_NEXT_NEWSLETTER];
+$view->putText(date("Y.m.d H:i:s", $options[OPTIONS_NAME_LAST_NEWSLETTER]), 'Utolsó ellenőrzés');
+$view->inputText('max_newsletter', 'Max körlevél szám');
+$view->inputText('next_newsletter', 'Körlevél időköz (mp)');
+$view->endDiv()->endDiv();
+
+$view->newDiv('collapse multi-collapse', 'emails');
+$view->newDiv('card card-body');
+$view->putText('<h4>Email címek<h4>');
+$admin_email = $options[OPTIONS_NAME_ADMIN_EMAIL];
+$mmsz_email = $options[OPTIONS_NAME_MMSZ_EMAIL];
+$mmsz_elnok_email = $options[OPTIONS_NAME_MMSZ_ELNOK_EMAIL];
+$fai_notif_email = $options[OPTIONS_NAME_FAI_NOTIF_EMAIL];
+$email_reply = $options[OPTIONS_NAME_EMAIL_REPLY];
+$email_sender = $options[OPTIONS_NAME_EMAIL_SENDER];
+$email_signature = $options[OPTIONS_NAME_EMAIL_SIGNATURE];
+$view->inputEmail('admin_email', 'Adminisztrátor');
+$view->inputEmail('mmsz_email', 'Szövetség');
+$view->inputEmail('mmsz_elnok_email', 'Szövetség elnök');
+$view->inputEmail('fai_notif_email', 'Befizetés értesítés');
+$view->inputEmail('email_reply', 'Emailek válaszcíme');
+$view->inputEmail('email_sender', 'Emailek feladója');
+$view->inputText('email_signature', 'Emailek aláírása');
+$view->endDiv()->endDiv();
+
+$view->newDiv('collapse multi-collapse', 'company');
+$view->newDiv('card card-body');
+$view->putText('<h4>Szövetség adatok<h4>');
+$company_name = $options[OPTIONS_NAME_COMPANY_NAME];
+$company_long = $options[OPTIONS_NAME_COMPANY_LONG_NAME];
+$company_addr = $options[OPTIONS_NAME_COMPANY_ADDR];
+$company_telefon = $options[OPTIONS_NAME_COMPANY_TELEFON];
+$company_bank_name = $options[OPTIONS_NAME_COMPANY_BANK_NAME];
+$company_bank_account = $options[OPTIONS_NAME_COMPANY_BANK_ACCOUNT];
+$company_id_format = $options[OPTIONS_NAME_COMPANY_ID_FORMAT];
+$view->inputText('company_name', 'Rövid név');
+$view->inputText('company_long', 'Hosszú név');
+$view->inputText('company_addr', 'Cím');
+$view->inputText('company_telefon', 'Telefon');
+$view->inputText('company_bank_name', 'Bank neve');
+$view->inputText('company_bank_account', 'Számla szám');
+$view->inputText('company_id_format', 'Azonosító formátum');
+$view->endDiv()->endDiv();
+
+$view->newDiv('collapse multi-collapse', 'admin');
+$view->newDiv('card card-body');
+$view->putText('<h4>Fejlesztői beállítások<h4>');
+if (isPermitted(ACCESS_ADMIN)) {
+    $development = (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) ? "on" : "off";
+    $error_log = (getOptionValue(OPTIONS_NAME_ERROR_LOG) > 0) ? "on" : "off";
+    $html_tabulated = (getOptionValue(OPTIONS_NAME_HTML_TABULATED) > 0) ? "on" : "off";
+    $error_cookie = (getOptionValue(OPTIONS_NAME_ERROR_LOG_COOKIE) > 0) ? "on" : "off";
+    $error_session = (getOptionValue(OPTIONS_NAME_ERROR_LOG_SESSIONS) > 0) ? "on" : "off";
+    $help_enabled = (getOptionValue(OPTIONS_NAME_HELP_ENABLED) > 0) ? "on" : "off";
+    $password_link = (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0) ? "on" : "off";
+    $view->inputCheckbox('development', 'Fejlesztői');
+    $view->inputCheckbox('error_log', 'Post variables');
+    $view->inputCheckbox('error_session', 'Sessions');
+    $view->inputCheckbox('error_cookie', 'Cookies');
+    $view->inputCheckbox('html_tabulated', 'HTML tabulálva');
+    $view->inputCheckbox('help_enabled', 'Help megjelenítés');
+    $view->inputCheckbox('password_link', 'Link jelszó kérésnél');
+    $view->inputMemberId('role_as_member', 'Felhasználó mint');
 } else {
-    $output .= '<button name="expand_newsletter" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>Utolsó körlevél ellenőrzés:</label>' . date("Y.m.d H:i:s", $options[OPTIONS_NAME_LAST_NEWSLETTER]) . '<br>';
-    $output .= '<label>Max körlevél szám:</label><input type="text" name="max_newsletter" value="' . $options[OPTIONS_NAME_MAX_NEWSLETTERS] . '"><br>';
-    $output .= '<label>Körlevél időköz (mp):</label><input type="text" name="next_newsletter" value="' . $options[OPTIONS_NAME_SECONDS_BEFORE_NEXT_NEWSLETTER] . '"><br>';
-    $output .= '</div>';
+    $view->warning('Csak adminisztrátori jogosultsággal érhető el.');
 }
+$view->endDiv()->endDiv();
 
-$output .= '<label>Email címek: </label>';
-if (0 == $expand_emails) {
-    $output .= '<button name="expand_emails" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
-} else {
-    $output .= '<button name="expand_emails" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>Adminisztrátor:</label><input type="text" name="admin_email" value="' . $options[OPTIONS_NAME_ADMIN_EMAIL] . '"><br>';
-    $output .= '<label>Szövetség:</label><input type="text" name="mmsz_email" value="' . $options[OPTIONS_NAME_MMSZ_EMAIL] . '"><br>';
-    $output .= '<label>Szövetség elnök:</label><input type="text" name="mmsz_elnok_email" value="' . $options[OPTIONS_NAME_MMSZ_ELNOK_EMAIL] . '"><br>';
-    $output .= '<label>Befizetés értesítés:</label><input type="text" name="fai_notif_email" value="' . $options[OPTIONS_NAME_FAI_NOTIF_EMAIL] . '"><br>';
-    $output .= '<label>Emailek válaszcíme:</label><input type="text" name="email_reply" value="' . $options[OPTIONS_NAME_EMAIL_REPLY] . '"><br>';
-    $output .= '<label>Emailek feladója:</label><input type="text" name="email_sender" value="' . $options[OPTIONS_NAME_EMAIL_SENDER] . '"><br>';
-    $output .= '<label>Emailek aláírása:</label><input type="text" name="email_signature" value="' . $options[OPTIONS_NAME_EMAIL_SIGNATURE] . '"><br>';
-    $output .= '</div>';
-}
-$output .= '<label>Szövetség adatok: </label>';
-if (0 == $expand_company) {
-    $output .= '<button name="expand_company" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
-} else {
-    $output .= '<button name="expand_company" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>Rövid név:</label><input type="text" name="company_name" value="' . $options[OPTIONS_NAME_COMPANY_NAME] . '"><br>';
-    $output .= '<label>Hosszú név:</label><input type="text" name="company_long" value="' . $options[OPTIONS_NAME_COMPANY_LONG_NAME] . '"><br>';
-    $output .= '<label>Cím:</label><input type="text" name="company_addr" value="' . $options[OPTIONS_NAME_COMPANY_ADDR] . '"><br>';
-    $output .= '<label>Telefon:</label><input type="text" name="company_telefon" value="' . $options[OPTIONS_NAME_COMPANY_TELEFON] . '"><br>';
-    $output .= '<label>Bank neve:</label><input type="text" name="company_bank_name" value="' . $options[OPTIONS_NAME_COMPANY_BANK_NAME] . '"><br>';
-    $output .= '<label>Számla szám:</label><input type="text" name="company_bank_account" value="' . $options[OPTIONS_NAME_COMPANY_BANK_ACCOUNT] . '"><br>';
-    $output .= '</div>';
-}
+$view->newDiv('collapse multi-collapse', 'congress');
+$view->newDiv('card card-body');
+$view->putText('<h4>Gyűlés küldöttei<h4>');
+$view->putElement('Küldöttek száma:');
+$delegate_mod = getOptionValue(OPTIONS_NAME_DELEGATE_MOD);
+$delegate_step = $options[OPTIONS_NAME_DELEGATE_STEP];
+$view->newDiv('row');
+$view->newDiv('col-md-2')->inputRadioButton('delegate_mod', 'Lineáris', DELEGATE_MODE_LINEAR)->endDiv();
+$view->newDiv('col-md-5')->inputMemberId('delegate_step', 'Küldött', ' tagonként')->endDiv();
+$view->endDiv();
+$view->putElement('<hr class="my-3"/>');
+$view->newDiv('row');
+$view->newDiv('col-md-2')->inputRadioButton('delegate_mod', 'Sávos', DELEGATE_MODE_RANGE)->endDiv();
+$view->newDiv('col-md-5');
+$ranges = unserialize(getOptionValue(OPTIONS_NAME_DELEGATE_RANGE));
+$del = 0;
+$last_mem = 0;
+$view->newElement('<ul class="list-group">');
+if (sizeof($ranges) > 1) {
 
-$output .= '<label>Általános beállítások: </label>';
-if (0 == $expand_general) {
-    $output .= '<button name="expand_general" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
-} else {
-    $output .= '<button name="expand_general" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>Fejlesztői:</label><input type="checkbox" name="development" '
-            . (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0 ? "checked" : "") . '><br>';
-    $output .= '<label>Help megjelenítés:</label><input type="checkbox" name="help_enabled" '
-            . (getOptionValue(OPTIONS_NAME_HELP_ENABLED) > 0 ? "checked" : "") . '><br>';
-    $output .= '<label>Felhasználó mint:</label>';
-    $output .= '<input type="number" min="1" max="10000" maxlength="4" size="4" name="role_as_member" value="' . $role_as_member . '"> tag<br>';
-    $output .= '<label>Belépő link jelszó kérésnél:</label><input type="checkbox" name="password_link" '
-            . (getOptionValue(OPTIONS_NAME_PASSWORD_LINK) > 0 ? "checked" : "") . '><br>';
-    $delegate_mod = getOptionValue(OPTIONS_NAME_DELEGATE_MOD);
-    if ($delegate_mod > 0) {
-        $output .= '<label>Küldöttek száma lineáris:</label><input  type="checkbox" name="delegate_mod" '
-                . ' checked="checked">';
-        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;'
-                . '<input type="number" min="1" max="1000" maxlength="4" size="4" name="delegate_step" value="' . $options[OPTIONS_NAME_DELEGATE_STEP] . '"> tagonként<br>';
-    } else {
-        $output .= '<label>Küldöttek száma sávos:</label><input   type="checkbox" name="delegate_mod" ><br>';
-        $ranges = unserialize(getOptionValue(OPTIONS_NAME_DELEGATE_RANGE));
-        $del = 0;
-        $last_mem = 0;
-        if (sizeof($ranges) > 1) {
-            while (isset($ranges[$del + 1])) {
-                $output .= '<label></label>' . $del . ' küldött ' . $ranges[$del + 1] . ' taglétszámig';
-                $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button type="submit" name="delegate_remove_range" value="' . ($del + 1) . '">'
-                        . '<img src="' . IMAGES . 'delete.jpg"></button><br>';
-                $del++;
-                $last_mem = $ranges[$del];
-            }
-        } else {
-            $output .= '<label></label>Nincs megadva taglétszám sáv.<br>';
-        }
-        $next_mem = intval($last_mem, 10) + 10;
-        $output .= '<label></label>' . $del . ' küldött ';
-        $output .= '<input type="number" min="1" max="10000" maxlength="4" size="4" name="delegate_add_member" value="' . $next_mem . '" > taglétszámig.';
-        $output .= '&nbsp;&nbsp;&nbsp;&nbsp;<button type="submit" name="delegate_add_range" value="' . (intval($del, 10) + 1) . '">'
-                . '<img src="' . IMAGES . 'add.jpg"></button>';
+    while (isset($ranges[$del + 1])) {
+        $view->newElement('<li class="list-group-item">');
+        $view->putElement($del . ' küldött ' . $ranges[$del + 1] . ' taglétszámig');
+        $view->submitDelete('delegate_remove_range', ($del + 1));
+        $view->endElement('</li>');
+        $del++;
+        $last_mem = $ranges[$del];
     }
-
-    $output .= '</div>';
-}
-$output .= '<label>Számlázz.hu: </label>';
-if (0 == $expand_szamlazz) {
-    $output .= '<button name="expand_szamlazz" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
 } else {
-    $output .= '<button name="expand_szamlazz" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>Számlázz.hu engedélyezve:</label><input type="checkbox" name="szamlazz_ena" '
-            . (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0 ? "checked" : "") . '><br>';
-    $output .= '<label>Számlázz felhasználó:</label><input type="text" name="szamlazz_user" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_USER) . '"><br>';
-    $output .= '<label>számlázz jelszó:</label><input type="text" name="szamlazz_passwd" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_PASSWD) . '"><br>';
-    $output .= '<label>számla előtag:</label><input type="text" name="szamlazz_prefix" value="' . getOptionValue(OPTIONS_NAME_SZAMLAZZ_PREFIX) . '"><br>';
-
-    $output .= '</div>';
+    $ranges[0] = 0;
+    $view->putText('Nincs megadva taglétszám sáv.', ' ');
 }
+$next_mem = intval($last_mem, 10) + 10;
+$view->newElement('<li class="list-group-item">');
+$delegate_add_member = $ranges[$del] + 1;
+$view->putElement($del . ' küldött '
+        . '<input type="number" min="1" max="9999" size="4" onchange="saved=false;" class="mx-2" id="delegate_add_member" name="delegate_add_member" value="' . $next_mem . '"> taglétszámig. ');
 
-$output .= '<label>FAI API: </label>';
-if (0 == $expand_fai) {
-    $output .= '<button name="expand_fai" value="1" ><img src="' . IMAGES . 'expand.jpg"> </button><br>';
-} else {
-    $output .= '<button name="expand_fai" value="0" ><img src="' . IMAGES . 'collapse.jpg"> </button>';
-    $output .= '<div class="keret">';
-    $output .= '<label>FAI API  engedélyezve:</label><input type="checkbox" name="fai_ena" '
-            . (getOptionValue(OPTIONS_NAME_FAI_ENABLED) > 0 ? "checked" : "") . '><br>';
-    $output .= '<label>FAI API felhasználó:</label><input type="text" name="fai_user" value="' . getOptionValue(OPTIONS_NAME_FAI_AUTH_USER) . '"><br>';
-    $output .= '<label>FAI API jelszó:</label><input type="text" name="fai_passwd" value="' . getOptionValue(OPTIONS_NAME_FAI_AUTH_PASSWD) . '"><br>';
-    $output .= '<label>FAI URL:</label><input type="text" name="fai_url" value="' . getOptionValue(OPTIONS_NAME_FAI_URL) . '"><br>';
-    $output .= '<label>FAI view:</label><input type="text" name="fai_view" value="' . getOptionValue(OPTIONS_NAME_FAI_VIEW) . '"><br>';
-    $output .= '<label>FAI print:</label><input type="text" name="fai_print" value="' . getOptionValue(OPTIONS_NAME_FAI_PRINT) . '"><br>';
+$view->submitAdd('delegate_add_range', (intval($del, 10) + 1), (intval($del, 10) + 1) . ' küldött taglétszámig');
+$view->endElement('</ul>');
+$view->endDiv();
+$view->endDiv();
+$view->putElement('<hr class="my-3"/>');
+$view->info('A fenti beállítások akkor aktívak, ha a mandátum számok nincsenek megadva az egyesületeknél.<br>Amennyiben egy egyesületnél a Mandátum 1 vagy Mandátum 2 mező nem nulla, akkor ezek közül a  Gyűlésnél választható mandátum száma lehet a küldöttnek. '
+        . 'Minden egyesület csak egy küldöttet állíthat, de egy küldött képviselhet több egyesüleletet is.');
+$view->endDiv();
+$view->endDiv();
 
-    $output .= '</div>';
-}
-$output .= '<label>Utolsó crontab:</label>' . date('Y-m-d H:i:s', getOptionValue(OPTIONS_NAME_LAST_CRONTAB));
-$output .= '<br><input type="submit" name="save_options" value="Mentés">';
-$output .= '</form></div>';
+
+
+$view->newDiv('collapse multi-collapse', 'szamlazz');
+$view->newDiv('card card-body');
+$view->putText('<h4>Számlázz.hu<h4>');
+$szamlazz_ena = (getOptionValue(OPTIONS_NAME_SZAMLAZZ_ENA) > 0) ? "on" : "off";
+$szamlazz_user = getOptionValue(OPTIONS_NAME_SZAMLAZZ_USER);
+$szamlazz_passwd = getOptionValue(OPTIONS_NAME_SZAMLAZZ_PASSWD);
+$szamlazz_prefix = getOptionValue(OPTIONS_NAME_SZAMLAZZ_PREFIX);
+$view->inputCheckbox('szamlazz_ena', 'Engedélyezve');
+$view->inputText('szamlazz_user', 'Felhasználó');
+$view->inputText('szamlazz_passwd', 'Jelszó');
+$view->inputText('szamlazz_prefix', 'Számla előtag');
+$view->endDiv()->endDiv();
+
+$view->newDiv('collapse multi-collapse', 'fai');
+$view->newDiv('card card-body');
+$view->putText('<h4>FAI API<h4>');
+$fai_ena = getOptionValue(OPTIONS_NAME_FAI_ENABLED) > 0 ? "on" : "off";
+$fai_user = getOptionValue(OPTIONS_NAME_FAI_AUTH_USER);
+$fai_passwd = getOptionValue(OPTIONS_NAME_FAI_AUTH_PASSWD);
+$fai_url = getOptionValue(OPTIONS_NAME_FAI_URL);
+$fai_view = getOptionValue(OPTIONS_NAME_FAI_VIEW);
+$fai_print = getOptionValue(OPTIONS_NAME_FAI_PRINT);
+$view->inputCheckbox('fai_ena', 'Engedélyezve');
+$view->inputText('fai_user', 'Felhasználó');
+$view->inputText('fai_passwd', 'Jelszó');
+$view->inputText('fai_url', 'FAI URL');
+$view->inputText('fai_view', 'FAI view');
+$view->inputText('fai_print', 'FAI print');
+$view->endDiv()->endDiv();
+
+$view->endDiv();
+$view->putText(date('Y-m-d H:i:s', getOptionValue(OPTIONS_NAME_LAST_CRONTAB)), 'Utolsó crontab');
+$view->submitButton('save_options', 'Mentés');
+$view->endKeret();
 
 function changeValue($var, $key) {
     global $options, $member_id;

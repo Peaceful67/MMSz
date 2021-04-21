@@ -4,7 +4,7 @@
 
 
 body {
-    background: transparent url("images/card.jpg");
+    background: url(card_background.jpg);
     background-repeat: no-repeat;
     background-size: 1093px 678px;
     margin: 0px;
@@ -35,7 +35,7 @@ body {
     position: fixed;
     top:27mm;
     left:4mm;
-    font-size: 16px;  
+    font-size: 14px;  
 }
 .data {
     position: fixed;

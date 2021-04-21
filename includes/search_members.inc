@@ -14,21 +14,12 @@ define("LICENCE_WITH", 10);
 define("LICENCE_WITHOUT", 11);
 define("LICENCE_ALL", 12);
 
-// Search fields
-define("SEARCH_LISTED_MEMBER", 'listed_member');
-define("SEARCH_SEARCH", 'search');
-define("SEARCH_SELECTED_ACTIVE", 'active');
-define("SEARCH_SELECTED_PAID", 'paid');
-define("SEARCH_SELECTED_LICENCE", 'licence');
-define("SEARCH_SEARCH_BY_ID", 'search_by_id');
-define("SEARCH_ORDER_BY", 'order_by');
-define("SEARCH_SELECTED_CLUB", 'club');
 
 define("SEARCH_FEE_YEAR", 'search_fee_year');
 define("SEARCH_FEE_TYPE", 'search_fee_type');
 define("SEARCH_FEE_NAME", 'search_fee_name');
 define("SEARCH_FEE_CLUB", 'search_fee_club');
-
+define("SEARCH_SELECTED_BRANCH", 'search_branch');
 
 if (!isset($searchByFees)) {
     $searchByFees = false;
@@ -87,11 +78,17 @@ if (!isset($order_by)) {
 if (!isset($selected_club)) {
     $selected_club = $reload ? $search_values[SEARCH_SELECTED_CLUB] :
             ((isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) ?
-            0 : isClubLeader());
+            -1 : isClubLeader());
 } else {
     isNewSearch($selected_club, SEARCH_SELECTED_CLUB);
 }
-
+if (!isset($selected_branch)) {
+    $selected_branch = $reload ? $search_values[SEARCH_SELECTED_BRANCH] :
+            ((isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) ?
+            -1 : isBranchLeader());
+} else {
+    isNewSearch($selected_branch, SEARCH_SELECTED_BRANCH);
+}
 if (!isset($search_fee_year)) {
     $search_fee_year = $reload ? $search_values[SEARCH_FEE_YEAR] : $this_year;
 } else {
@@ -126,17 +123,24 @@ $_SESSION[SESSION_SEARCH_VALUES] = serialize(array(
     SEARCH_FEE_TYPE => $search_fee_type,
     SEARCH_FEE_NAME => $search_fee_name,
     SEARCH_FEE_CLUB => $search_fee_club,
+    SEARCH_SELECTED_BRANCH => $selected_branch,
         ));
-
 $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM `' . MEMBER_TABLE . '` ';
 if ($search_by_id > 0) {
     $search = '';
     $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_ID . '`="' . $search_by_id . '" LIMIT 1';
 } else {
     $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (((`' . MEMBER_TABLE . '`';
-
+    if ($selected_branch >= 0) {
+        $sql .= ' INNER JOIN `' . CATEGORIES_TABLE . '` ON '
+                . '`' . CATEGORIES_TABLE . '`.`' . CATEGORIES_BRANCH . '`=' . $selected_branch . ' '
+                . ' INNER JOIN `' . CM_TABLE . '` ON ('
+                . ' `' . CATEGORIES_TABLE . '`.`' . CATEGORIES_ID . '`=`' . CM_TABLE . '`.`' . CM_CATEGORY . '` '
+                . 'AND `' . CM_TABLE . '`.`' . CM_MEMBER_ID . '`=`' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`)';
+    }
     if ($selected_club > 0) {
-        $sql .= ' INNER JOIN `' . ROLE_TABLE . '` ON (`' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`="' . $selected_club . '" '
+        $sql .= ' INNER JOIN `' . ROLE_TABLE . '` ON (`' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=' . $selected_club . ' '
+                . ' AND ((`' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '` & (' . ACCESS_CLUB_MEMBER . ')) > 0) '
                 . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '` '
                 . ' AND (CURDATE() BETWEEN `' . ROLE_TABLE . '`.`' . ROLE_FROM . '` AND `' . ROLE_TABLE . '`.`' . ROLE_TO . '`)))';
     } else {
@@ -195,12 +199,13 @@ if ($search_by_id > 0) {
         case PAID_ALL:
         default:
             $sql .= (($searchByFees AND $selected_fee_id > 0) ?
-                    (' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON (`paid_fm`.`' . FM_FEE_ID . '`=' . $selected_fee_id . ' )') : '')
+                    (' INNER JOIN `' . FM_TABLE . '` AS `paid_fm` ON (`paid_fm`.`' . FM_FEE_ID . '`=' . $selected_fee_id . ' )'
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`paid_fm`.`' . FM_MEMEBER_ID . '` ') : '')
                     . ' ) ';
             break;
     }
     if (strlen($search) < 3 AND ! empty($search)) {
-        warning('Legalább 3 karakter adj meg a szűréshez');
+        $view->warning('Legalább 3 karaktert adj meg a szűréshez');
     }
     if (strlen($search) >= 3) {
         $sql .= ' WHERE ( CONCAT (`' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, " ", `'
@@ -224,10 +229,11 @@ if ($search_by_id > 0) {
             break;
         case MEMBER_VEZNEV:
         default:
-            $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, `' . MEMBER_KERNEV . '` ASC ;';
+            $sql .= ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, `' . MEMBER_TABLE . '`.`' . MEMBER_KERNEV . '` ASC ;';
             break;
     }
 }
+//error_log('search_members:' . $sql);
 $res = $mysqliLink->query($sql);
 if ($res) {
     $total_member = $res->num_rows;
@@ -250,120 +256,86 @@ if (isset($filtered_newsletter) AND $total_member > 0) {
 } else {
     unset($_SESSION[SESSION_FILTERED_NEWSLETTER]);
 }
-$output .= '<div class="search"><form  method="post"><div class="keret">';
 
+$view->newKeret();
 if ($searchByFees) {
     include_once INCLUDES . 'search_fee.inc';
+    $view->submitButton('search_submit', 'Keresés');
 } else {
-    $output .= '<input type="hidden" name="selected_fee_id" value="' . $selected_fee_id . '">';
-    $output .= '
-<label for="search">Név: </label>
-<input type="text" name="search"  id="search" value="' . $search . '"  size="10">'
-            . '&nbsp;&nbsp;&nbsp;
-            <label for="search">Azonosító : </label>
-<input type="text" name="search_by_id"  id="search_by_id" value="' . $search_by_id . '" size="10">&nbsp;&nbsp;&nbsp;';
+    $view->putHidden('selected_fee_id');
+    $view->newDiv('form-inline');
+    $view->inputSearch('search', 'Név');
+    $view->inputMemberId('search_by_id', 'Azonosító');
+    $view->submitButton('search_submit', 'Keresés');
+    if ($total_member > 0 AND ( isPermitted(getAccessOfModule("news_letters")))) {
+        $view->submitButton('filtered_newsletter', 'Körlevél', -1, 'Csak ez email címmel rendelkezőknek !', 'Biztosan körlevelet akarsz küldeni a ' . $total_member . ' kiválsztott tagnak ?');
+    }
+    $view->info($total_member . ' tag');
+    $view->endDiv();
 }
-$output .= 'Rendezés:';
-$output .= '<input type="radio" name="order_by" value="' . MEMBER_ID . '" onChange="submit();" ';
-if ($order_by == MEMBER_ID) {
-    $output .= 'checked="checked"';
+$given_filters = 'Aktív szűrők:';
+$view->newDiv('form-inline');
+$view->submitDropDownChooser('Rendezés', [MEMBER_ID => 'Azonosító', MEMBER_VEZNEV => 'Név'], 'order_by', true);
+$view->putModalToggler('filters', 'Szűrők', $given_filters);
+$view->newModal('filters', 'Szűrők megadás');
+$search_branches = array();
+if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
+    $search_branches = [-1 => 'Összes'] + $branches;
+} elseif (isPermitted(ACCESS_BRANCH_LEADER)) {
+    $search_branches = [-1 => 'Összes'] + getBranchesOfLeader($member_id);
 }
-$output .= '>azonosító&nbsp;&nbsp;&nbsp;&nbsp;';
-$output .= '<input type="radio" name="order_by" value="' . MEMBER_VEZNEV . '" onChange="submit();" ';
-if ($order_by == MEMBER_VEZNEV) {
-    $output .= 'checked="checked"';
-}
-$output .= '>Név&nbsp;&nbsp;&nbsp;&nbsp;<b>Találat :' . $total_member . ' tag</b>';
-
-if ($total_member > 0 AND isPermitted(getAccessOfMmodule("news_letters"))) {
-    $output .= '&nbsp;&nbsp;&nbsp;&nbsp;';
-    $output .= '<input type="submit" name="filtered_newsletter" value="Körlevél" title="Csak ez email címmel rendelkezőknek !">';
+if (count($search_branches) > 0) {
+    $view->submitDropDownChooser('Szakágak', $search_branches, 'selected_branch', true);
 }
 if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ) || isPermitted(ACCESS_MMSZ_PRESIDENT)) {
-    $output .= '<br><br>';
-    $output .= 'Egyesület: <select  name="selected_club" onChange="submit();">';
-    $output .= '<option value="0">Válassz egyesületet !</option>';
-    $clubs = getClubNameList();
-    foreach ($clubs as $club_id => $club_name) {
-        $output .= '<option value="' . $club_id . '" ' . (($club_id == $selected_club) ? "selected" : "") . '>' . $club_name . '</option>';
-    }
-    $output .= '</select>';
+    $clubs = [-1 => 'Összes'] + getClubNameList();
+    $view->submitDropDownChooser('Egyesület', $clubs, 'selected_club', true);
 } else {
     $selected_club = putSelectionOfClub('selected_club');
 }
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Tagság: ';
-$output .= '<select name="selected_active" onChange="submit();">';
-$output .= '<option value="' . ACTIVE_ALL . '" ' . ($selected_active == ACTIVE_ALL ? "selected" : "") . '>Nincs szűrés</option>';
-$output .= '<option value="' . ACTIVE_ONLY . ' " ' . ($selected_active == ACTIVE_ONLY ? "selected" : "") . '>Aktívak</option>';
-$output .= '<option value="' . ACTIVE_NOT . '" ' . ($selected_active == ACTIVE_NOT ? "selected" : "") . '>Nem aktívak</option>';
-//$output .= '<option value="' . ACTIVE_DELETED . '" ' . ($selected_active == ACTIVE_DELETED ? "selected" : "") . '>Töröltek</option>';
-$output .= '</select>';
+$view->submitDropDownChooser('Tagság', [ACTIVE_ALL => 'Nincs szűrés', ACTIVE_ONLY => 'Aktívak', ACTIVE_NOT => 'Nem aktívak'], 'selected_active', true);
 
 
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fizetett: ';
-$output .= '<select name="selected_paid" onChange="submit();">';
-$output .= '<option value="' . PAID_ALL . '" ' . ($selected_paid == PAID_ALL ? "selected" : "") . '>Nincs szűrés</option>';
-$output .= '<option value="' . PAID_ONLY . '" ' . ($selected_paid == PAID_ONLY ? "selected" : "") . '>Rendezett</option>';
-$output .= '<option value="' . PAID_NOT . '"  ' . ($selected_paid == PAID_NOT ? "selected" : "") . '>Rendezetlen</option>';
-$output .= '</select>';
-
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;FAI licensz: ';
-$output .= '<select name="selected_licence" onChange="submit();">';
-$output .= '<option value="' . LICENCE_ALL . '" ' . ($selected_licence == LICENCE_ALL ? "selected" : "") . '>Összes</option>';
-$output .= '<option value="' . LICENCE_WITH . '" ' . ($selected_licence == LICENCE_WITH ? "selected" : "") . '>Van</option>';
-$output .= '<option value="' . LICENCE_WITHOUT . '" ' . ($selected_licence == LICENCE_WITHOUT ? "selected" : "") . '>Nincs</option>';
-$output .= '</select>';
-
-if (isset($pager)) {
-    switch ($pager) {
-        case '<<':
-            $listed_member = 0;
-            break;
-        case '<':
-            $listed_member -= PAGE_MEMBERS;
-            if ($listed_member < 0) {
-                $listed_member = 0;
-            }
-            break;
-        case '>':
-            $listed_member += PAGE_MEMBERS;
-            if ($listed_member + PAGE_MEMBERS >= $total_member) {
-                $listed_member = $total_member - PAGE_MEMBERS;
-            }
-            break;
-        case '>>':
-            $listed_member = $total_member - PAGE_MEMBERS;
-            break;
-
-        default:
-            break;
-    }
+$view->submitDropDownChooser('Fizetés', [PAID_ALL => 'Nincs szűrés', PAID_ONLY => 'Fizetve', PAID_NOT => 'Rendezetlen'], 'selected_paid', true);
+if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) > 0) {
+    $view->submitDropDownChooser('FAI licensz', [LICENCE_ALL => 'Összes', LICENCE_WITH => 'Van', LICENCE_WITHOUT => 'Nincs'], 'selected_licence', true);
 }
+$view->endModal();
+$view->inputDropDownSelector('Oszlopok', 'view_', $all_columns, $view_columns, true);
 
-$output .= '<br><br><input type="submit" name="search_submit" value="Szűrés">&nbsp;&nbsp;&nbsp;&nbsp';
-$output .= '<input type="hidden" name="listed_member" value="' . $listed_member . '">    ';
-$output .= '<input type="hidden" name="total_member" value="' . $total_member . '">    ';
+
 
 if ($total_member > PAGE_MEMBERS) {
-    $output .= 'Lapozás:<input type="submit" name="pager" value="<<">    ';
-    $output .= '<input type="submit" name="pager" value="<">    ';
-    $output .= $listed_member + 1 . '/' . $total_member;
-    $output .= '<input type="submit" name="pager" value=">">    ';
-    $output .= '<input type="submit" name="pager" value=">>">    ';
+    $total_pages = intdiv($total_member - 1, PAGE_MEMBERS) + 1;
+    $current_page = intdiv($listed_member, PAGE_MEMBERS); // Az első lap 0-s  
+    $first_page = max(0, min($current_page - 1, $total_pages - PAGERS));
+    $view->newElement('<nav aria-label="search_members">');
+    $view->newElement('<ul class="pagination m-2">');
+    $view->newElement('<li class="page-item">');
+    $view->putElement('<button class="page-link" name="listed_member" id="listed_member" value="0" title="Első oldal"><span aria-hidden="true">&laquo;</span><span class="sr-only">Első</span></button>');
+    $view->endElement('</li>');
+    for ($i = 0; $i < min(PAGERS, $total_pages); $i++) {
+        $page_active = ($first_page + $i) == $current_page;
+        $page_num = $first_page + $i;
+        $goto_member = $page_num * PAGE_MEMBERS;
+        $view->newElement('<li class="page-item' . ($page_active ? ' active" aria-current="page"' : '"') . '>');
+        $view->putElement('<button class="page-link" name="listed_member" id="listed_member" value="' . $goto_member . '" title="' . ($page_num + 1) . '. oldal" >' . ($page_num + 1) . ($page_active ? '<span class="sr-only">(current)</span>' : '') . '</button>');
+        $view->endElement('</li>');
+    }
+    $view->newElement('<li class="page-item">');
+    $view->putElement('<button class="page-link" name="listed_member" id="listed_member" value="' . ($total_member - PAGE_MEMBERS) . '" title="Utolsó oldal"><span aria-hidden="true">&raquo;</span><span class="sr-only">Utolsó</span></button>');
+    $view->endElement('</li>');
+    $view->endElement('</ul>');
+    $view->endElement('</nav>');
 }
-$output .= '&nbsp;&nbsp;&nbsp;&nbspNézet: ';
-foreach ($all_columns as $view_chkindex => $view_chkname) {
-    $output .= $view_chkname . ':<input type="checkbox" name="view_' . $view_chkindex . '" onChange="submit();"'
-            . ((in_array($view_chkindex, $view_columns)) ? ' checked ' : '')
-            . '>&nbsp;&nbsp;&nbsp;';
-}
-$output .= '</div></form>';
-$output .= '</div>';
+$view->endDiv();
+$view->endKeret();
 
 function isNewSearch($field, $id) {
     global $search_values, $listed_member;
-    if (!isset($search_values))
+    if (!isset($search_values)) {
         return;
+    }
     if ($field != $search_values[$id]) {
         $listed_member = 0;
     }

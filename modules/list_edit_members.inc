@@ -9,6 +9,7 @@ define("VIEW_LICENCE", 5);
 define("VIEW_CLUB", 6);
 define("VIEW_FEES", 7);
 define("VIEW_ROLES", 8);
+define("VIEW_GDPR", 9);
 
 $all_columns = array(
     VIEW_BORN => "Született",
@@ -19,6 +20,7 @@ $all_columns = array(
     VIEW_CLUB => "Egyesület",
     VIEW_FEES => "Díjak",
     VIEW_ROLES => "Szerepek",
+    VIEW_GDPR => "GDPR",
 );
 
 $isSetView = false;
@@ -43,6 +45,12 @@ if (isset($delete_member)) {
     deleteMember($delete_member);
 }
 if (isset($selected_item)) {
+    if (isset($_SESSION[SESSION_SEARCH_VALUES])
+            AND isset($_SESSION[SESSION_SEARCH_VALUES])
+            AND isset($_SESSION[SESSION_SEARCH_VALUES][SEARCH_SELECTED_CLUB])
+            AND $_SESSION[SESSION_SEARCH_VALUES][SEARCH_SELECTED_CLUB] > 0) {
+        $_SESSION[SESSION_SELECTED_CLUB] = $_SESSION[SESSION_SEARCH_VALUES][SEARCH_SELECTED_CLUB];
+    }
     $_SESSION[SESSION_SELECTED_ITEM] = $selected_item;
     $_SESSION[SESSION_MOD] = $admin_menu["edit_member"][SETUP_MOD_ID];
     include_once (MODULES . $admin_menu["edit_member"][SETUP_MOD_MODULE]);
@@ -52,13 +60,18 @@ include_once INCLUDES . 'search_members.inc';
 unset($_SESSION[SESSION_FOUND_MEMBERS]);
 unset($found_member_ids);
 if ($total_member > 0) {
-    $output .= '<div class="lists"> <form id="members" method="post"> '
-            . '<table border="1"><caption>Tagok listázása</caption>';
-    $output .= '<tr><th>Sorszám</th><th>Név</th>';
+    $view->newDiv('table-responsive-sm');
+    $view->newElement('<table class="table table-bordered table-hover table-sm p-1"><caption>Tagok listázása</caption>');
+    $view->newElement('<thead>');
+    $view->newElement('<tr>');
+    $view->putElement('<th scope="col">Sorszám</th><th scope="col">Név</th>');
     foreach ($view_columns as $view_index) {
-        $output .= '<th>' . $all_columns[$view_index] . '</th>';
+        $view->putElement('<th scope="col">' . $all_columns[$view_index] . '</th>');
     }
-    $output .= '<th>Művelet</th></tr>';
+    $view->putElement('<th scope="col">Művelet</th>');
+    $view->endElement('</tr>');
+    $view->endElement('</thead>');
+    $view->newElement('<tbody>');
     $found_member_ids = array();
     $edited_item = 0;
     while ($res AND $row = $res->fetch_assoc()) {
@@ -73,51 +86,52 @@ if ($total_member > 0) {
         if ($listed_item < 0) {
             break;
         }
-        $output .= '<tr>';
-        $paid = '';
-        if (isPaidMembership($row[MEMBER_ID])) {
-            $paid = '<image src="' . IMAGES . 'ok.jpg">';
-        }
-        $output .= '<td>' . $row[MEMBER_ID] . $paid . '</td>';
-        $output .= '<td>' . $row[MEMBER_VEZNEV] . " " . $row[MEMBER_KERNEV] . "</td>";
+        $view->newElement('<tr' . (isPaidMembership($row[MEMBER_ID]) ? ' class="table-success"' : '') . '>');
+        $view->putElement('<th scope="row">' . $row[MEMBER_ID] . '</th>');
+        $view->putElement('<td>' . $row[MEMBER_VEZNEV] . " " . $row[MEMBER_KERNEV] . '</td>');
         foreach ($view_columns as $view_index) {
             switch ($view_index) {
                 case VIEW_BORN:
-                    $output .= '<td>' . $row[MEMBER_BORN] . "</td>";
+                    $view->putElement('<td>' . $row[MEMBER_BORN] . '</td>');
                     break;
                 case VIEW_CATEGORY:
-                    $output .= "<td>" . getListMemberCategories($row[MEMBER_ID]) . "</td>";
+                    $view->putElement("<td>" . getListMemberCategories($row[MEMBER_ID]) . "</td>");
                     break;
                 case VIEW_EMAIL:
-                    $output .= "<td>" . $row[MEMBER_EMAIL] . "</td>";
+                    $view->putElement("<td>" . $row[MEMBER_EMAIL] . "</td>");
                     break;
                 case VIEW_ADDR:
-                    $output .= "<td>" . $row[MEMBER_ADDR_POST] . ' ' . $row[MEMBER_ADDR_CITY] . ', ' . $row[MEMBER_ADDR_STREET] . "</td>";
+                    $view->putElement("<td>" . $row[MEMBER_ADDR_POST] . ' ' . $row[MEMBER_ADDR_CITY] . ', ' . $row[MEMBER_ADDR_STREET] . "</td>");
                     break;
                 case VIEW_LICENCE:
-                    $output .= "<td>" . $row[MEMBER_LICENCE] . "</td>";
+                    $view->putElement("<td>" . $row[MEMBER_LICENCE] . "</td>");
                     break;
                 case VIEW_CLUB:
-                    $output .= "<td>" . getMemberClubNames($row[MEMBER_ID]) . "</td>";
+                    $view->putElement("<td>" . getMemberClubNames($row[MEMBER_ID]) . "</td>");
                     break;
                 case VIEW_FEES:
-                    $output .= "<td>" . printFmOfMember($row[MEMBER_ID]) . "</td>";
+                    $view->putElement("<td>" . printFmOfMember($row[MEMBER_ID]) . "</td>");
                     break;
                 case VIEW_ROLES:
-                    $output .= "<td>" . printPermissions($row[MEMBER_ID]) . "</td>";
+                    $view->putElement("<td>" . printRoles($row[MEMBER_ID]) . "</td>");
+                    break;
+                case VIEW_GDPR:
+                    $view->putElement("<td>" . printGDPR($row[MEMBER_GDPR]) . "</td>");
                     break;
             }
         }
-        $output .= '<td>';
+        $view->newElement('<td>');
         if (isDeletableMember($row[MEMBER_ID]) && ($permission & (ACCESS_ADMIN | ACCESS_MMSZ | ACCESS_CLUBLEADER)) != 0) {
-            $output .= '<button  type="submit" name="delete_member" value="' . $row[MEMBER_ID] . '" onClick="return confirm(\'Biztosan tölni akarod a ' . $row[MEMBER_ID] . ' azonosítójú tagot?\')"><img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+            $view->submitDelete('delete_member', $row[MEMBER_ID], 'Törlés', 'Biztosan tölni akarod a ' . $row[MEMBER_ID] . ' azonosítójú tagot?');
         }
-        $output .= '<button  type="submit" name="selected_item" value="' . ($edited_item + $listed_member) . '"><img src="' . IMAGES . 'edit.jpg" title="Szerkesztés"></button>';
-        $output .= '</td>';
-        $output .= "</tr>";
+        $view->submitEdit('selected_item', ($edited_item + $listed_member));
+        $view->endElement('</td>');
+        $view->endElement('</tr>');
         $edited_item++;
     }
-    $output .= "</table></form></div>";
+    $view->endElement('</tbody>');
+    $view->endElement('</table>');
+    $view->endDiv();
 } else {
-    warning("Nincs találat !");
+    $view->warning('Nincs találat !');
 }

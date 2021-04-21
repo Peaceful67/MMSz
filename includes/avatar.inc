@@ -1,5 +1,6 @@
 <?php
 
+
 $file = '.' . AVATAR . $avatar_id . '.jpg';
 $sized_file = '.' . AVATAR_SIZED . $avatar_id . '.jpg';
 $original_file = '.' . AVATAR_ORIGINAL . $avatar_id . '.jpg';
@@ -36,12 +37,11 @@ if (isset($download_original)) {
 }
 if (isset($_FILES["avatar_upload"]) AND isset($feltolt_avatar)) {
     if (!empty($_FILES["avatar_upload"]["tmp_name"])) {
-
         $check = getimagesize($_FILES["avatar_upload"]["tmp_name"]);
-        if ($check !== false OR $_FILES["document_upload"]["type"] == "image/jpg") {
+        if ($check !== false AND $_FILES["avatar_upload"]["type"] == "image/jpg" OR $_FILES["avatar_upload"]["type"] == "image/jpeg") {
             list($width, $height) = $check;
             if (!isAvatarRatio($width, $height)) {
-                warning(AVATAR_SIZED_WIDTH . "(széles)/" . AVATAR_SIZED_HEIGHT . " (magas) képarányú (&#177;5%) kép tölthető csak fel !");
+                $view->danger(AVATAR_SIZED_WIDTH . "(széles)/" . AVATAR_SIZED_HEIGHT . " (magas) képarányú (&#177;5%) kép tölthető csak fel !");
                 unset($_FILES);
             } elseif ($width >= AVATAR_SIZED_WIDTH AND $height >= AVATAR_SIZED_HEIGHT) {
                 $thumb = imagecreatetruecolor(AVATAR_WIDTH, AVATAR_HEIGHT);
@@ -53,60 +53,58 @@ if (isset($_FILES["avatar_upload"]) AND isset($feltolt_avatar)) {
                 imagejpeg($sized, $sized_file);
                 rename($_FILES["avatar_upload"]["tmp_name"], $original_file);
                 logger($member_id, $avatar_id, LOGGER_MEMBER_MOD, " tag avatar feltöltése");
-                if(getOptionValue(OPTIONS_NAME_FAI_ENABLED)==1 AND isFaiMember($avatar_id)) {
+                if (getOptionValue(OPTIONS_NAME_FAI_ENABLED) == 1 AND isFaiMember($avatar_id)) {
                     updateFaiAvatar($avatar_id);
                 }
             } else {
-                warning(" A képnek legalább " . AVATAR_SIZED_WIDTH . " képpont szélesnek és "
+                $view->warning(" A képnek legalább " . AVATAR_SIZED_WIDTH . " képpont szélesnek és "
                         . AVATAR_SIZED_HEIGHT . " képpont magasnak kell lennie.");
                 unset($_FILES);
             }
         } else {
-            warning("A feltöltött fájl nem kép !");
+            $view->danger("A feltöltött fájl nem JPG formátumú !");
             unset($_FILES);
         }
     }
 }
-$output .= '<div class="keret">';
-$output .= '<H1>Arckép feltöltés</H1>';
+$view->newKeret();
 if (isset($avatar_id)) {
     if (is_file($file)) {
         $mtime = filemtime($file);
-        $output .= '<img height="' . AVATAR_HEIGHT . '" width="' . AVATAR_WIDTH . '" src="' . AVATAR_URL . $avatar_id . '.jpg?' . $mtime . '"/>';
+        $view->putElement('<img height="' . AVATAR_HEIGHT . '" width="' . AVATAR_WIDTH . '" src="' . AVATAR_URL . $avatar_id . '.jpg?' . $mtime . '"/>');
     } else {
-        $output .= "Nincs feltöltött kép";
+        $view->warning("Nincs feltöltött kép");
     }
 }
-$output .= '<form method="post" enctype="multipart/form-data"><label>Feltöltés:</label>
-            <input type="hidden" name="avatar_id" value="' . $avatar_id . '">
-                        <input type="file" name="avatar_upload"  ><br>';
-//if (isset($_FILES["avatar_upload"])) {
-$output .= '<input type="submit" name="feltolt_avatar" value="Feltöltés" >';
-//}
-$output .= '<input type="hidden" name="edit_member" value="' . $edit_member . '">';
+$view->putHidden('avatar_id');
+$view->putHidden('edit_member');
+//$view->inputFileUpload('avatar_upload', 'feltolt_avatar', 'Avatar feltöltése');
+$view->inputFile('Avatar', 'avatar_upload');
+$view->submitButton('feltolt_avatar', 'Feltöltés');
+
 if (is_file($file)) {
-    $output .= '<br><label>Törlés:</label><input type="submit" name="delete_avatar" value="Törlés" onClick="return confirm(\'Biztosan törölni akarod a képet ?\')"/>';
+    $view->submitDelete('delete_avatar', $avatar_id, 'Törlés', 'Biztosan törölni akarod a képet ?');
 }
 if (is_file($sized_file) OR is_file($original_file)) {
-    $output .= '<br><label>Letöltés:</label>';
+    $view->putLabel('Letöltés');
 }
 if (is_file($sized_file)) {
     list($width, $height) = getimagesize($sized_file);
-    $output .= '<input title="Méretes" type="submit" name="download_sized" value="' . $width . ' x ' . $height . '" >';
+    $view->submitButton('download_sized', $width . ' x ' . $height, $avatar_id, 'Átméretezett');
+//    $output .= '<input title="Méretes" type="submit" name="download_sized" value="' . $width . ' x ' . $height . '" >';
 }
 if (is_file($original_file)) {
     list($width, $height) = getimagesize($original_file);
-    $output .= '&nbsp;&nbsp;&nbsp;<input title="Eredeti" type="submit" name="download_original" value="' . $width . ' x ' . $height . '" >';
+    $view->submitButton('download_original', $width . ' x ' . $height, $avatar_id, 'Eredeti képméret');
+//    $output .= '&nbsp;&nbsp;&nbsp;<input title="Eredeti" type="submit" name="download_original" value="' . $width . ' x ' . $height . '" >';
 }
-
-$output .= '</form>';
-$output .= '</div>';
+$view->endKeret();
 
 function isAvatarRatio($width, $height) {
-    if ((floatval($height * AVATAR_SIZED_WIDTH) / floatval($width*AVATAR_SIZED_HEIGHT)) > AVATAR_TOLERANCE) {
+    if ((floatval($height * AVATAR_SIZED_WIDTH) / floatval($width * AVATAR_SIZED_HEIGHT)) > AVATAR_TOLERANCE) {
         return false;
     }
-    if ((floatval($height*AVATAR_SIZED_WIDTH) / floatval($width*AVATAR_SIZED_HEIGHT)) < (1 / AVATAR_TOLERANCE)) {
+    if ((floatval($height * AVATAR_SIZED_WIDTH) / floatval($width * AVATAR_SIZED_HEIGHT)) < (1 / AVATAR_TOLERANCE)) {
         return false;
     }
     return true;

@@ -8,13 +8,16 @@ $downloads = [
     2 => ["Tagok kategóriánként", "Kategória, Szakág, " . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " azonosító, Név, Született, Egyesület, Tagdíj, Rendezve, FAI befizetés, Email, Telefon, Egyesületi szerep, lejárata, Jogosítások, lejárata"],
     3 => ["Egyesületek vezetői", "Egyesület neve, Létszám, Vezetők"],
     4 => ["Egyesületek küldöttei", "Egyesület neve, Küldöttek száma, Maximális küldött, Küldöttek neve, Vezetők elérhetősége"],
-    5 => ["Taglista", "Tag neve, Email, Születetett, Város, Egyesület"],
+    5 => ["Taglista egyesületenként", "Tag neve, Email, Születetett, Város, Egyesület"],
+    51 => ["Taglista szerepkörönként", "Tag neve, Email, Születetett, Város, Egyesület, Szerepkör, -tól, -ig"],
     6 => ["SiR versenyzők", "Tag neve, Egyesület, Születési idő, Születési hely, Nem, Anyja neve, Település, Irsz., Lakcím, Amatőr"],
     7 => ["Offline egyesületek", "Még egy tagnak sincs jelszava, tehát nem használják a tagnyilvántartót"],
     8 => ["Tavalyi taglista", "Tavaly év végi aktív tagok listája"],
 //    8 =>  ["Összes FAI tag", "Minden olyan tag, akinek van FAI ID-je"],
 //    9 =>  ["Fizetett FAI tag", "Minden olyan tag, akinek van FAI ID-je és befizette a díjat"],
     10 => ["Tavalyi tagok", "Egyesületenkénti kimutatás tagokról (xlsx)"],
+    11 => ['Nov.15 aktív tagok száma', 'Tavaly nov. 15-én aktív tagok egyesületenkénti száma'],
+    12 => ['Nov.15 aktív tagok részletesen', 'Tavaly nov. 15-én aktív tagok egyesületenként'],
 ];
 
 if (!isset($selected_stat)) {
@@ -23,13 +26,10 @@ if (!isset($selected_stat)) {
 if (isset($download)) {
     switch ($selected_stat) {
         case 1:
-            $filename = "membership_" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
+            $filename = "membership_" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Tagok összetétele", $filename);
+            $ex->insertHeaderRow(["Tagsági forma", "Létszám", "Fizetett"]);
             $fees = getFeeIdsToday(FEE_TYPE_MEMBERSHIP);
-            $data = conv_array(array("Tagsági forma", "Létszám", "Fizetett"));
-            $fh = fopen('php://output', 'w');
-            fputcsv($fh, $data, CSV_DELIMITER);
             foreach ($member_types as $mt_key => $mt_name) {
                 if (isset($fees[$mt_key])) {
                     $sql = 'SELECT * FROM `' . FM_TABLE . '` WHERE '
@@ -43,24 +43,21 @@ if (isset($download)) {
                             . ' AND (CURDATE() BETWEEN `' . FM_FROM . '` AND `' . FM_TO . '`) ';
                     $res = $mysqliLink->query($sql);
                     $num_paied = $res ? $res->num_rows : 0;
-                    fputcsv($fh, conv_array(array($mt_name, $num, $num_paied)), CSV_DELIMITER);
+                    $ex->insertRow([$mt_name, $num, $num_paied]);
                 }
             }
-            fclose($fh);
+            $ex->save();
             logger($member_id, -1, LOGGER_STATISTIC, "Tagok összetétele");
-            exit(0);
+            break;
 
         case 2:
             $filename = "member_category_" . date("Y-m-d_H-i-s") . ".xlsx";
-            header('Content-type: application/vnd.ms-excel');
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            header('Cache-Control: max-age=0');
             $ex = new ExcelHelper("Tagok kategóriánként", $filename);
-            $ex->insertRow(array("Kategória", "Szakág", getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " azonosító",
+            $ex->insertHeaderRow(["Kategória", "Szakág", getOptionValue(OPTIONS_NAME_COMPANY_NAME) . " azonosító",
                 "Név", "Született", "Egyesület", "Tagdíj", "Rendezve",
                 "FAI befizetés", "Email", "Telefon",
                 "Egyesületi szerep", "lejárata",
-                $fee_type[FEE_TYPE_LICENCES][0], "lejárata"));
+                $fee_type[FEE_TYPE_LICENCES][0], "lejárata"]);
             $cat_res = $mysqliLink->query('SELECT * FROM `' . CATEGORIES_TABLE . '` ORDER BY `' . CATEGORIES_SHORT . '`');
             while ($cat_res AND $cat_row = $cat_res->fetch_assoc()) {
                 $mem_res = $mysqliLink->query('SELECT * FROM `' . CM_TABLE . '` WHERE `' . CM_CATEGORY . '`=' . $cat_row[CATEGORIES_ID]);
@@ -95,30 +92,26 @@ if (isset($download)) {
                     } else {
                         $lic_name = $lic_date = '---';
                     }
-                    $ex->insertRow(array($cat_row[CATEGORIES_SHORT], $branches[$cat_row[CATEGORIES_BRANCH]],
+                    $ex->insertRow([$cat_row[CATEGORIES_SHORT], $branches[$cat_row[CATEGORIES_BRANCH]],
                         $mem_row[CM_MEMBER_ID], getMemberName($mem_row[CM_MEMBER_ID]),
                         $mem[MEMBER_BORN], getMemberClubNames($mem_row[CM_MEMBER_ID])
                         , $sum, $paid,
                         getFaiPaymentDate($mem_row[CM_MEMBER_ID]), $mem[MEMBER_EMAIL], $mem[MEMBER_TEL],
                         $role_name, $role_date,
-                        $lic_name, $lic_date));
+                        $lic_name, $lic_date]);
                 }
             }
 
-            $ex->close($filename);
+            $ex->save();
             logger($member_id, -1, LOGGER_STATISTIC, "Tagok kategoriánként");
-            exit(0);
+            breał;
 
         case 3:
-            $filename = "clubleaders_" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            $fh = fopen('php://output', 'w');
-            $data = array(" Egyesület", "Létszám", "Vezetők");
-            fputcsv($fh, conv_array($data), CSV_DELIMITER);
+            $filename = "clubleaders_" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Egyesületek vezetői", $filename);
+            $ex->insertHeaderRow([" Egyesület", "Létszám", "Vezetők"]);
             $res = $mysqliLink->query('SELECT * FROM `' . CLUB_TABLE . '` WHERE  1  ORDER BY `' . CLUB_NAME . '` ');
             while ($res AND $row = $res->fetch_assoc()) {
-
                 $name = " " . $row[CLUB_NAME];
                 $num = " " . getNumMemberOfClub($row[CLUB_ID]);
 
@@ -134,20 +127,16 @@ if (isset($download)) {
                     $leader .= $mem[MEMBER_BORN] . '/';
                     $leader .= $mem[MEMBER_EMAIL] . ', ';
                 }
-                $data = array($name, $num, $leader);
-                fputcsv($fh, conv_array($data), CSV_DELIMITER);
+                $ex->insertRow([$name, $num, $leader]);
             }
-            fclose($fh);
+            $ex->save();
             logger($member_id, -1, LOGGER_STATISTIC, "Egyesületi vezetők");
-            exit(0);
+            break;
 
         case 4:
-            $filename = "clubdelegates_" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            $fh = fopen('php://output', 'w');
-            $data = array(" Egyesület", "Kijelölt", "Maximum", "Küldöttek", "Vezetők");
-            fputcsv($fh, conv_array($data), CSV_DELIMITER);
+            $filename = "clubdelegates_" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Egyesületek küldöttei", $filename);
+            $ex->insertHeaderRow([" Egyesület", "Kijelölt", "Maximum", "Küldöttek", "Vezetők"]);
             $res = $mysqliLink->query('SELECT * FROM `' . CLUB_TABLE . '` WHERE  1  ORDER BY `' . CLUB_NAME . '` ');
             while ($res AND $row = $res->fetch_assoc()) {
 
@@ -159,19 +148,16 @@ if (isset($download)) {
                 $act = " " . getNumberOfDelegateClub($row[CLUB_ID]);
                 $max = " " . getMaxNumberOfDelegateClub($row[CLUB_ID]);
                 $names = getClubDelegates($row[CLUB_ID]);
-                $data = array($club, $act, $max, $names, $leaders);
-                fputcsv($fh, conv_array($data), CSV_DELIMITER);
+                $ex->insertRow([$club, $act, $max, $names, $leaders]);
             }
-            fclose($fh);
+            $ex->save();
             logger($member_id, -1, LOGGER_STATISTIC, "Egyesületek küldöttei");
-            exit(0);
+            break;
         case 5:
-            $filename = "members_" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            $fh = fopen('php://output', 'w');
-            $data = array("Tag neve", "Email", "Született", "Város", "Egyesület");
-            fputcsv($fh, conv_array($data), CSV_DELIMITER);
+            logger($member_id, -1, LOGGER_STATISTIC, "Aktív tagok");
+            $filename = "members_" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Tagok kategóriánkent", $filename);
+            $ex->insertHeaderRow(["Tag neve", "Email", "Született", "Város", "Egyesület", 'club_cnt']);
             $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '` ';
             $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
                     . ' `active`.`' . ROLE_PERMISSION . '`!="0" '
@@ -179,24 +165,64 @@ if (isset($download)) {
                     . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) ';
             $res = $mysqliLink->query($sql);
             while ($res AND $row = $res->fetch_assoc()) {
+                $club_cnt = 0;
                 $name = getMemberName($row[MEMBER_ID]);
                 $born = $row[MEMBER_BORN];
                 $email = $row[MEMBER_EMAIL];
                 $city = $row[MEMBER_ADDR_CITY];
-                $club = getMemberClubNames($row[MEMBER_ID]);
-                $data = array($name, $email, $born, $city, $club);
-                fputcsv($fh, conv_array($data), CSV_DELIMITER);
+                $clubs = getClubsMember($row[MEMBER_ID]);
+                foreach ($clubs as $club) {
+                    $ex->insertRow([$name, $email, $born, $city, $club, $club_cnt]);
+                    $club_cnt--;
+                }
+//                $club = getMemberClubNames($row[MEMBER_ID]);
             }
-            fclose($fh);
-            logger($member_id, -1, LOGGER_STATISTIC, "Aktív tagok");
-            exit(0);
+            $ex->save();
+            break;
+        case 51:
+            logger($member_id, -1, LOGGER_STATISTIC, "Aktív tagok szerkörönként");
+            $filename = "members_by_roles_" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Tagok szerepenként", $filename);
+            $ex->insertHeaderRow(["Tag neve", "Email", "Született", "Város", "Egyesület", 'Szerepkör', 'Ettől', 'Eddig']);
+            $searched_role = ACCESS_ADMIN | ACCESS_MMSZ | ACCESS_MMSZ_PRESIDENT | ACCESS_CLUBLEADER | ACCESS_CLUB_DELEGATE | ACCESS_CLUB_MEMBER | ACCESS_BRANCH_LEADER | ACCESS_USER | ACCESS_SUBCLUB_LEADER;
+            $sql = 'SELECT `' . MEMBER_TABLE . '`.*, `active`.*  FROM (`' . MEMBER_TABLE . '` ';
+            $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
+                    . ' (`active`.`' . ROLE_PERMISSION . '`&' . $searched_role . ')!="0" '
+                    . ' AND `' . MEMBER_TABLE . '`.`' . MEMBER_ID . '`=`active`.`' . ROLE_MEMBER . '` '
+                    . ' AND (CURDATE() BETWEEN `active`.`' . ROLE_FROM . '` AND `active`.`' . ROLE_TO . '`))) '
+                    . ' ORDER BY `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`, `' . MEMBER_TABLE . '`.`' . MEMBER_VEZNEV . '`;';
+            $res = $mysqliLink->query($sql);
+//            error_log($sql);
+            while ($res AND $row = $res->fetch_assoc()) {
+                $club_cnt = 0;
+                $name = getMemberName($row[MEMBER_ID]);
+                $born = $row[MEMBER_BORN];
+                $email = $row[MEMBER_EMAIL];
+                $city = $row[MEMBER_ADDR_CITY];
+                $club = $row[ROLE_CLUB];
+                $club_name = $club > 0 ? getClubName($club) : '---';
+                $from = $row[ROLE_FROM];
+                $to = $row[ROLE_TO];
+                switch ($row[ROLE_PERMISSION]) {
+                    case ACCESS_ADMIN :
+                    case ACCESS_USER:
+                    case ACCESS_CLUBLEADER:
+                    case ACCESS_MMSZ:
+                    case ACCESS_CLUB_DELEGATE:
+                    case ACCESS_MMSZ_PRESIDENT:
+                    case ACCESS_CLUB_PRESIDENT:
+                        $role_name = $access[$row[ROLE_PERMISSION]];
+                        $ex->insertRow([$name, $email, $born, $city, $club_name, $role_name, $from, $to]);
+                        break;
+                    default:
+                        break;
+                }
+            } $ex->save();
+            break;
         case 6:
-            $filename = "Sir_Competitors" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            $fh = fopen('php://output', 'w');
-            $data = array("Tag neve", "Egyesület", "Születési idő", "Születési hely", "Nem", "Anyja neve", "Település", "Irsz.", "Lakcím", "Amatőr");
-            fputcsv($fh, conv_array($data), CSV_DELIMITER);
+            $filename = "Sir_Competitors" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("SiR versenyzők", $filename);
+            $ex->insertHeaderRow(["Tag neve", "Egyesület", "Születési idő", "Születési hely", "Nem", "Anyja neve", "Település", "Irsz.", "Lakcím", "Amatőr"]);
             $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '` ';
             $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
                     . ' `active`.`' . ROLE_PERMISSION . '`!="0" '
@@ -215,19 +241,15 @@ if (isset($download)) {
                 $mother = $row[MEMBER_MOTHER];
                 $sex = ($row[MEMBER_SEX] != "F") ? "Férfi" : "Nő";
                 $club = getMemberClubNames($row[MEMBER_ID]);
-                $data = array($name, $club, $born, $birth_city, $sex, $mother, $city, $post, $addr, "Amatőr");
-                fputcsv($fh, conv_array($data), CSV_DELIMITER);
+                $ex->insertRow([$name, $club, $born, $birth_city, $sex, $mother, $city, $post, $addr, "Amatőr"]);
             }
-            fclose($fh);
+            $ex->save();
             logger($member_id, -1, LOGGER_STATISTIC, "SiR Versenyzők");
-            exit(0);
+            break;
         case 7:
-            $filename = "offline_clubs" . date("Y-m-d_H-i-s") . ".csv";
-            header('Content-Type: ' . MIME_CSV);
-            header('Content-Disposition: attachment; filename="' . $filename . '";');
-            $fh = fopen('php://output', 'w');
-            $data = array("Egyesület neve");
-            fputcsv($fh, conv_array($data), CSV_DELIMITER);
+            $filename = "offline_clubs" . date("Y-m-d_H-i-s") . ".xlsx";
+            $ex = new ExcelHelper("Offline egyesületek", $filename);
+            $ex->insertHeaderRow(["Egyesület neve"]);
             $clubs = getClubNameList();
             $sql = 'SELECT * FROM `' . MEMBER_TABLE . '` WHERE '
                     . ' `' . MEMBER_PASSWORD . '`!="" ';
@@ -236,15 +258,15 @@ if (isset($download)) {
                 unset($clubs[getMemberClubId($row[MEMBER_ID])]);
             }
             foreach ($clubs as $club) {
-                fputcsv($fh, conv_array(array($club)), CSV_DELIMITER);
+                $ex->insertRow([$club]);
             }
-            fclose($fh);
-            logger($member_id, -1, LOGGER_STATISTIC, "SiR Versenyzők");
-            exit(0);
+            $ex->save();
+            logger($member_id, -1, LOGGER_STATISTIC, "Offline egyesületek");
+            break;
         case 8:
             logger($member_id, -1, LOGGER_STATISTIC, "Tavalyi taglista");
             $filename = 'TavalyiTaglista_' . date("Y-m-d_H-i-s") . '.xlsx';
-            $helper = new ExcelHelper('Taglista', $filename);
+            $helper = new ExcelHelper('Tavalyi taglista', $filename);
             $last_year = intval($this_year) - 1;
             $last_year .= '-12-31';
             $helper->insertHeaderRow([
@@ -274,7 +296,7 @@ if (isset($download)) {
             $fh = fopen('php://output', 'w');
             fclose($fh);
             logger($member_id, -1, LOGGER_STATISTIC, "Fizetett FAI tagok");
-            exit(0);
+            break;
         case 10:
             logger($member_id, -1, LOGGER_STATISTIC, "Tavalyi egyesületi tagadatok");
             $filename = 'TavalyiTagok_' . date("Y-m-d_H-i-s") . '.xlsx';
@@ -301,31 +323,67 @@ if (isset($download)) {
                     $paid_members,
                     $fai_members
                 ]);
-               
             }
             $helper->insertRow([
-                 'Összesen',
+                'Összesen',
                 $total_mem,
                 $total_paid,
                 $total_fai
             ]);
             $helper->save();
-            exit(0);
+            break;
+        case 11:
+            logger($member_id, -1, LOGGER_STATISTIC, "Nov.15 tagok egyesületenkénti száma");
+            $filename = 'Nov15_tagok_' . date("Y-m-d_H-i-s") . '.xlsx';
+            $helper = new ExcelHelper('Nov15 aktivtagok', $filename);
+            $last_year = intval($this_year) - 1;
+            $last_year .= '-11-15';
+            $helper->insertHeaderRow([
+                'Egyesület', 'Létszám'
+            ]);
+            $sql = 'SELECT `clubs`.`KlubNev`, COUNT(*) AS number FROM `role_member` '
+                    . ' INNER JOIN `clubs` ON `clubs`.`IDK` = `role_member`.`club_id` AND `role_member`.`club_id` > 0 '
+                    . ' WHERE `date_from` < "' . $last_year . '" AND `permission` = 1 GROUP BY `club_id` ORDER BY `clubs`.`KlubNev`';
+            $res = $mysqliLink->query($sql);
+            while ($res AND $row = $res->fetch_assoc()) {
+                $helper->insertRow([
+                    $row[CLUB_NAME],
+                    $row['number'],
+                ]);
+            }
+            $helper->save();
+            break;
+        case 12:
+            logger($member_id, -1, LOGGER_STATISTIC, "Nov.15 tagok egyesületenként részletesen");
+            $filename = 'Nov15_tagok_reszletes_' . date("Y-m-d_H-i-s") . '.xlsx';
+            $helper = new ExcelHelper('Nov15 aktivtagok részletesen', $filename);
+            $last_year = intval($this_year) - 1;
+            $last_year .= '-11-15';
+            $helper->insertHeaderRow([
+                'Egyesület', 'Azonosító', 'Név', 'Email', 'Született', 'GDPR',
+            ]);
+            $sql = 'SELECT `clubs`.`KlubNev`, `members`.* FROM `role_member` '
+                    . ' INNER JOIN `clubs` ON (`clubs`.`IDK`=`role_member`.`club_id` AND `role_member`.`club_id`>0 )'
+                    . ' INNER JOIN `members` ON (`role_member`.`member_id`=`members`.`ID`) '
+                    . ' WHERE `role_member`.`date_from` < "2020-11-15" AND `role_member`.`permission` = 1'
+                    . ' ORDER by `clubs`.`KlubNev`, `members`.`VezNev`, `members`.`KerNev`';
+            $res = $mysqliLink->query($sql);
+            while ($res AND $row = $res->fetch_assoc()) {
+                $helper->insertRow([
+                    $row[CLUB_NAME],
+                    $row[MEMBER_ID],
+                    $row[MEMBER_VEZNEV] . ' ' . $row[MEMBER_KERNEV],
+                    $row[MEMBER_EMAIL],
+                    $row[MEMBER_BORN],
+                    $row[MEMBER_GDPR],
+                ]);
+            }
+            $helper->save();
+            break;
     }
 }
-$output .= '<div class="keret">';
-$output .= '<h2>Letöltések</h2>';
-$output .= '<form method="post">';
-$output .= '<select name="selected_stat" onChange="submit();">';
-foreach ($downloads as $download_id => $download_name) {
-    $output .= '<option value="' . $download_id . '"'
-            . (($selected_stat == $download_id) ? ' selected ' : '')
-            . '>' . $download_name[0] . '</option>';
-}
-
-$output .= '</select>&nbsp;&nbsp;&nbsp;&nbsp;' . $downloads[$selected_stat][1];
-
-$output .= '<br><br><input type="submit" name="download" value="Letöltés">';
-$output .= '</form>';
-$output .= '</div>';
-
+$view->newKeret() ;
+$view->submitDropDownChooser('Letöltések', $downloads, 'selected_stat');
+$view->info($downloads[$selected_stat][1]);
+$view->submitButton('download', 'Letöltés');
+$view->endKeret();

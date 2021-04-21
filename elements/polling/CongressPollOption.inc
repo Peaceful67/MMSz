@@ -6,9 +6,32 @@ define('CONGRESS_POLL_OPTION_POLL_ID', "poll_id");
 define('CONGRESS_POLL_OPTION_TITLE', "title");
 define('CONGRESS_POLL_OPTION_DESC', "description");
 
+
+define('CONGRESS_POLL_OPTION_ABSTAIN_ID', 1);
+define('CONGRESS_POLL_OPTION_YES_ID', 2);
+define('CONGRESS_POLL_OPTION_NO_ID', 3);
+
 class CongressPollOption extends BasicElement {
 
     private $congressPollId;
+    public static $predefinedPollOptions = [
+        CONGRESS_POLL_OPTION_ABSTAIN_ID => [
+            CONGRESS_POLL_OPTION_TITLE => 'Tartózkodás',
+            CONGRESS_POLL_OPTION_DESC => 'Jelen vagyok, de egyik lehetőségre sem szavazok',
+            CONGRESS_POLL_OPTION_POLL_ID => -1,
+        ],
+        CONGRESS_POLL_OPTION_YES_ID => [
+            CONGRESS_POLL_OPTION_TITLE => 'Elfogadom',
+            CONGRESS_POLL_OPTION_DESC => 'Egyetértek a határozati javaslattal',
+            CONGRESS_POLL_OPTION_POLL_ID => -1,
+        ],
+        CONGRESS_POLL_OPTION_NO_ID => [
+            CONGRESS_POLL_OPTION_TITLE => 'Nem fogadom el',
+            CONGRESS_POLL_OPTION_DESC => 'Nem értek egyet a határozati javaslattal',
+            CONGRESS_POLL_OPTION_POLL_ID => -1,
+        ],
+    ];
+    private $autoAbstain = false;
 
     function __construct() {
 
@@ -27,20 +50,41 @@ class CongressPollOption extends BasicElement {
                 . CONGRESS_POLL_OPTION_DESC . '` varchar(256) NOT NULL,`'
                 . CONGRESS_POLL_OPTION_POLL_ID . '` int(8) NOT NULL DEFAULT -1, '
                 . 'UNIQUE KEY `' . CONGRESS_POLL_OPTION_ID . '` (`' . CONGRESS_POLL_OPTION_ID . '`))'
-                . ' ENGINE=InnoDB DEFAULT CHARSET=utf8;');
+                . ' AUTO_INCREMENT=10 ENGINE=InnoDB DEFAULT CHARSET=utf8;');
         $this->setPrimaryKey(CONGRESS_POLL_OPTION_ID);
     }
 
     function setSelectedPoll($poll_id) {
         $this->congressPollId = $poll_id;
+        return $this;
     }
 
     function setSelectedPollOption($optionId) {
         $this->itemId = $optionId;
+        return $this;
     }
 
     function getPollOptions() {
-        return $this->getElementsBy(CONGRESS_POLL_OPTION_POLL_ID, $this->congressPollId);
+        $pollOptions = $this->getElementsBy(CONGRESS_POLL_OPTION_POLL_ID, $this->congressPollId);
+        return $pollOptions;
+    }
+
+    function getTitle($option_id) {
+        if (isset(self::$predefinedPollOptions[$option_id])) {
+            return self::$predefinedPollOptions[$option_id][CONGRESS_POLL_OPTION_TITLE];
+        } else {
+            $this->getItemById($option_id);
+            return $this->getPollOptionTitle();
+        }
+    }
+
+    function getDescription($option_id) {
+        if (isset(self::$predefinedPollOptions[$option_id])) {
+            return self::$predefinedPollOptions[$option_id][CONGRESS_POLL_OPTION_DESC];
+        } else {
+            $this->getItemById($option_id);
+            return $this->getPollOptionDescription();
+        }
     }
 
     function getPollOptionTitle() {
@@ -53,21 +97,60 @@ class CongressPollOption extends BasicElement {
 
     function setPollOptionTitle($title) {
         $this->updateValue(CONGRESS_POLL_OPTION_TITLE, $title);
+        return $this;
     }
 
     function setPollOptionDescription($desc) {
-   //     error_log('Set:'.$this->itemId);
         $this->updateValue(CONGRESS_POLL_OPTION_DESC, $desc);
+        return $this;
     }
 
     function addPollOption() {
-        $this->insertElement([
+        $item_id = $this->insertElement([
             CONGRESS_POLL_OPTION_POLL_ID => $this->congressPollId,
         ]);
+        $this->setItemId($item_id);
+        $this->updateItem();
+        return $this;
+    }
+
+    function incrementNumAnonim($mandat) {
+        
+    }
+
+    function getNumAnonim() {
+        
     }
 
     function delPollOption($optionId) {
         $this->deleteElementById($optionId);
+    }
+
+    function addYesNo() {
+        if ($this->congressPollId > 0) {
+            $this->insertElement([
+                CONGRESS_POLL_OPTION_POLL_ID => $this->congressPollId,
+                CONGRESS_POLL_OPTION_TITLE => 'Elfogadom',
+                CONGRESS_POLL_OPTION_DESC => 'Egyetértek a határozati javaslattal',
+            ]);
+            $this->insertElement([
+                CONGRESS_POLL_OPTION_POLL_ID => $this->congressPollId,
+                CONGRESS_POLL_OPTION_TITLE => 'Nem fogadom el',
+                CONGRESS_POLL_OPTION_DESC => 'Nem értek egyet a határozati javaslattal',
+            ]);
+        }
+    }
+
+    public function getItems() {
+        
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
     }
 
 }

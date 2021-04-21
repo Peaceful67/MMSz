@@ -12,13 +12,14 @@ define("OPTIONS_NAME_EMAIL_SENDER", "email_sender");
 define("OPTIONS_NAME_EMAIL_REPLY", "email_reply");
 define("OPTIONS_NAME_EMAIL_SIGNATURE", "email_signature");
 
-
 define("OPTIONS_NAME_COMPANY_NAME", "company_name");
 define("OPTIONS_NAME_COMPANY_LONG_NAME", "company_long_name");
 define("OPTIONS_NAME_COMPANY_ADDR", "company_addr");
 define("OPTIONS_NAME_COMPANY_BANK_NAME", "company_bank_name");
 define("OPTIONS_NAME_COMPANY_BANK_ACCOUNT", "company_bank_account");
 define("OPTIONS_NAME_COMPANY_TELEFON", "company_telefon");
+define("OPTIONS_NAME_COMPANY_ID_FORMAT", "id_format");
+
 
 define("OPTIONS_NAME_DEVELOPMENT", 'development');
 define("OPTIONS_NAME_PASSWORD_LINK", 'password_link');
@@ -28,6 +29,10 @@ define("OPTIONS_NAME_DELEGATE_MOD", 'delegate_mod');
 define("OPTIONS_NAME_DELEGATE_STEP", 'delegate_step');
 define("OPTIONS_NAME_DELEGATE_RANGE", 'delegate_range');
 define("OPTIONS_NAME_HELP_ENABLED", 'help');
+define("OPTIONS_NAME_ERROR_LOG", 'error_log');
+define("OPTIONS_NAME_ERROR_LOG_SESSIONS", 'error_session');
+define("OPTIONS_NAME_ERROR_LOG_COOKIE", 'error_cookie');
+define("OPTIONS_NAME_HTML_TABULATED", 'html_tabulated');
 
 define("OPTIONS_NAME_SZAMLAZZ_ENA", 'szamlazz_ena');
 define("OPTIONS_NAME_SZAMLAZZ_USER", 'szamlazz_user');
@@ -43,7 +48,11 @@ define('OPTIONS_NAME_FAI_AUTH_PASSWD', 'fai_auth_passwd');
 
 define("OPTIONS_NAME_LAST_CRON_DAILY", 'cron_daily');
 define("OPTIONS_NAME_LAST_CRONTAB", 'last_crontab');
+define("OPTIONS_NAME_CURRENT_YEAR", 'current_year');
 
+define("OPTIONS_NAME_VERSION_CURRENT", 'current_version');
+define("OPTIONS_NAME_VERSION_UPDATED", 'updated');
+define("OPTIONS_NAME_DOCU_LAST_ID", 'last_docu_id');
 
 $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_MAX_NEWSLETTERS => 300,
@@ -61,9 +70,13 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_COMPANY_BANK_NAME => 'Bank',
     OPTIONS_NAME_COMPANY_BANK_ACCOUNT => '12345678-12345678-12345678',
     OPTIONS_NAME_COMPANY_TELEFON => '70-1234567',
+    OPTIONS_NAME_COMPANY_ID_FORMAT => '%d',
     OPTIONS_NAME_LAST_CRON_DAILY => 0,
     OPTIONS_NAME_LAST_CRONTAB => 0,
     OPTIONS_NAME_DEVELOPMENT => 0,
+    OPTIONS_NAME_ERROR_LOG => 0,    
+    OPTIONS_NAME_ERROR_LOG_SESSIONS => 0,    
+    OPTIONS_NAME_ERROR_LOG_COOKIE => 0,    
     OPTIONS_NAME_PASSWORD_LINK => 1,
     OPTIONS_NAME_DELEGATE_MOD => 1,
     OPTIONS_NAME_DELEGATE_STEP => 10,
@@ -79,6 +92,11 @@ $options = [OPTIONS_NAME_LAST_NEWSLETTER => 0,
     OPTIONS_NAME_FAI_AUTH_USER => 'hun-ciam',
     OPTIONS_NAME_FAI_AUTH_PASSWD => '6EhBft6I',
     OPTIONS_NAME_HELP_ENABLED => 0,
+    OPTIONS_NAME_VERSION_CURRENT => 0,
+    OPTIONS_NAME_VERSION_UPDATED => 0,
+    OPTIONS_NAME_DOCU_LAST_ID => 1,
+    OPTIONS_NAME_CURRENT_YEAR => 0,
+    OPTIONS_NAME_HTML_TABULATED => 0,
 ];
 
 

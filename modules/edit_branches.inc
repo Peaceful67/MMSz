@@ -1,5 +1,6 @@
 <?php
 
+
 if (isset($add_name)) {
     $sql = 'INSERT INTO `' . BRANCHES_TABLE . '` (`' . BRANCHES_NAME . '`) VALUES ("Nevezd át !!!");';
     $mysqliLink->query($sql);
@@ -14,16 +15,17 @@ if (isset($delete_name)) {
     $mysqliLink->query($sql);
 }
 $branches = getBranches();
-$output .= '<form method="post"><div class="keret lists"><br>';
-$output .= '<button title="Új szakág felvitele" name="add_name"><img src="' . IMAGES . 'add.jpg"></button><br>';
+$view->newKeret();
+$view->submitAdd('add_name', -1, 'Új szakág felvitele');
 foreach ($branches as $branch_id => $branch_name) {
-    $output .= '<input type="text" name="edit_name_' . $branch_id . '" value="' . $branch_name . '">&nbsp;&nbsp;&nbsp;&nbsp;';
-    $output .= '<button  title="Szakág mentése" name="save_name" value="' . $branch_id . '"><img src="' . IMAGES . 'save.jpg"></button>&nbsp;&nbsp;&nbsp;&nbsp;';
+    $var_name = 'edit_name_' . $branch_id;
+    $$var_name = $branch_name;
+    $view->newDiv('row');
+    $view->inputText($var_name);
+    $view->submitSave('save_name', $branch_id, 'Szakág nevének mentése');
     if (!isBranchUsed($branch_id)) {
-        $output .= '<button  title="Szakág törlése"  name="delete_name" value="' . $branch_id . '"><img src="' . IMAGES . 'delete.jpg"></button>';
-    } else {
-        $output .= 'használatban.';
+        $view->submitDelete('delete_name', $branch_id, 'Szakág törlése');
     }
-    $output .= '</br>';
+    $view->endDiv();
 }
-$output .= '</div></form>';
+$view->endKeret();

@@ -23,7 +23,7 @@ function insert_menu_item($menu_item) {
 
 function getListCategories($id, $group) {
     global $main_menu_group;
-    $ret = '<select name="' . MENU_GROUP . $id . '" id="selected_' . $id . '" onchange="submit();">';
+    $ret = '<select name="' . MENU_GROUP . $id . '" id="selected_' . $id . '" class="form-control" onchange="submit();">';
     $ret .= '<option value=-2 '
             . ($group == -2 ? ' selected ' : '')
             . '>Rejtett</option>';

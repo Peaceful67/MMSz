@@ -7,30 +7,37 @@ define("COMMAND_EXPIRE", 'expire');
 define("COMMAND_NAME", 'name');
 define("COMMAND_VALUE", 'value');
 
-
 class Command extends BasicElement {
 
     const PASSWORD = 'password';
+    const EMAIL_VOTE = 'email_vote';
 
     private static $definedCommands = [
         self::PASSWORD => [
-            'expire' => 'DAY,1',
+            'expire' => 'TIMESTAMPADD(DAY,1 ,CURRENT_TIMESTAMP())',
             'valueIsArray' => false,
             'module_name' => 'profile',
             'fixed' => [
+                'login_by_email' => true,
                 'login_normal' => 'coded',
                 'radio_edit_member' => 'passwd',
-                'remember_me' => 'true',
+                'remember_me' => 'false',
             ],
             'variables' => [
                 'member_pass' => NULL,
-                'old_pass' => NULL
+            ],
+        ],
+        self::EMAIL_VOTE => [
+            'valueIsArray' => true,
+            'module_name' => 'vote_by_email',
+            'variables' => [
+                'member_pass' => NULL,
             ],
         ],
     ];
-    private $mem_id, $code, $name, $value;
+    private $mem_id, $code, $name, $value, $expire;
 
-    function __construct($name) {
+    function __construct($name = '') {
         parent::__construct();
         $this->setTableName(COMMAND_TABLE);
         $this->setTableFields([COMMAND_MEMBER_ID, COMMAND_CODE, COMMAND_EXPIRE, COMMAND_NAME, COMMAND_VALUE]);
@@ -47,6 +54,7 @@ class Command extends BasicElement {
         $this->removeExpiredCommands();
         $this->setPrimaryKey(COMMAND_CODE);
         $this->name = $name;
+        $this->expire = '"' . date('Y-m-d I:m:s' . time()) . '"';
     }
 
     public function getItemOnce($code) {
@@ -70,7 +78,7 @@ class Command extends BasicElement {
             }
             $sql = 'DELETE FROM `' . COMMAND_TABLE . '` WHERE `' . COMMAND_CODE . '`="' . $code . '";';
             $mysqliLink->query($sql);
-            return $this->value;
+            return true;
         } else {
             return false;
         }
@@ -86,7 +94,6 @@ class Command extends BasicElement {
             foreach ($com['fixed'] as $var_name => $var_value) {
                 global $$var_name;
                 $$var_name = $var_value;
-                error_log('Fixed: ' . $var_name . '=>' . $var_value);
             }
         }
         if (isset($com['valueIsArray'])) {
@@ -101,7 +108,6 @@ class Command extends BasicElement {
                     global $$var_name;
                     if (is_null($var_value)) {
                         $$var_name = $this->value;
-                        error_log('Variables: ' . $var_name . '=>' . $this->value);
                     } else {
                         global $$var_value;
                         $$varname = $$var_value;
@@ -115,29 +121,70 @@ class Command extends BasicElement {
         if (!isset(self::$definedCommands[$this->name])) {
             return false;
         }
-        $exp = self::$definedCommands[$this->name]['expire'];
-        if (is_array($value)) {
-            $stored = serialize($value);
-        } else {
-            $stored = $value;
+        if (isset(self::$definedCommands[$this->name]['expire'])) {
+            $this->expire = self::$definedCommands[$this->name]['expire'];
         }
-        return $this->putElement($mem_id, $this->name, $stored, $exp);
+        return $this->putElement($mem_id, $value);
     }
 
-    private function putElement($mem_id, $name, $value, $expire) {
+    private function putElement($mem_id, $value) {
         global $mysqliLink;
-        $code = randomPassword();  //Ez itt nem jelszo, hanem csak egy random azonosito
+        if (is_array($value)) {
+            $escaped_value = $mysqliLink->real_escape_string(serialize($value));
+        } else {
+            $escaped_value = $mysqliLink->real_escape_string($value);
+        }
+        while ($this->isCodeAlready($code = randomPassword()));  //Ez itt nem jelszo, hanem csak egy random azonosito, ha létezik már, újra generáljuk
         $sql = 'INSERT INTO `' . COMMAND_TABLE . '` '
                 . '(`' . COMMAND_MEMBER_ID . '`, `' . COMMAND_CODE . '`,`' . COMMAND_EXPIRE . '`,`' . COMMAND_NAME . '`,`' . COMMAND_VALUE . '`) '
-                . ' VALUES (' . $mem_id . ', "' . $code . '", TIMESTAMPADD(' . $expire . ',CURRENT_TIMESTAMP()), "' . $name . '", "' . $value . '");';
+                . ' VALUES (' . $mem_id . ', "' . $code . '", ' . $this->expire . ' , "' . $this->name . '", "' . $escaped_value . '");';
         $mysqliLink->query($sql);
         return $code;
+    }
+
+    private function isCodeAlready($code) { // Elvileg már létezhet a véletlenül generált.
+        return !empty($this->getElementBy(COMMAND_CODE, $code));
     }
 
     private function removeExpiredCommands() {
         global $mysqliLink;
         $sql = 'DELETE FROM `' . COMMAND_TABLE . '` WHERE `' . COMMAND_EXPIRE . '` < CURRENT_TIMESTAMP();';
         $mysqliLink->query($sql);
+    }
+
+    public function setExpire($expire) {
+        $this->expire = $expire;
+        return $this;
+    }
+
+    public function putPatternCommand($value) {
+        return $this->putElement(-1, $value);
+    }
+
+    public function putItemByPattern($mem_id, $pattern_code) {
+        if (empty($this->getItemById($pattern_code))) {
+            error_log('Pattern code not found in Command:' . $pattern_code);
+            return '--------';
+        }
+        $value = $this->tableRow[COMMAND_VALUE];
+        $this->expire = '"' . $this->tableRow[COMMAND_EXPIRE] . '"';
+        return $this->putItem($mem_id, $value);
+    }
+
+    public function getItems() {
+        
+    }
+
+    public function getMemId() {
+        return $this->mem_id;
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
     }
 
 }

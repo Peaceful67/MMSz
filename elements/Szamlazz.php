@@ -20,6 +20,7 @@ define("SZAMLAZZ_PREPARED", "prepared");
 define("SZAMLAZZ_DONE", "done");
 
 define("SZAMLAZZ_DIR", './szamlazz/');
+define("SZAMLAZZ_URL", URL.'/szamlazz/');
 
 class Szamlazz extends BasicElement {
 
@@ -53,6 +54,7 @@ class Szamlazz extends BasicElement {
         $this->pdf_file = '';
         $this->xml_file = '';
         $this->cookie_file = '';
+        $this->setPrimaryKey(SZAMLAZZ_ID);
     }
 
     public function getElementByBillNumber($bn) {
@@ -70,7 +72,7 @@ class Szamlazz extends BasicElement {
     }
 
     public function getPdfURL($bn) {
-        return URL . $this->getPdfFileName($bn);
+        return SZAMLAZZ_URL . 'szamla_' . $bn . '.pdf';
     }
 
     public function isPdfExists($bn) {
@@ -278,6 +280,18 @@ class Szamlazz extends BasicElement {
         $ar = ["szamla" => $this->tableRow,
             "pdf_file" => $this->pdf_file];
         return serialize($ar);
+    }
+
+    public function getItems() {
+        
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
     }
 
 }

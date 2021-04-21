@@ -54,7 +54,34 @@ class EmailMember extends BasicElement {
     }
 
     function setSent() {
-        $this->setTime(EMAIL_SENT);
+        $this->setTimeCurrent(EMAIL_MEMBER_SENT);
+    }
+    function isAlreadySent($context, $congress_id, $mem_id) {
+        global  $mysqliLink;
+        $sql = 'SELECT * FROM `'.EMAIL_MEMBER_TABLE.'` '
+                . ' INNER JOIN `'.EMAIL_TABLE.'` AS `email_matched` ON ('
+                . ' `email_matched`.`'.EMAIL_CONTEXT.'`="'.$context.'" AND  `email_matched`.`'.EMAIL_ELEMENT_ID.'`='.$congress_id.''
+                . ') WHERE  `'.EMAIL_MEMBER_TABLE.'`.`'.EMAIL_MEMBER_MEMBER_ID.'`='.$mem_id. ' '
+                . 'AND `'.EMAIL_MEMBER_TABLE.'`.`'.EMAIL_MEMBER_EMAIL_ID.'`=`email_matched`.`'.EMAIL_ID.'`;';
+//        error_log($sql);
+        $res = $mysqliLink->query($sql);
+        if($res AND $res->num_rows>0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function getItems() {
+        
+    }
+
+    public function getNames() {
+        
+    }
+
+    public function isDeletable($id) {
+        
     }
 
 }

@@ -22,16 +22,18 @@ if (!isset($club_tax))
     $club_tax = '';
 if (!isset($club_mandat))
     $club_mandat = 0;
+if (!isset($club_mandat2))
+    $club_mandat2 = 0;
 
 if (isset($cancel)) {
     unset($edit_club);
     return;
 }
-
 if (isset($save_club)) {
     if (empty($club_name)) {
-        warning('Add meg az egyesület nevét !');
+        $view->danger('Add meg az egyesület nevét !');
     } else {
+
         if ($edit_club < 0) {
             $sql = 'INSERT INTO `' . CLUB_TABLE . '` SET '
                     . ' `' . CLUB_NAME . '`="' . $club_name . '", '
@@ -43,6 +45,7 @@ if (isset($save_club)) {
                     . ' `' . CLUB_BANK . '`="' . $club_bank . '", '
                     . ' `' . CLUB_TAX . '`="' . $club_tax . '", '
                     . ' `' . CLUB_MANDATUM . '`="' . $club_mandat . '", '
+                    . ' `' . CLUB_MANDATUM2 . '`="' . $club_mandat2 . '", '
                     . ' `' . CLUB_COMMENT . '`="' . $club_comment . '"; ';
             $mysqliLink->query($sql);
             $edit_club = $mysqliLink->insert_id;
@@ -58,6 +61,7 @@ if (isset($save_club)) {
                     . ' `' . CLUB_BANK . '`="' . $club_bank . '", '
                     . ' `' . CLUB_TAX . '`="' . $club_tax . '", '
                     . ' `' . CLUB_MANDATUM . '`="' . $club_mandat . '", '
+                    . ' `' . CLUB_MANDATUM2 . '`="' . $club_mandat2 . '", '
                     . ' `' . CLUB_COMMENT . '`="' . $club_comment . '", '
                     . ' `' . CLUB_ACT . '`="' . (($club_act == 'on') ? '1' : '0') . '" '
                     . ' WHERE `' . CLUB_ID . '`="' . $edit_club . '"';
@@ -69,7 +73,7 @@ if (isset($save_club)) {
                     move_uploaded_file($_FILES["document_upload"]["tmp_name"], $file);
                     logger($member_id, $edit_club, LOGGER_CLUB_EDIT, "A " . $edit_club . " egyesülethez tartozó új dokumentum feltöltése : " . $file);
                 } else {
-                    warning("A feltöltött fájl nem pdf !");
+                    $view->danger("A feltöltött fájl nem pdf !");
                 }
             }
         }
@@ -98,67 +102,71 @@ if ($edit_club > 0) {
         $club_act = $club[CLUB_ACT] == 1 ? 'on' : 'off';
         $club_tax = $club[CLUB_TAX];
         $club_mandat = $club[CLUB_MANDATUM];
+        $club_mandat2 = $club[CLUB_MANDATUM2];
         $club_leader = getClubLeaders($edit_club);
         $club_president = getClubPresidents($edit_club);
         $club_delegate = getClubDelegates($edit_club);
+        $subclubs = unserialize($club[CLUB_SUBCLUBS]);
     }
 }
-
-$output .= '<div class="editor"><div class="keret"><form method="post" enctype="multipart/form-data">';
-$output .= '<label for="club_name">Klub név:</label><input name="club_name" type="text" value="' . $club_name . '"><br>';
-$output .= '<label for="club_postcode">Irányítószám:</label><input name="club_postcode" type="text" value="' . $club_postcode . '"><br>';
-$output .= '<label for="club_city">Város:</label><input name="club_city" type="text" value="' . $club_city . '"><br>';
-$output .= '<label for="club_street">Utca:</label><input name="club_street" type="text" value="' . $club_street . '"><br>';
-$output .= '<label for="club_email">Klub email:</label><input name="club_email" type="text" value="' . $club_email . '"><br>';
-$output .= '<label for="club_comment">Megjegyzés:</label><input name="club_comment" type="text" value="' . $club_comment . '"><br>';
-$output .= '<label for="club_comment">Honlap:</label><input name="club_homepage" type="text" value="' . $club_homepage . '"><br>';
-$output .= '<label for="club_bank">Bankszámla:</label><input name="club_bank" type="text" value="' . $club_bank . '"><br>';
-$output .= '<label for="club_tax">Adószám:</label><input name="club_tax" type="text" value="' . $club_tax . '"><br>';
-$output .= '<label for="club_mandat">Mandátum:</label><input name="club_mandat" type="number" min="0" max="10" maxlength="4" size="4" value="' . $club_mandat . '"><br>';
-$output .= '<label for="club_act">Aktív:</label><input name="club_act" type="checkbox"  ' . ($club_act == 'on' ? "checked" : "") . '><br>';
+$view->newKeret();
+$view->inputText('club_name', 'Név');
+$view->inputText('club_postcode', 'Irányítósz.');
+$view->inputText('club_city', 'Város');
+$view->inputText('club_street', 'Utca');
+$view->inputText('club_email', 'Klub email');
+$view->inputText('club_comment', 'Megjegyzés');
+$view->inputText('club_homepage', 'Honlap');
+$view->inputText('club_bank', 'Bankszámla');
+$view->inputText('club_tax', 'Adószám');
+$view->inputMemberId('club_mandat', 'Mandátum 1');
+$view->inputMemberId('club_mandat2', 'Mandátum 2');
+$view->inputCheckbox('club_act', 'Aktív');
 if (isset($club_leader)) {
-    $output .= '<label>Vezető:</label>' . ((strlen($club_leader) > 1) ? $club_leader : 'Nincs megadva !') . '<br>';
+    $view->putText((strlen($club_leader) > 1) ? $club_leader : 'Nincs megadva !', 'Vezető');
 }
 if (isset($club_president)) {
-    $output .= '<label>Elnök:</label>' . ((strlen($club_president) > 1) ? $club_president : 'Nincs megadva !') . '<br>';
+    $view->putText((strlen($club_president) > 1) ? $club_president : 'Nincs megadva !', 'Elnök');
 }
 if (isset($club_delegate)) {
-    $output .= '<label>Küldött:</label>' . ((strlen($club_delegate) > 1) ? $club_delegate : 'Nincs megadva !');
-    $output .= ' ' . delegatesNumberToString($edit_club);
-    $output .= '<br>';
+    $view->putText(((strlen($club_delegate) > 1) ? $club_delegate : 'Nincs megadva !') . delegatesNumberToString($edit_club), 'Küldött');
+}
+if (isPermitted(ACCESS_ADMIN) OR isPermitted(ACCESS_MMSZ_PRESIDENT) OR isPermitted(ACCESS_MMSZ) OR amILeaderOfClub($edit_club)) {
+    $clubs = getClubNameList();
+    $view->submitButton('edit_subclubs', 'Alszövetség', $edit_club, ((isset($subclubs)AND ! empty($subclubs)) ? "Szerkesztése" : "Egyesületek alásorolásával alszövetséggé alakítjuk ezt az egyesületet."));
+    output_spaces(5);
+    if (isset($subclubs) AND ! empty($subclubs)) {
+        $view->putText(count($subclubs) . ' tagegyesület');
+    }
 }
 
 $files = scandir(DOCUMENTS);
-
 if (!empty($files)) {
     $needle = 'club_' . $edit_club . '_';
     $found = false;
+    $view->newDiv('row');
     foreach ($files as $f) {
         if (substr($f, 0, strlen($needle)) == $needle) {
             $found = true;
-            $output .= '<a target="_blank" href="' . DOCUMENTS . $f . '"><img style="width:60px;" src="' . IMAGES . 'pdf.jpg"></a>';
+            $view->putElement('<a target="_blank" href="' . DOCUMENTS . $f . '"><img class="m-1" style="width:30px;" src="' . IMAGES . 'pdf.jpg"></a>');
         }
     }
     if ($found) {
-        $output .= '<br>';
+        $view->endDiv()->newDiv('row');
     }
     foreach ($files as $f) {
         if (substr($f, 0, strlen($needle)) == $needle) {
-            $output .= '<button type="submit" name="delete_document" value="' . $f . '" onClick="return confirm(\'Biztosan tölni akarod a dokumentumot ?\')">'
-                    . '<img style="margin-left: 14px; margin-right: 14px;" src="' . IMAGES . 'delete.jpg" title="Törlés">'
-                    . '</button>';
+            $view->submitDelete('delete_document', $f, 'Törlés', 'Biztosan tölni akarod a dokumentumot ?');
         }
     }
-    if ($found) {
-        $output .= '<br>';
-    }
+    $view->endDiv();
 }
+$view->submitButton('save_club', 'Rögzít');
+$view->submitButton('cancel', 'Vissza');
 
-$output .= '<input type="hidden" name="edit_club" value="' . $edit_club . '">'
-        . '<input type="submit" name="save_club" value="Rögzít"> '
-        . '&nbsp;&nbsp;&nbsp;<input type="submit" name="cancel" value="Mégsem">';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Feltöltés:
-    <input type="file" name="document_upload"/>';
-
-$output .= '</div>';
-$output .= '</div></form>';
+$view->newDiv('file-upload-wrapper');
+$view->putElement('<label class="control-label">File feltöltés</label>');
+$view->putElement('<input type="file" id="document_upload" name="document_upload" class="file-upload" />');
+$view->endDiv();
+$view->submitButton('feltolt', 'Feltöltés');
+$view->endKeret();

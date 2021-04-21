@@ -12,7 +12,7 @@ if (!isset($add_club_mem_id)) {
 if (isset($require_member)) {
     unset($save_add_club);
     if ($add_club_mem_id <= 0 || $add_club_mem_id > getLastMemberId()) {
-        warning("Adj meg érvényes azonosítót !");
+        $view->danger("Adj meg érvényes azonosítót !");
         unset($member_to_add);
     } else {
         $member_to_add = $add_club_mem_id;
@@ -26,7 +26,9 @@ if (isset($delete_club)) {
 }
 if (isset($save_add_club)) {
     if ($selected_club < 0) {
-        warning('Válassz egyesületet !');
+        $view->danger('Válassz egyesületet !');
+    } elseif (in_array($selected_club, getClubsId($add_club_mem_id))) {
+        $view->danger('Ennek az egyesületnek már tagja');
     } else {
         $sql = 'INSERT INTO `' . ROLE_TABLE . '` (`'
                 . ROLE_MEMBER . '`, `' . ROLE_CLUB
@@ -39,49 +41,53 @@ if (isset($save_add_club)) {
     }
 }
 
-$output .= '<div class="editor"><form method="post">';
-$output .= '<label>Azonosító:</label><input min="0" max="9999" type="number" name="add_club_mem_id" value="' . $add_club_mem_id . '" onchange="submit();">';
-$output .= ' <input type="submit" name="require_member" value="Lekérdezés"><br>';
+//$output .= '<div class="editor">';
+   $view->newDiv('row');
+   $view->inputMemberId('add_club_mem_id', 'Azonosító');
+   $view->submitButton('require_member', 'Lekérdezés');
+   $view->endDiv();
 
 if (isValidMemberId($add_club_mem_id)) {
-    $output .= '<label>Név:</label>' . getMemberName($add_club_mem_id) . '<br>';
-    $output .= '<label>Egyesületi tagságok:</label><br>';
+    $club_leader_id = getRoleClubleader($member_id);
+    $view->putElement('<label>Név:</label>' . getMemberName($add_club_mem_id) . '<br>');
+    $view->putElement('<label>Egyesületi tagságai:</label><br>');
     $isAlreadyGot = false;
+    $view->newDiv('panel panel-default');
     foreach (getClubsEver($add_club_mem_id) as $role_id => $role) {
-        $output .= $role[2] . ' : ' . $role[3] . ' => ' . $role[1];
-        $club_leader_id = getRoleClubleader($member_id);
+        $view->newDiv('panel-body');
+        if ($club_leader_id == $role[0] || isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ)) {
+            $view->submitDelete('delete_club', $role_id, 'A tag törlése a ' . $role[1] . ' egyesületből', 'Biztosan törölni akarod ?');
+        }
+        $view->putElement($role[2] . ' : ' . $role[3] . ' => ' . $role[1]);
         if ($club_leader_id == $role[0]) {
             $isAlreadyGot = true;
         }
-        if ($club_leader_id == $role[0] || isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ)) {
-            $output .= '<input type="image" title="Törlés" name="delete_club" value="' . $role_id . '" src="' . IMAGES . 'delete.jpg">';
-        }
-        $output .= '<br>';
+        $view->endDiv();
     }
+    $view->endDiv();
 //    $output .= '<input type="hidden" name="add_club_mem_id" value="' . $add_club_mem_id . '">';
     if (isPermitted(ACCESS_ADMIN) || isPermitted(ACCESS_MMSZ)) {
-        $output .= '<input type="date" name="add_club_from" size="10" value="' . $add_club_from . '">'
-                . '<input type="date" name="add_club_to" size="10" value="' . $add_club_to . '">';
+        $clubs_of_member = getClubsId($add_club_mem_id);
         if (!isset($selected_club)) {
-            $selected_club = -1;
+            $selected_club = key($clubs_of_member);
         }
-        $output .= '<select id="selected_club" name="selected_club" >';
-        $output .= '<option value="-1">Válassz egyesületet !</option>';
-        $clubs = getClubNameList();
-        $clubs_of_member = getClubsId($role_member_id);
-        foreach ($clubs as $club_id => $club_name) {
-            $output .= '<option value="' . $club_id . '" ' . (empty($clubs_of_member[$club_id]) ? "" : "selected") . '>' . $club_name . '</option>';
-        }
-        $output .= '</select>';
-        $output .= '<input type="submit" name="save_add_club" value="Rögzít"><br>';
-    } elseif(!$isAlreadyGot) {
-        $output .= '<input type="date" name="add_club_from" size="10" value="' . $add_club_from . '">'
-                . '<input type="date" name="add_club_to" size="10" value="' . $add_club_to . '">';
+        $view->newDiv('row');
+        $view->inputDate('add_club_from');
+        $view->inputDate('add_club_to');
+        $view->inputClub('', getClubNameList(), 'selected_club', false);
+        $view->submitButton('save_add_club', 'Rögzít');
+        $view->endDiv();
+    } elseif (!$isAlreadyGot) {
+        $view->newDiv('row');
+        $view->inputDate('add_club_from');
+        $view->inputDate('add_club_to');
         $selected_club = getRoleClubleader($member_id);
-        $output .= getClubName($selected_club);
-        $output .= '<input type="hidden" name="selected_club" value="' . $selected_club . '">';
-        $output .= '<input type="submit" name="save_add_club" value="Rögzít"><br>';
+        $view->putElement(getClubName($selected_club));
+        $view->putHidden('selected_club');
+
+        $view->submitButton('save_add_club', 'Rögzít');
+        $view->endDiv();
     }
-    $output .= '</form>';
+
     $output .= '</div>';
 }

@@ -1,6 +1,5 @@
 <?php
 
-
 if (!isset($member_id)) {
     $member_id = 0;
 }
@@ -21,7 +20,7 @@ if (isset($login_normal)) {
         $member_id = getMemberIdByEmail($login_email);
     }
 
-    if (isset($remember_me) AND $remember_me == "true") {
+    if (isset($remember_me) AND $remember_me == "on") {
         setcookie(COOKIE_REMEMBER_ME, "true", $now + TIME_REMEMBER_ME);
         setcookie(COOKIE_MEMBER_ID, $member_id, $now + TIME_REMEMBER_ME);
         setcookie(COOKIE_MEMBER_PASS, $member_pass, $now + TIME_REMEMBER_ME);
@@ -32,7 +31,11 @@ if (isset($login_normal)) {
     }
 } elseif (isset($_COOKIE[COOKIE_MEMBER_ID])) {
     $member_id = $_COOKIE[COOKIE_MEMBER_ID];
-    $member_pass = $_COOKIE[COOKIE_MEMBER_PASS];
+    if (isset($_COOKIE[COOKIE_MEMBER_PASS])) {
+        $member_pass = $_COOKIE[COOKIE_MEMBER_PASS];
+    } else {
+        $member_pass = "";
+    }
     if (isset($_COOKIE[COOKIE_REMEMBER_ME]) && $_COOKIE[COOKIE_REMEMBER_ME] == "true") {
         setcookie(COOKIE_REMEMBER_ME, "true", TIME_REMEMBER_ME);
     }

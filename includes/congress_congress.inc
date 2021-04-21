@@ -6,95 +6,48 @@ if (!isset($congress_title)) {
 if (!isset($congress_description)) {
     $congress_description = '';
 }
-
-if (isset($congress_congress_save)) {
-    $selected_open_congress_old = -2;
-    $congressOnline->modifyCongressTitle($congress_title);
-    $congressOnline->modifyCongressDescription($congress_description);
-    $option = 0;
-    $chk = 'option_chk_byname';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_BY_NAME;
-    }
-    $chk = 'option_chk_public';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_PUBLIC;
-    }
-    $chk = 'option_chk_byemail';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_BY_EMAIL;
-    }
-    $chk = 'option_chk_appendable';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_APPENDABLE;
-    }
-    $chk = 'option_chk_auto_item';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_AUTO_ITEM;
-    }
-    $chk = 'option_chk_auth_mand';
-    if (isset($$chk) AND ( $$chk == 'on')) {
-        $option |= CONGRESS_OPTIONS_AUTH_MANDATORY;
-    }
-
-    $congressOnline->setCongressOption($option);
-}
-
 $congress_title = $congressOnline->getCongressTitle();
 $congress_description = $congressOnline->getCongressDescription();
 
-output_label('Cím');
-$output .= '<input type="text" size="80" maxlength="250"  name="congress_title" value="' . $congress_title . '">';
-output_ln();
-output_label('Leírás');
-$output .= '<textarea rows="5" cols="100" maxlength="1000" name="congress_description">' . $congress_description . '</textarea>';
-output_ln();
+$view->putPrevent();
+$view->inputText('congress_title', 'Cím', 'A gyűlés címe');
+$view->inputTextArea('congress_description', 'Leírás', 'A gyűlés leírása');
+$view->submitSave('congress_congress_save', 0, 'Gyűlés szövegének mentése');
 
-$output .= '<h3>Beállítások</h3>';
+$view->putElement('<hr><h3>Beállítások</h3>');
+$option_chk_byname = $congressOnline->isCongressByName() ? 'on' : 'off';
+$comment_by_name = $congressOnline->isCongressByName() ? 'Nyilvános, hogy ki hogyan szavazott.' : 'Titkos szavazás, a rendszer nem tárolja, ki hogyan szavazott.';
+$view->inputCheckboxCommented('option_chk_byname', 'Név szerinti szavazás', true, $comment_by_name);
 
-if (isset($close_congress)) {
-    $congressOnline->closeCongress();
-    logger($member_id, -1, LOGGER_CONGRESS_ONLINE, $selected_open_congress . ' azonosítójú szavazás létrehozva.');
-    redirect('congress_online');
+$option_chk_public = $congressOnline->isCongressPublic() ? 'on' : 'off';
+$comment_public = $congressOnline->isCongressPublic() ? 'A gyűlés minden részlete nyilvános.' : 'A gyűlést csak az abban résztvevők látják.';
+$view->inputCheckboxCommented('option_chk_public', 'Mindenki láthatja', true, $comment_public);
+
+$option_chk_byemail = $congressOnline->isCongressByEmail() ? 'on' : 'off';
+$comment_by_email = $congressOnline->isCongressByEmail() ? 'Emailben kapott linken keresztül is lehet szavazni.' : 'Az emailben szavazás nem lehetséges.';
+$view->inputCheckboxCommented('option_chk_byemail', 'Email szavazás', true,$comment_by_email );
+
+$option_chk_appendable = $congressOnline->isCongressAppendable() ? 'on' : 'off';
+$comment_appendable = $congressOnline->isCongressAppendable() ? 'Napirendek tárgyalása közben lehetőség van új napirend felvételére.' : 'Csak a kiírásban szereplő napirendek tárgyalása és szavazása.';
+$view->inputCheckboxCommented('option_chk_appendable', 'Utólagos napirend', true, $comment_appendable);
+
+$option_chk_auto_item = $congressOnline->isCongressAutoItem() ? 'on' : 'off';
+$comment_auto_item = $congressOnline->isCongressAutoItem() ? 'A napirendek és hitelesítők elfogadásához. Minden más napirendet megelőz.' : 'Nem jön létre.';
+$view->inputCheckboxCommented('option_chk_auto_item', 'Automatikus napirend', true,$comment_auto_item);
+
+if (!$congressOnline->isCongressAutoItem()) {
+    $option_chk_auth_mand = $congressOnline->isCongressAuthMandatory() ? 'on' : 'off';
+    $comment_auth_mand = $congressOnline->isCongressAuthMandatory() ? 'Kötelező megadni két jegyzőkönyv hitelesítőt.' : 'Nem kötelező a jegyzőkönyvhitelesítő.';
+    $view->inputCheckboxCommented('option_chk_auth_mand', 'Jegyzőkönyv hitelesítő', true, $comment_auth_mand);
 }
-output_label('Név szerinti szavazás');
-output_set_checkbox('option_chk_byname', $congressOnline->isCongressByName());
-output_spaces(4);
-o('Nyilvános a szavozók szavazata.');
-output_ln();
-output_label('Mindenki láthatja');
-output_set_checkbox('option_chk_public', $congressOnline->isCongressPublic());
-output_spaces(4);
-o('A gyűlés kiírása nyilvános.');
-output_ln();
-output_label('Emailben is lehet szavazni');
-output_set_checkbox('option_chk_byemail', $congressOnline->isCongressByEmail());
-output_spaces(4);
-o('Emailben kapott linken keresztül is lehet szavazni.');
-output_ln();
-output_label('Utólagos napirend');
-output_set_checkbox('option_chk_appendable', $congressOnline->isCongressAppendable());
-output_spaces(4);
-o('Napirendek tárgyalása közben lehetőség van új napirend felvételére.');
-output_ln();
-output_label('Automatikus napirend');
-output_set_checkbox('option_chk_auto_item', $congressOnline->isCongressAutoItem());
-output_spaces(4);
-o('Automatikus szavazás létrehozása a napirendek és hitelesítők elfogadásához.');
-output_ln();
-output_label('Jegyzőkönyv vezető');
-output_set_checkbox('option_chk_auth_mand', $congressOnline->isCongressAuthMandatory());
-output_spaces(4);
-o('Kötelező megadni két jegyzőkönyv vezetőt');
-output_ln(2);
+$option_chk_base_voted = $congressOnline->isCongressBaseVoted() ? 'on' : 'off';
+$comment_base_voted = $congressOnline->isCongressBaseVoted() ? 'A szavazók száma.': 'A gyűlésre meghívottak száma.';
+$view->inputCheckboxCommented('option_chk_base_voted', 'Szavazat számlálás alapja', true, $comment_base_voted);
 
-if (!empty($error_arr)) {
-    $output .= '<p style="color:red">';
-    foreach ($error_arr as $err) {
-        $output .= $err;
-        output_ln();
-    }
-    $output .= '</p>';
+$mandate_radio = $congressOnline->getMandateType();
+$view->putLabel('Szavazat számlálás módja');
+foreach ($mandate_names as $type => $name) {
+    $view->submitRadioInline('mandate_radio', $name['short'], $type, $name['desc']);
 }
 
-$output .= '<button name="congress_congress_save"><img src="' . IMAGES . 'save.jpg"></button>';
+

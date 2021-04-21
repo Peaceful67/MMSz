@@ -7,6 +7,6 @@ if($permission == ACCESS_PUBLIC || !isset($member_id)) {
     $r = retriveMember($member_id);
     $output .= "Üdvözöllek ".$r[MEMBER_VEZNEV]." ".$r[MEMBER_KERNEV]." !"
             . "<br>";
-    $output .= '<br>'.printPermissions($member_id);
+    $output .= '<br>'.printRoles($member_id);
     $output .= '<br><br>Verzió szám: '.VERSION;
 }

@@ -6,16 +6,30 @@ if (isset($radio_edit_member)) {
     $radio_edit_member = isset($_SESSION[SESSION_DATA2EDIT]) ? $_SESSION[SESSION_DATA2EDIT] : "base";
 }
 
-$output .= '<div class="member">';
-$output .= 'Tagsági szám: ' . $member_id . '&nbsp;&nbsp;&nbsp;&nbsp;';
-$output .= 'Alap:<input type="radio" name="radio_edit_member" value="base"  onChange="submit();" ' . (($radio_edit_member == "base") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Díjak:<input type="radio" name="radio_edit_member" value="fees" onChange="submit();" ' . (($radio_edit_member == "fees") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Jelszó:<input type="radio" name="radio_edit_member" value="passwd" onChange="submit();" ' . (($radio_edit_member == "passwd") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Kategóriák:<input type="radio" name="radio_edit_member" value="categories" onChange="submit();" ' . (($radio_edit_member == "categories") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;' . $fee_type[FEE_TYPE_LICENCES][0] . ':<input type="radio" name="radio_edit_member" value="licences" onChange="submit();" ' . (($radio_edit_member == "licences") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Arckép<input type="radio" name="radio_edit_member" value="avatar" onChange="submit();" ' . (($radio_edit_member == "avatar") ? " checked " : "") . '>';
-$output .= '&nbsp;&nbsp;&nbsp;&nbsp;Fájlok: <input type="radio" name="radio_edit_member" value="documents" onChange="submit();" ' . (($radio_edit_member == "documents") ? " checked " : "") . '>';
-
+$view->info('<b>Tagsági szám: ' . $member_id . '</b>');
+$view->newElement('<ul class="nav nav-tabs">');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'base' ? 'active' : '') . '" name="radio_edit_member" title="Tag alapadatai" value="base">Alap</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'fees' ? 'active' : '') . '" name="radio_edit_member" title="A nyitott és rendezett díjak áttekintése" value="fees">Díjak</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'passwd' ? 'active' : '') . '" name="radio_edit_member" title="Jelszó modosítása" value="passwd">Jelszó</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'categories' ? 'active' : '') . '" name="radio_edit_member" title="Szakágak és azon belüli kategóriák beállítása" value="categories">Kategóriák</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'licences' ? 'active' : '') . '" name="radio_edit_member" title="Különböző jogosítások beállítása" value="licences">' . $fee_type[FEE_TYPE_LICENCES][0] . '</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'avatar' ? 'active' : '') . '" name="radio_edit_member" title="Profilhoz tartozó arckép feltöltése" value="avatar">Arckép</button>');
+$view->endElement('</li>');
+$view->newElement('<li class="nav-item">');
+$view->putElement('<button class="btn m-1 navbar-btn btn-secondary ' . ($radio_edit_member == 'documents' ? 'active' : '') . '" name="radio_edit_member" title="Publikus PDF állaományok feltöltése" value="documents">Fájlok</button>');
+$view->endElement('</li>');
+$view->endElement('</ul>');
 switch ($radio_edit_member) {
     case "base":
     default:
@@ -51,5 +65,5 @@ switch ($radio_edit_member) {
         include_once INCLUDES . 'documents.inc';
         break;
 }
-$output .= '</div>';
+
 ?>

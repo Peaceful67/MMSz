@@ -1,11 +1,12 @@
 <?php
 
+
 if (isset($group_down)) {
     $gd = 'group_weight_' . $group_down;
     $gd_weight = $$gd;
     $sql = 'UPDATE `' . SETUP_GROUP_TABLE . '` SET '
             . ' `' . SETUP_GROUP_WEIGHT . '`=' . $gd_weight
-            . ' WHERE  `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight+1) . ' ;';
+            . ' WHERE  `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight + 1) . ' ;';
     $mysqliLink->query($sql);
     $sql = 'UPDATE `' . SETUP_GROUP_TABLE . '` SET '
             . ' `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight + 1)
@@ -18,7 +19,7 @@ if (isset($group_up)) {
     $gd_weight = $$gd;
     $sql = 'UPDATE `' . SETUP_GROUP_TABLE . '` SET '
             . ' `' . SETUP_GROUP_WEIGHT . '`=' . $gd_weight
-            . ' WHERE  `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight-1) . ' ;';
+            . ' WHERE  `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight - 1) . ' ;';
     $mysqliLink->query($sql);
     $sql = 'UPDATE `' . SETUP_GROUP_TABLE . '` SET '
             . ' `' . SETUP_GROUP_WEIGHT . '`=' . ($gd_weight - 1)
@@ -55,10 +56,9 @@ if (isset($menu_group_submit)) {
     logger($member_id, -1, LOGGER_SETUP, 'Kategóriák megnevezésének módosítása.');
 }
 
-include INCLUDES.'setup_load.inc';
-$output .= '<input type="submit" name="menu_group_new" value="Új felvitele">&nbsp;&nbsp;&nbsp;';
-$output .= '<input type="submit" name="menu_group_submit" value="Módosítás">';
-$output .= '<br><br>';
+include INCLUDES . 'setup_load.inc';
+$view->submitAdd('menu_group_new', 0, 'Új főmenü létrehozása');
+$view->submitSave('menu_group_submit', 0, 'Módosítások mentése');
 $sql = 'SELECT MIN(`' . SETUP_GROUP_WEIGHT . '`) AS `min`,'
         . ' MAX(`' . SETUP_GROUP_WEIGHT . '`) AS `max` FROM `' . SETUP_GROUP_TABLE . '`;';
 $row = mysqli_fetch_assoc($mysqliLink->query($sql));
@@ -67,16 +67,16 @@ $max_weight = $row['max'];
 
 
 foreach ($main_menu_group as $menu_group) {
-    $output .= '<input type="hidden" name="group_weight_' . $menu_group[SETUP_GROUP_ID] . '" value="' . $menu_group[SETUP_GROUP_WEIGHT] . '">';
-    $output .= $menu_group[SETUP_GROUP_ID] . '&nbsp;&nbsp;:&nbsp;&nbsp;';
-    $output .= '<input type="text" name="group_name_' . $menu_group[SETUP_GROUP_ID] . '" value="' . $menu_group[SETUP_GROUP_NAME] . '">';
+    $view->newDiv('row');
+    $view->putHidden('group_weight_' . $menu_group[SETUP_GROUP_ID], $menu_group[SETUP_GROUP_WEIGHT]);
+    $var_name = 'group_name_' . $menu_group[SETUP_GROUP_ID];
+    $$var_name = $menu_group[SETUP_GROUP_NAME];
+    $view->inputText($var_name, $menu_group[SETUP_GROUP_ID]);
     if ($menu_group[SETUP_GROUP_WEIGHT] > $min_weight) {
-        $output .= '<button  type="submit" name="group_up" value="' . $menu_group[SETUP_GROUP_ID] . '" >'
-                . '<img src="' . IMAGES . 'up.jpg" title="Fel"></button>';
+        $view->submitUp('group_up', $menu_group[SETUP_GROUP_ID]);
     }
     if ($menu_group[SETUP_GROUP_WEIGHT] < $max_weight) {
-        $output .= '<button  type="submit" name="group_down" value="' . $menu_group[SETUP_GROUP_ID] . '" >'
-                . '<img src="' . IMAGES . 'down.jpg" title="Le"></button>';
+        $view->submitDown('group_down', $menu_group[SETUP_GROUP_ID]);
     }
     $deletable = true;
     foreach ($admin_menu as $menu_item) {
@@ -85,9 +85,7 @@ foreach ($main_menu_group as $menu_group) {
         }
     }
     if ($deletable) {
-        $output .= '<button  type="submit" name="delete_group" value="' . $menu_group[SETUP_GROUP_ID] . '" '
-                . 'onClick="return confirm(\'Biztosan tölni akarod a kaetgóriát ?\')">'
-                . '<img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+        $view->submitDelete('delete_group', $menu_group[SETUP_GROUP_ID], 'Törlés', 'Biztosan tölni akarod a kategóriát ?');
     }
-    $output .= '<br><br>';
+    $view->endDiv();
 }

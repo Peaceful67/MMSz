@@ -10,25 +10,44 @@ if (isset($_POST['chkboxes'])) {
     $chkboxes = $_POST['chkboxes'];
 }
 if (isset($menu_submit)) {
-    foreach ($admin_menu as $menu) {
-        $name = MENU_NAME . $menu[SETUP_MOD_ID];
-        $title = MENU_TITLE . $menu[SETUP_MOD_ID];
-
-        if (isset($$name) && $$name != $menu[SETUP_MOD_MENU]) {
-            $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
-                    . '`' . SETUP_MOD_MENU . '`="' . $$name . '" '
-                    . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu[SETUP_MOD_ID] . '";';
-            logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menü neve módosítva.');
-            $mysqliLink->query($sql);
-        }
-        if (isset($$title) && $$title != $menu[SETUP_MOD_TITLE]) {
-            $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
-                    . '`' . SETUP_MOD_TITLE . '`="' . $$title . '" '
-                    . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu[SETUP_MOD_ID] . '";';
-            $mysqliLink->query($sql);
-            logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menü címe módosítva.');
-        }
+    $name = MENU_NAME . $menu_submit;
+    $title = MENU_TITLE . $menu_submit;
+    if (isset($$name)) {
+        $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
+                . '`' . SETUP_MOD_MENU . '`="' . $$name . '" '
+                . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu_submit . '";';
+        logger($member_id, -1, LOGGER_SETUP, $menu_submit . ' azonosítójú menü neve módosítva.');
+        $mysqliLink->query($sql);
     }
+    if (isset($$title)) {
+        $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
+                . '`' . SETUP_MOD_TITLE . '`="' . $$title . '" '
+                . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu_submit . '";';
+        $mysqliLink->query($sql);
+        logger($member_id, -1, LOGGER_SETUP, $menu_submit . ' azonosítójú menü címe módosítva.');
+    }
+    /*
+      foreach ($admin_menu as $menu) {
+      $name = MENU_NAME . $menu[SETUP_MOD_ID];
+      $title = MENU_TITLE . $menu[SETUP_MOD_ID];
+
+      if (isset($$name) && $$name != $menu[SETUP_MOD_MENU]) {
+      $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
+      . '`' . SETUP_MOD_MENU . '`="' . $$name . '" '
+      . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu[SETUP_MOD_ID] . '";';
+      logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menü neve módosítva.');
+      $mysqliLink->query($sql);
+      }
+      if (isset($$title) && $$title != $menu[SETUP_MOD_TITLE]) {
+      $sql = 'UPDATE `' . SETUP_MOD_TABLE . '` SET '
+      . '`' . SETUP_MOD_TITLE . '`="' . $$title . '" '
+      . ' WHERE `' . SETUP_MOD_ID . '`="' . $menu[SETUP_MOD_ID] . '";';
+      $mysqliLink->query($sql);
+      logger($member_id, -1, LOGGER_SETUP, $menu[SETUP_MOD_ID] . ' azonosítójú menü címe módosítva.');
+      }
+      }
+     * 
+     */
 }
 if (isset($menu_down)) {
     $md = 'menu_weight_' . $menu_down;
@@ -93,54 +112,55 @@ foreach ($admin_menu as $menu) {
 }
 include INCLUDES . 'setup_load.inc';
 
-$output .= '<br><br>';
+
 
 $sql = 'SELECT MIN(`' . SETUP_MOD_WEIGHT . '`) AS `min`,'
         . ' MAX(`' . SETUP_MOD_WEIGHT . '`) AS `max` FROM `' . SETUP_MOD_TABLE . '`;';
 $row = mysqli_fetch_assoc($mysqliLink->query($sql));
 $min_weight = $row['min'];
 $max_weight = $row['max'];
-$output .= '<table>'
-        . '<col width="5%"><col width="15%"><col width="40%"><col width="25%"><col width="25%">'
-        . '<tr><th>Eng.</th><th>ID</th><th>Név/Cím <input type="submit" name="menu_submit" value="Mentés"></th><th>Elhelyezkedés</th><th>Műveletek</th></tr>';
+$view->newTable('MOdulok megjelenése');
+$view->putThead('', ['Eng.', 'ID', 'Név/Cím', 'Elhelyezkedés', 'Műveletek']);
 foreach ($admin_menu as $menu) {
     $deleteable = true;
-    $output .= '<input type="hidden" name="' . MENU_WEIGHT . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_WEIGHT] . '">';
-    $output .= '<tr>';
-    $output .= '<td><input type="checkbox" name="chkboxes[]" value="' . $menu[SETUP_MOD_ID] . '" onChange="submit();" ';
+    $view->putHidden(MENU_WEIGHT . $menu[SETUP_MOD_ID], $menu[SETUP_MOD_WEIGHT]);
+    $view->newTableTr();
+    $view->newElement('<td>');
+    $checkbox_str = '<input type="checkbox" class="form-check-input mx-1"  name="chkboxes[]" value="' . $menu[SETUP_MOD_ID] . '" onChange="submit();" ';
     if ($menu[SETUP_MOD_DEPENDENCY] != "") {
         $deleteable = false;
         $dependecy = $menu[SETUP_MOD_DEPENDENCY];
-        $output .= ' disabled title="' . $dependecy . '" ';
+        $checkbox_str .= ' disabled title="' . $dependecy . '" ';
         if (array_key_exists($dependecy, $admin_menu)) {
-            $output .= ($admin_menu[$dependecy][SETUP_MOD_ENABLED] == 1) ? ' checked  ' : '  ';
+            $checkbox_str .= ($admin_menu[$dependecy][SETUP_MOD_ENABLED] == 1) ? ' checked  ' : '  ';
         } else {
-            $output .= ($menu[SETUP_MOD_ENABLED] == 1) ? ' checked  ' : ' ';
+            $checkbox_str .= ($menu[SETUP_MOD_ENABLED] == 1) ? ' checked  ' : ' ';
         }
     } else {
-        $output .= ($menu[SETUP_MOD_ENABLED] == 1) ? ' checked ' : '  ';
+        $checkbox_str .= ($menu[SETUP_MOD_ENABLED] == 1) ? ' checked ' : '  ';
     }
-    $output .= '></td>';
-    $output .= '<td>' . $menu[SETUP_MOD_ID] . '</td>';
-    $output .= '<td><input type="text" size="16" maxlength="32" name="' . MENU_NAME . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_MENU] . '">'
-            . '<input type="text" size="32" maxlength="64" name="' . MENU_TITLE . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_TITLE] . '"></td>';
-    $output .= '<td align="center">' . getListCategories($menu[SETUP_MOD_ID], $menu[SETUP_MOD_GROUP]) . '</td>';
-    $output .= '<td>';
+    $checkbox_str .= '>';
+    $view->putElement($checkbox_str);
+    $view->endElement('</td>');
+    $view->putElement('<td>' . $menu[SETUP_MOD_ID] . '</td>');
+    $view->newElement('<td>');
+    $view->putElement('<input type="text" size="16" maxlength="32" class="form-control" name="' . MENU_NAME . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_MENU] . '">'
+            . '<input type="text" size="32" maxlength="64" class="form-control" name="' . MENU_TITLE . $menu[SETUP_MOD_ID] . '" value="' . $menu[SETUP_MOD_TITLE] . '">');
+    $view->endElement('</td>')->newElement('<td>');
+    $view->putElement(getListCategories($menu[SETUP_MOD_ID], $menu[SETUP_MOD_GROUP]));
+    $view->endElement('</td>')->newElement('<td>');
     if ($menu[SETUP_MOD_WEIGHT] > $min_weight) {
-        $output .= '<button  type="submit" name="menu_up" value="' . $menu[SETUP_MOD_ID] . '" >'
-                . '<img src="' . IMAGES . 'up.jpg" title="Fel"></button>';
+        $view->submitUp('menu_up', $menu[SETUP_MOD_ID]);
     }
-
     if ($menu[SETUP_MOD_WEIGHT] < $max_weight) {
-        $output .= '<button  type="submit" name="menu_down" value="' . $menu[SETUP_MOD_ID] . '" >'
-                . '<img src="' . IMAGES . 'down.jpg" title="Le"></button>';
+        $view->submitDown('menu_down', $menu[SETUP_MOD_ID]);
     }
     if ($deleteable) {
-        $output .= '<button  type="submit" name="menu_delete" value="' . $menu[SETUP_MOD_ID] . '" >'
-                . '<img src="' . IMAGES . 'delete.jpg" title="Törlés"></button>';
+        $view->submitDelete('menu_delete', $menu[SETUP_MOD_ID], 'A menü törlése', 'Biztosan törölni akarod a menut!');
     }
-    $output .= '</td>';
-    $output .= '</tr>';
+    $view->submitSave('menu_submit', $menu[SETUP_MOD_ID], 'A menü nevének és címének mentése');
+    $view->endElement('</td>');
+    $view->endTableTr();
 }
-$output .= '</table>';
+$view->endTable();
 

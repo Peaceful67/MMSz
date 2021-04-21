@@ -15,6 +15,7 @@ function getMemberClubNames($id) {
     }
     return empty($ret) ? 'Egyik sem' : $ret;
 }
+
 function getMemberClubNamesByDate($id, $date) {
     global $mysqliLink;
     $ret = '';
@@ -22,7 +23,7 @@ function getMemberClubNamesByDate($id, $date) {
             . 'WHERE `' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`="' . $id . '" '
             . ' AND `' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=`' . CLUB_TABLE . '`.`' . CLUB_ID . '`'
             . ' AND `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`="' . ACCESS_USER . '"'
-            . ' AND ("'.$date.'" BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
+            . ' AND ("' . $date . '" BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
             . 'GROUP BY `' . ROLE_CLUB . '`  ORDER BY `' . ROLE_FROM . '` DESC ;';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
@@ -36,9 +37,12 @@ function getClubsMember($mem_id) {
     $ret = array();
     $sql = 'SELECT * FROM `' . ROLE_TABLE . '`, `' . CLUB_TABLE . '` '
             . 'WHERE `' . ROLE_TABLE . '`.`' . ROLE_MEMBER . '`="' . $mem_id . '" '
-            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=`' . CLUB_TABLE . '`.`' . CLUB_ID . '`'
-            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`!=0 '
-            . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
+            . ' AND `' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`=`' . CLUB_TABLE . '`.`' . CLUB_ID . '` AND ('
+            . ' `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`=' . ACCESS_USER . ' OR'
+            . ' `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`=' . ACCESS_CLUBLEADER . ' OR'
+            . ' `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`=' . ACCESS_CLUB_PRESIDENT . ' OR'
+            . ' `' . ROLE_TABLE . '`.`' . ROLE_PERMISSION . '`=' . ACCESS_CLUB_DELEGATE
+            . ') AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)'
             . 'GROUP BY `' . ROLE_CLUB . '`  ORDER BY `' . ROLE_FROM . '` DESC ;';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
@@ -167,6 +171,18 @@ function getMaxNumberOfDelegateClub($cl_id) {
     return $last_del;
 }
 
+function getMandateOfClubByRange($cl_id) {
+    $ranges = unserialize(getOptionValue(OPTIONS_NAME_DELEGATE_RANGE));
+    $club_members = getNumMemberOfClub($cl_id);
+    $ret = 0;
+    foreach ($ranges as $mandate => $member) {
+        if ($club_members >= $member) {
+            $ret = $mandate;
+        }
+    }
+    return $ret;
+}
+
 function getNumberOfDelegateClub($club_id) {
     global $mysqliLink;
     $sql = 'SELECT * FROM `' . ROLE_TABLE . '` WHERE '
@@ -205,7 +221,7 @@ function getRoleById($role_id) {
     $sql = 'SELECT * FROM `' . ROLE_TABLE
             . '` WHERE `' . ROLE_ID . '`="' . $role_id . '" LIMIT 1;';
     $res = $mysqliLink->query($sql);
-    if ($res AND $res->num_rows() > 0) {
+    if ($res AND $res->num_rows > 0) {
         return $res->fetch_assoc();
     } else {
         return array();
@@ -217,7 +233,7 @@ function getRolesOfMember($mem_id) {
     $ret = array();
     $sql = 'SELECT * FROM `' . ROLE_TABLE
             . '` WHERE `' . ROLE_MEMBER . '`=' . $mem_id . '  '
-            . ' AND `' . ROLE_PERMISSION . '`>1 '
+            . ' AND `' . ROLE_PERMISSION . '`>=1 '
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '` )';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
@@ -261,12 +277,26 @@ function getClubRoles($mem_id, $club_id) {
     return $ret;
 }
 
-function getBranchRoles($mem_id, $branch_id) {
-    return getClubRoles($mem_id, $branch_id);
+function getBranchRoles($mem_id) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . ROLE_TABLE
+            . '` WHERE `' . ROLE_MEMBER . '`="' . $mem_id . '" '
+            . ' AND (`' . ROLE_PERMISSION . '`&' . ACCESS_BRANCH_LEADER . ')>0 '
+            . ' ORDER BY `' . ROLE_CLUB . '` DESC';
+    $res = $mysqliLink->query($sql);
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $ret[] = array($row[ROLE_ID], $row[ROLE_CLUB], $row[ROLE_PERMISSION], $row[ROLE_FROM], $row[ROLE_TO]);
+        }
+    } else {
+        $ret[-1] = array(0, 0, 0, 0, 0);
+    }
+    return $ret;
 }
 
 function getNumberOfClubsOfLeader($mem_id) {
-    return count(getClubsOfLeader($mem_id));
+    return count(ClubsOfLeader($mem_id));
 }
 
 function getClubsOfLeader($mem_id) {
@@ -275,6 +305,51 @@ function getClubsOfLeader($mem_id) {
     $sql = 'SELECT * FROM `' . ROLE_TABLE
             . '` WHERE `' . ROLE_MEMBER . '`="' . $mem_id . '" '
             . ' AND `' . ROLE_PERMISSION . '`="' . ACCESS_CLUBLEADER . '"'
+            . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`); ';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $club_id = $row[ROLE_CLUB];
+        $ret[$club_id] = getClubName($club_id);
+    }
+    return $ret;
+}
+
+function getSubclubsOfLeader($mem_id) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . ROLE_TABLE . '` '
+            . ' INNER JOIN `' . CLUB_TABLE . '` ON (`' . CLUB_TABLE . '`.`' . CLUB_ID . '`=`' . ROLE_TABLE . '`.`' . ROLE_CLUB . '`'
+            . ' AND `' . CLUB_TABLE . '`.`' . CLUB_SUBCLUBS . '`!="" AND `' . CLUB_TABLE . '`.`' . CLUB_SUBCLUBS . '` IS NOT NULL) '
+            . ' WHERE `' . ROLE_MEMBER . '`="' . $mem_id . '" '
+            . ' AND `' . ROLE_PERMISSION . '`="' . ACCESS_CLUBLEADER . '"'
+            . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`); ';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $club = getClubById($row[ROLE_CLUB]);
+        foreach (unserialize($club[CLUB_SUBCLUBS]) as $subclub_id) {
+            $ret[$subclub_id] = getClubName($subclub_id);
+        }
+    }
+    return $ret;
+}
+
+function getSubClubs() {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_SUBCLUBS . '` IS NOT NULL AND `' . CLUB_SUBCLUBS . '`!=""; ';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $ret[$row[CLUB_ID]] = $row[CLUB_NAME];
+    }
+    return $ret;
+}
+
+function getClubsOfDelegate($mem_id) {
+    global $mysqliLink;
+    $ret = array();
+    $sql = 'SELECT * FROM `' . ROLE_TABLE
+            . '` WHERE `' . ROLE_MEMBER . '`="' . $mem_id . '" '
+            . ' AND `' . ROLE_PERMISSION . '`="' . ACCESS_CLUB_DELEGATE . '"'
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`); ';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
@@ -298,6 +373,12 @@ function getRoleClubleader($id) { // Ez nem kezeli, ha egy vezeto tobb egyesulet
         $ret = $res->fetch_assoc()[ROLE_CLUB];
     }
     return $ret;
+}
+
+function amILeaderOfClub($cl_id) {
+    global $member_id;
+    $clubs = getClubsOfLeader($member_id);
+    return isset($clubs[$cl_id]);
 }
 
 function getNumMemberOfClub($club_id) {
@@ -440,7 +521,7 @@ function getNameOfCatLeaders($cat_id) {
     global $mysqliLink;
     $ret = '';
     $sql = 'SELECT `' . ROLE_MEMBER . '` FROM `' . ROLE_TABLE . '` WHERE `'
-            . ROLE_PERMISSION . '`=' . ACCESS_CATEGORY_LEADER . ' '
+            . ROLE_PERMISSION . '`=' . ACCESS_BRANCH_LEADER . ' '
             . 'AND `' . ROLE_CATEGORY_LEADER . '`="' . $cat_id . '" '
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)';
     $res = $mysqliLink->query($sql);
@@ -484,7 +565,7 @@ function getLeadersOfBranch($branch_id) {
     global $mysqliLink;
     $ret = array();
     $sql = 'SELECT `' . ROLE_MEMBER . '` FROM `' . ROLE_TABLE . '` WHERE `'
-            . ROLE_PERMISSION . '`="' . ACCESS_CATEGORY_LEADER . '" '
+            . ROLE_PERMISSION . '`="' . ACCESS_BRANCH_LEADER . '" '
             . 'AND `' . ROLE_CLUB . '`="' . $branch_id . '" '
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)';
     $res = $mysqliLink->query($sql);
@@ -499,14 +580,30 @@ function getBranchesOfLeader($mem_id) {
     global $branches;
     $ret = array();
     $sql = 'SELECT * FROM `' . ROLE_TABLE . '` WHERE `'
-            . ROLE_PERMISSION . '`=' . ACCESS_CATEGORY_LEADER . ' '
+            . '(' . ROLE_PERMISSION . '`& ' . ACCESS_BRANCH_LEADER . ')>0 '
             . 'AND `' . ROLE_MEMBER . '`=' . $mem_id . ' '
             . ' AND (CURDATE() BETWEEN `' . ROLE_FROM . '` AND `' . ROLE_TO . '`)';
     $res = $mysqliLink->query($sql);
     while ($res AND $row = $res->fetch_assoc()) {
         $ret[$row[ROLE_CATEGORY_LEADER]] = $branches[$row[ROLE_CATEGORY_LEADER]];
     }
-    return $ret;   
+    return $ret;
 }
 
-
+function getBranchesNameOfMember($mem_id) {
+    global $mysqliLink;
+    global $branches;
+    $str = '';
+    $sql = 'SELECT `' . CATEGORIES_BRANCH . '` FROM `' . CATEGORIES_TABLE . '` INNER JOIN `' . CM_TABLE . '` ON  (`' . CM_TABLE . '`.`' 
+            . CM_MEMBER_ID . '`='.$mem_id.') WHERE `' . CATEGORIES_TABLE . '`.`' . CATEGORIES_ID . '`=`' . CM_TABLE . '`.`' . CM_CATEGORY . '`'
+            . ' GROUP BY `' . CATEGORIES_TABLE . '`.`' . CATEGORIES_BRANCH . '`;';
+    $res = $mysqliLink->query($sql);
+    while ($res AND $row = $res->fetch_assoc()) {
+        $str .= $branches[$row[CATEGORIES_BRANCH]] . ', ';
+    }
+    if (strlen($str) > 0) {
+        return substr($str, 0, -2);
+    } else {
+        return 'Nincs megadva';
+    }
+}

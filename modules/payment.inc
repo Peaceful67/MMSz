@@ -14,18 +14,21 @@ if (isset($storno_bill)) {
 $unpaied = getUnpaiedBillNumbers();
 
 if (count($unpaied) > 0) {
-    $output .= '<div class="lists"><form  method="post">'
-            . '<table><tr><th>Azonosító</th><th>Indított</th><th>Összeg</th><th>Tartalom</th><th>Beérkezett</th></tr>';
+    $view->newTable('Kifizetetlen tételek');
+    $view->putThead('', ['Azonosító', 'Indított', 'Összeg', 'Tartalom', 'Művelet']);
     foreach ($unpaied as $bill) {
-        $output .= '<tr><td>' . $bill . '</td><td>' . getTimeOfBills($bill) . '</td><td>' . getSumOfBills($bill) . ' Ft</td>';
-        $output .= '<td>' . printBillItems($bill) . '</td>';
-        $output .= '<td><button type="submit" name="pay_bill" value="' . $bill . '" '
-                . 'onClick="return confirm(\'Biztosan beérkeztek a befizetések ?\')">Befizetes</button>&nbsp;&nbsp;&nbsp;&nbsp;'
-                . '<button type="submit" name="storno_bill" value="' . $bill . '" '
-                . 'onClick="return confirm(\'Biztosan sztornózod a tételt?\')">Sztorno</button></td></tr>';
+        $view->newTableTr();
+        $view->putElement('<td>' . $bill . '</td>');
+        $view->putElement('<td>' . getTimeOfBills($bill) . '</td>');
+        $view->putElement('<td>' . getSumOfBills($bill) . '</td>');
+        $view->putElement('<td>' . printBillItems($bill) . '</td>');
+        $view->newElement('<td>');
+        $view->submitButton('pay_bill', 'Befizetes', $bill, 'A tétel befizetésének lekönyvelése', 'Biztosan beérkeztek a befizetések ?');
+        $view->submitButton('storno_bill', 'Sztorno', $bill, 'A tétel sztornózása', 'Biztosan sztornózod a tételt?');
+        $view->endElement('</td>');
+        $view->endTableTr();
     }
-    $output .= '</table>';
-    $output .= '</form></div>';
+    $view->endTable();
 } else {
-    $output .= 'Nincsenek kifizetetlen tételek.';
+    $view->warning('Nincsenek kifizetetlen tételek.');
 }

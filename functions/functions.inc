@@ -19,7 +19,6 @@ function conv_array($in_data) {
     return $ret;
 }
 
-
 function conv_array_walk($in_data) {
     $ret = array();
     foreach ($in_data as $key => $value) {
@@ -31,12 +30,14 @@ function conv_array_walk($in_data) {
 function redirect($id) {
     global $admin_menu;
     global $redirected;
+//    error_log('Redirect function: '.$id.', debug:'.print_r(debug_backtrace(), true));
     $redirected = true;
     if (isset($admin_menu[$id])) {
         $_SESSION[SESSION_MOD] = $admin_menu[$id][SETUP_MOD_ID];
     } else {
         error_log('Redirect, unknown menu: ' . $id);
     }
+    reset_mod();
     header("Location: " . PROGI);
 }
 
@@ -84,9 +85,12 @@ function getLastMemberId() {
 
 function isGdpr($id) {
     global $mysqliLink;
+    if ($id == 0) {
+        return true;
+    }
     $sql = 'SELECT `' . MEMBER_GDPR . '` FROM `' . MEMBER_TABLE . '` WHERE `' . MEMBER_ID . '`=' . $id . ' LIMIT 1;';
     $res = $mysqliLink->query($sql);
-    if ($res->num_rows > 0) {
+    if ($res AND $res->num_rows > 0) {
         $gdpr = $res->fetch_assoc()[MEMBER_GDPR];
         return $gdpr > 0 ? true : false;
     } else {
@@ -111,6 +115,10 @@ function isValidMemberId($id) {
     return $ret;
 }
 
+function getId($mem_id) {
+    return sprintf(getOptionValue(OPTIONS_NAME_COMPANY_ID_FORMAT), $mem_id);
+}
+
 function isEditAllowed() {
     global $permission;
     return (($permission & (ACCESS_ADMIN | ACCESS_CLUBLEADER | ACCESS_MMSZ | ACCESS_MMSZ_PRESIDENT)) != 0);
@@ -126,7 +134,7 @@ function isPermitted($perm) {
         return false;
 }
 
-function getAccessOfMmodule($module) {
+function getAccessOfModule($module) {
     global $admin_menu;
     if (isset($admin_menu[$module])) {
         return $admin_menu[$module][SETUP_MOD_ACCESS];
@@ -135,6 +143,14 @@ function getAccessOfMmodule($module) {
     }
 }
 
+function isDocuEnabled() {
+    global $admin_menu;
+    return isset($admin_menu['docu_edu_base']);
+}
+
+/*
+ *  Kis, betű nagybetű, szám lehet
+ */
 
 function randomPassword() {
     $alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
@@ -189,14 +205,15 @@ function setPassword($id, $pass) {
     global $output;
     $mod_string = 'UPDATE `members` SET `' . MEMBER_PASSWORD . '` = "' . $password . '" WHERE `' . MEMBER_ID . '`=' . $id;
     if ($mysqliLink->query($mod_string)) {
-        header("Location:" . PROGI);
+//        header("Location:" . PROGI);
     } else {
         $output .= '<br><a  title="Nem sikerült a jelszó beállítani, vissza !" href="' . PROGI . '"><img width="48" weight="48"src="plus.jpg"></a>';
     }
 }
 
 function getPassword($id) {
-    return retriveMember($id)[MEMBER_PASSWORD];
+    $mem = retriveMember($id);
+    return (empty($mem) ? '' : $mem[MEMBER_PASSWORD]);
 }
 
 function getMemberName($id) {
@@ -211,7 +228,10 @@ function getMemberEmail($id) {
 
 function warning($msg) {
     global $output;
-    $output .= '<div class="warning">  ' . $msg . '</div><br><br>';
+    $output .= '<div class="warning">  ' . $msg . '</div><br>';
+    if (getOptionValue(OPTIONS_NAME_ERROR_LOG) > 0) {
+        error_log('Warning: ' . $msg);
+    }
 }
 
 function searchById($id) {
@@ -226,7 +246,7 @@ function logger($id, $related, $category, $action) {
     $mysqliLink->query($sql);
     $sql = 'DELETE FROM `logs` WHERE `time_stamp` < DATE_SUB(NOW(), INTERVAL 2 YEAR);';
     $mysqliLink->query($sql);
-    if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
+    if (getOptionValue(OPTIONS_NAME_ERROR_LOG) > 0) {
         error_log(iconv("utf-8", "iso-8859-2", 'Logger:' . $logger_categories[$category] . '/' . $action));
     }
 }
@@ -259,12 +279,15 @@ function getClub($cl_id) {
 function delegatesNumberToString($club_id) {
     $num = getNumberOfDelegateClub($club_id);
     $max = getMaxNumberOfDelegateClub($club_id);
+    return green_red_String($num, $max);
+}
+
+function green_red_String($num, $max) {
     if ($num > $max) {
-        $ret = '<span style="color:red;">(Akt/Max: ' . $num . '/' . $max . ')</span>';
+        return '<span style="color:red;">(Akt/Max: ' . $num . '/' . $max . ')</span>';
     } else {
-        $ret = '(Akt/Max: ' . $num . '/' . $max . ')';
+        return '(Akt/Max: ' . $num . '/' . $max . ')';
     }
-    return $ret;
 }
 
 function getClubNameList() {
@@ -277,14 +300,14 @@ function getClubNameList() {
     return $ret;
 }
 
-function getClubList() {
+function getClubIdByClubName($club_name) {
     global $mysqliLink;
-    $ret = array();
-    $res = $mysqliLink->query('SELECT `' . CLUB_ID . '`, `' . CLUB_NAME . '` FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_ACT . '`="1" ORDER BY ' . CLUB_NAME);
-    while ($row = $res->fetch_assoc()) {
-        $ret[$row[CLUB_ID]] = $row;
+    $sql = 'SELECT `' . CLUB_ID . '` FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_NAME . '` LIKE "' . $club_name . '" LIMIT 1;';
+    $res = $mysqliLink->query($sql);
+    if ($res AND $row = $res->fetch_assoc()) {
+        return $row[CLUB_ID];
     }
-    return $ret;
+    return -1;
 }
 
 function isClubLeader() {
@@ -293,6 +316,20 @@ function isClubLeader() {
         return 0;
     }
     return getRoleClubleader($member_id);
+}
+
+function isBranchLeader() {
+    global $member_id;
+    if (!isPermitted(ACCESS_BRANCH_LEADER)) {
+        return -1;
+    }
+    $cats = getBranchesOfLeader($member_id);
+    if (empty($cats)) {
+        return -1;
+    } else {
+        reset($cats);
+        return key($cats);
+    }
 }
 
 function getCategories($branch = -1) {
@@ -335,8 +372,7 @@ function getClubById($cl_id) {
     $ret = array();
     $sql = 'SELECT * FROM `' . CLUB_TABLE . '` WHERE `' . CLUB_ID . '`=' . $cl_id;
     $res = $mysqliLink->query($sql);
-    $row = $res->fetch_assoc();
-    if ($row) {
+    if ($res AND $row = $res->fetch_assoc()) {
         $ret = $row;
     }
     return $ret;
@@ -426,16 +462,33 @@ function isCategoryNameUsed($short, $branch, $cat_id) {
     return ($res AND ( $res->num_rows > 0)) ? true : false;
 }
 
-function printPermissions($id) {
-    global $access;
-    $p = getPermission($id);
-    $ret = "Jogosultságok: ";
-    foreach ($access as $k => $a) {
-        if (($p & $k) != 0) {
-            $ret .= $a . ', ';
+function printRoles($id) {
+    global $access, $branches;
+    $roles = getRolesOfMember($id);
+
+    $ret = '';
+    foreach ($roles as $role) {
+        if (($role[ROLE_PERMISSION] & ACCESS_CLUB_MEMBER) > 0) {
+            if ($role[ROLE_CLUB] == 0) {
+                continue;
+            }
+            $ret .= $access[$role[ROLE_PERMISSION]] . ' (' . getClubName($role[ROLE_CLUB]) . ')';
+        } elseif (($role[ROLE_PERMISSION] & ACCESS_BRANCH_LEADER) > 0 AND $role[ROLE_CLUB] > 0) {
+            $ret .= 'Szakágvezető (' . $branches[$role[ROLE_CLUB]] . ')';
+        } else {
+            $ret .= $access[$role[ROLE_PERMISSION]];
         }
+        $ret .= ', ';
     }
-    return $ret;
+    return substr($ret, 0, -2);
+}
+
+function printGDPR($gdpr) {
+    if (is_null($gdpr)) {
+        return '<span class="fa fa-ban m-1" style="font-size:32px; color:red;" title="Nincs elfogadva"></span>';
+    } else {
+        return '<span class="fa fa-check-square-o m-1" style="font-size:32px; color:green;" title="Elfogadva:' . $gdpr . '"></span>';
+    }
 }
 
 function isOnlyClubleader() {// Ha klubvezeto de nem magasabb jogosultsagu
@@ -462,6 +515,61 @@ function similarMembers($vez, $ker, $email, $born) {
     return $ret;
 }
 
+function push_history($arr) {
+    global $mod;
+    $new = ['mod' => $mod];
+    foreach ($arr as $var_name) {
+        global $$var_name;
+        $new[$var_name] = $$var_name;
+    }
+    if (isset($_SESSION[SESSION_HISTORY])) {
+        $history = unserialize($_SESSION[SESSION_HISTORY]);
+    } else {
+        $history = array();
+    }
+    array_push($history, $new);
+    $_SESSION[SESSION_HISTORY] = serialize($history);
+}
+
+function pop_history() {
+    if (!is_history()) {
+        return;
+    }
+    $history = unserialize($_SESSION[SESSION_HISTORY]);
+    $last = array_pop($history);
+    $_SESSION[SESSION_HISTORY] = serialize($history);
+    foreach ($last as $var_name => $value) {
+        global $$var_name;
+        $$var_name = $value;
+    }
+}
+
+function is_history() {
+    return (isset($_SESSION[SESSION_HISTORY]) AND ! empty(unserialize($_SESSION[SESSION_HISTORY])));
+}
+
+function put_new_values($arr) {
+    $variables = array();
+    foreach ($arr as $var_name => $value) {
+        $variables[$var_name] = $value;
+    }
+    if (!empty($variables)) {
+        $_SESSION[SESSION_NEW_VALUES] = serialize($variables);
+    }
+}
+
+function get_new_values() {
+    if (isset($_SESSION[SESSION_NEW_VALUES])) {
+        $new_values = unserialize($_SESSION[SESSION_NEW_VALUES]);
+        foreach ($new_values as $var_name => $value) {
+            global $$var_name;
+            $$var_name = $value;
+        }
+        unset($_SESSION[SESSION_NEW_VALUES]);
+    }
+    return;
+}
+
 function push_mod($new) {
     if (isset($_SESSION[SESSION_LAST_MOD])) {
         $hist = unserialize($_SESSION[SESSION_LAST_MOD]);
@@ -478,6 +586,10 @@ function reset_mod() {
     unset($_SESSION[SESSION_LAST_MOD]);
 }
 
+function reset_history() {
+    unset($_SESSION[SESSION_HISTORY]);
+}
+
 function get_back() {
     $ret = "";
     if (isset($_SESSION[SESSION_LAST_MOD])) {
@@ -489,63 +601,6 @@ function get_back() {
         }
     }
     return $ret;
-}
-
-function downloadCardOfMember($mem_id) {
-    global $this_year;
-    $file = '.' . AVATAR . $mem_id . '.jpg';
-    $mem = retriveMember($mem_id);
-    if (!is_file($file)) {
-        $file = "./" . ((retriveMember($mem_id)[MEMBER_SEX] == "F") ?
-                PATH_IMAGES . 'female.jpg' :
-                PATH_IMAGES . 'male.jpg');
-    }
-
-    $avatar = imagecreatetruecolor(CARD_AVATAR_WIDTH, CARD_AVATAR_HEIGHT);
-    $source = imagecreatefromjpeg($file);
-    $temp_file = tempnam(TMP_DIR, "_") . ".jpg";
-    $check = getimagesize($file);
-    list($width, $height) = $check;
-    imagecopyresized($avatar, $source, 0, 0, 0, 0, CARD_AVATAR_WIDTH, CARD_AVATAR_HEIGHT, $width, $height);
-    imagejpeg($avatar, $temp_file, 100);
-
-    $stylesheet = file_get_contents('design/card.css');
-    $body = '<body>';
-    $body .= '<div class="avatar">';
-    $body .= '<img src="' . $temp_file . '"></div>';
-
-    $body .= '<div class="mmsz_hun"><b>MAGYAR MODELLEZŐ SZÖVETSÉG</b></div>'
-            . '<div class="mmsz_eng">HUNGARIAN ASSOCIATION OF MODELLERS</div>';
-
-    $body .= '<div class="name">';
-    $body .= getMemberName($mem_id) . '&nbsp;&nbsp;-&nbsp;&nbsp;' . $mem_id;
-    $body .= '</div><div class="data">';
-    $body .= getMemberClubNames($mem_id);
-    if ($mem[MEMBER_LICENCE] != '') {
-        $body .= '&nbsp;&nbsp;&nbsp;FAI:&nbsp;' . $mem[MEMBER_LICENCE];
-    }
-    $body .= '</div><div class="year">' . $this_year . '</div>';
-    $body .= '</body>';
-
-    require_once MPDF . 'vendor/autoload.php';
-    $pdf = new \Mpdf\Mpdf(
-            [
-        'tempDir' => TMP_DIR,
-        'mode' => '+aCJK',
-        'margin_left' => 1,
-        'margin_right' => 1,
-        'margin_top' => 1,
-        'margin_bottom' => 1,
-        'margin_header' => 1,
-        'margin_footer' => 1
-            ]
-    );
-    $pdf->img_dpi = $pdf->dpi = CARD_IMG_DPI;
-    $pdf->nonPrintMargin = '0';
-    $pdf->WriteHTML($stylesheet, 1);
-    $pdf->WriteHTML($body);
-    $pdf->Output('card_' . $mem_id . '_' . date("Y-m-d_H-i-s") . '.pdf', 'D');
-    unlink($temp_file);
 }
 
 function emailExcelMember($mem_id, $addr, $body) {
@@ -720,6 +775,8 @@ function retriveAddresses($sel) {
     global $mysqliLink;
     $ret = false;
     switch ($sel) {
+        case -1:
+            return $ret;
         case 0:
             $sql = 'SELECT `' . MEMBER_TABLE . '`.* FROM (`' . MEMBER_TABLE . '`';
             $sql .= ' INNER JOIN `' . ROLE_TABLE . '` AS `active` ON ('
@@ -789,4 +846,61 @@ function retriveAddresses($sel) {
             break;
     }
     return $ret;
+}
+
+function getClubSubclubs($cl_id) {
+    $ret = array();
+    $club = getClubById($cl_id);
+    if (!isset($club[CLUB_SUBCLUBS]) OR empty($club[CLUB_SUBCLUBS])) {
+        return array();
+    } else {
+        return unserialize($club[CLUB_SUBCLUBS]);
+    }
+}
+
+function getMandatOfClub($cl_id) {
+    $club = getClubById($cl_id);
+    if (!empty($club) AND $club[CLUB_MANDATUM] > 0) {
+        return $club[CLUB_MANDATUM];
+    } else {
+        return 0;
+    }
+}
+
+function uri_view_document($param) {
+    include_once FUNCTIONS . 'docu_functions.inc';
+    if (isset($_SESSION[SESSION_VIEW_DOCUMENT_ID]) AND $_SESSION[SESSION_VIEW_DOCUMENT_ID] > 0) {
+        $docu_id = $_SESSION[SESSION_VIEW_DOCUMENT_ID];
+        unset($_SESSION[SESSION_VIEW_DOCUMENT_ID]);
+        unset($_SESSION[SESSION_VIEW_DOCUMENT_ARRAY]);
+        $docuFile = new DocuFile();
+        $file = $docuFile->getItemById($docus_arr[$param]);
+        if (empty($file)) {
+            return;
+        } else {
+            $docuFile->viewFile($docu_id);
+        }
+    }
+}
+
+function uri_view_selected_document($param) {
+    include_once FUNCTIONS . 'docu_functions.inc';
+    if (isset($_SESSION[SESSION_VIEW_DOCUMENT_ARRAY])) {
+        $docus_arr = unserialize($_SESSION[SESSION_VIEW_DOCUMENT_ARRAY]);
+        unset($_SESSION[SESSION_VIEW_DOCUMENT_ARRAY]);
+        unset($_SESSION[SESSION_VIEW_DOCUMENT_ID]);
+        if (isset($docus_arr[$param])) {
+            $docuFile = new DocuFile();
+            $file = $docuFile->getItemById($docus_arr[$param]);
+            if (empty($file)) {
+                return;
+            } else {
+                $docuFile->viewFile($docus_arr[$param]);
+            }
+        }
+    }
+}
+
+function isFileUploading($upload) {
+    return !empty($_FILES) AND isset($_FILES[$upload]) AND $_FILES[$upload]['error'] == 0 AND $_FILES[$upload]['size'] > 0;
 }

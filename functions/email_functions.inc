@@ -10,13 +10,18 @@ function mail_system_error($error) {
     send_mail_to(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL), 'Rendszerüzenet', $error);
 }
 
+function hasMemberEmail($mem_id) {
+    $email_addr = getMemberEmail($mem_id);
+    return strlen($email_addr)>0 && filter_var($email_addr, FILTER_VALIDATE_EMAIL);
+}
+
 function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
     require_once CLASSES . 'PHPMailer/PHPMailer.php';
     require_once CLASSES . 'PHPMailer/SMTP.php';
     require_once CLASSES . 'PHPMailer/Exception.php';
 
     $my_mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-    // $my_mail->SMTPDebug = 4;
+//    $my_mail->SMTPDebug = \PHPMailer\PHPMailer\SMTP::DEBUG_SERVER;
     $my_mail->IsSMTP();
     $my_mail->SMTPOptions = array(
         'ssl' => array(
@@ -25,7 +30,7 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
             'allow_self_signed' => true
         )
     );
-    //$my_mail->isSendmail();
+//$my_mail->isSendmail();
     $my_mail->Host = "localhost";
     $my_mail->Port = 25;
     $my_mail->CharSet = 'utf-8';
@@ -47,27 +52,46 @@ function send_mail_via_phpmailer($addr, $subject, $body, $filename = "") {
     }
     if (getOptionValue(OPTIONS_NAME_DEVELOPMENT) > 0) {
         $my_mail->AddAddress(getOptionValue(OPTIONS_NAME_ADMIN_EMAIL));
+//        $my_mail->action_function = 'send_email_callback';
+//    $my_mail->AddAddress($addr);
     } else {
         $my_mail->AddAddress($addr);
     }
-    if (!$my_mail->Send()) {
-        error_log('Error occurred during sending the email: ' . $my_mail->ErrorInfo);
+    try {
+        if (!$my_mail->Send()) {
+            error_log('Error occurred during sending the email: ' . $my_mail->ErrorInfo);
+        }
+    } catch (Exception $e) {
+        warning('Rendszer hiba: Levél küldés sikertelen(' . $e->getMessage() . ')');
+        error_log('Mailer ErrorInfo:' . $my_mail->ErrorInfo);
     }
+}
+
+function send_email_callback($result, $to, $cc, $bcc, $subject) {
+    error_log('send_email_callback: result:' . ($result ? 'sikeres' : 'sikertelen') . ', subject:' . $subject);
 }
 
 function send_mail_to($addr, $subject, $body, $filename = "") {
     global $member_id;
+    global $email_member;
+    if (!isset($email_member)) {
+        $email_member = -1;
+    }
+    if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
+        $subject .= ' Hiás email cím :' . $addr;
+        $addr = getOptionValue(OPTIONS_NAME_ADMIN_EMAIL);
+    }
     $email_body = '<html><body style=\"font-family:Verdana, Verdana, Geneva, sans-serif; font-size:12px;\">';
     $email_body .= $body;
     $email_body .= "<br><br>Üdvözlettel:<br>" . getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE);
     $email_body .= "</body></html>\n";
     if (!isset($addr) OR empty($addr)) {
-        mail_system_error('Nem létező emailcím !\r\nTárgy: ' . $subject . '\r\nTartalom: ' . $body);
+        mail_system_error('Nem létező emailcím :' . $addr . '<br>Tárgy: ' . $subject . '<br>Tartalom: ' . $body);
         return;
     }
     $addr = trim($addr);
     send_mail_via_phpmailer($addr, $subject, $email_body, $filename);
-    logger($member_id, -1, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
+    logger($member_id, $email_member, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
 }
 
 function send_mail($subject, $body) {
@@ -81,9 +105,12 @@ function send_mail($subject, $body) {
 }
 
 function send_newsletter($id, $subject, $body) {
+    global $email_member;
     $person_body = str_replace(REPLACE_NAME, getMemberName($id), $body);
-    $formated_body = str_replace(NEWLINE, '<br>', $person_body);
+    $id_body = str_replace(REPLACE_ID, $id, $person_body);
+    $formated_body = str_replace(NEWLINE, '<br>', $id_body);
     $addr = getMemberEmail($id);
+    $email_member = $id;
     if (!isset($addr) OR empty($addr)) {
         return;
     }
@@ -91,7 +118,6 @@ function send_newsletter($id, $subject, $body) {
 }
 
 function send_notification($id, $subject, $body) {
-    global $member_id;
     $person_body = str_replace(REPLACE_NAME, getMemberName($id), $body);
     $formated_body = str_replace(NEWLINE, '<br>', $person_body);
     $addr = getMemberEmail($id);
@@ -125,12 +151,14 @@ function create_newsletter($subject, $body) {
 function start_sending_newsletters() {
     global $options;
     global $mysqliLink;
+    global $member_id;
     $max = $options[OPTIONS_NAME_MAX_NEWSLETTERS];
-    updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
     $sql = 'SELECT * FROM `' . NLM_TABLE . '` WHERE `' . NLM_SENT . '`= 0 '
             . 'LIMIT ' . $max . ';';
+    $current = $member_id;
     $res = $mysqliLink->query($sql);
     if ($res AND $res->num_rows > 0) {
+        updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
         while ($row = $res->fetch_assoc()) {
             $sql = 'SELECT *  FROM `' . NEWSLETTER_TABLE . '` WHERE `' . NEWSLETTER_ID . '`=' . $row[NLM_NEWSLETTER_ID] . ' ;';
             $nl_res = $mysqliLink->query($sql);
@@ -138,6 +166,7 @@ function start_sending_newsletters() {
                 $nl_row = $nl_res->fetch_assoc();
                 $subject = $nl_row[NEWSLETTER_SUBJECT];
                 $body = $nl_row[NEWSLETTER_BODY];
+                $member_id = $nl_row[NEWSLETTER_CREATOR]; // A tenyleges kuldo legyen a logban az elkövető
                 send_newsletter($row[NLM_MEMBER], $subject, $body);
                 $sql = 'UPDATE `' . NLM_TABLE . '` ' //Mark as sent                        
                         . 'SET `' . NLM_SENT . '`=CURRENT_TIMESTAMP '
@@ -146,36 +175,49 @@ function start_sending_newsletters() {
             }
         }
     }
+    $member_id = $current;
 }
 
 function sending_emails() {
     global $options;
+
     $max = $options[OPTIONS_NAME_MAX_NEWSLETTERS];
-    updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
     $emailMember = new EmailMember();
     $email = new Email(EMAIL_CONTEXT_DUMMY, -1);
+    $comm = new Command(Command::EMAIL_VOTE);
     for ($i = 1; $i < $max; $i++) {
         if (!$emailMember->retriveUnsentEmail()) {
             break;
         }
+        updateOption(OPTIONS_NAME_LAST_NEWSLETTER, time());
         $mem_id = $emailMember->getMemberId();
         $addr = getMemberEmail($mem_id);
-        
         $email->getEmailById($emailMember->getEmailId());
+        $filename = $email->getFilename();
         $subject = $email->getEmailSubject();
         $body = $email->getEmailBody();
-        if (!isset($addr) OR empty($addr)) {
-            error_log("Missing email address (send_mail)");
-            mail_system_error('Nem létező emailcím !\r\nTárgy: ' . $subject . '\r\nTartalom: ' . $body);
-            continue;
-        }
         $email_body = '<html><body style=\"font-family:Verdana, Verdana, Geneva, sans-serif; font-size:12px;\">';
         $email_body .= $email->changeNewLines($body);
         $email_body .= "<br><br>" . getOptionValue(OPTIONS_NAME_EMAIL_SIGNATURE);
         $email_body .= "</body></html>\n";
         $person_body = str_replace(REPLACE_NAME, getMemberName($mem_id), $email_body);
-        $formated_body = str_replace(NEWLINE, '<br>', $person_body);
-        send_mail_via_phpmailer($addr, $subject, $formated_body);
+        $id_body = str_replace(REPLACE_ID, $mem_id, $person_body);
+        $formated_body = str_replace(NEWLINE, '<br>', $id_body);
+        $matches = [];
+        preg_match_all(REPLACE_COMMAND_REGEXP, $formated_body, $matches);
+        if (!empty($matches)) {
+            foreach ($matches[0] as $match) {
+                $pattern_code = substr($match, 3, -3);
+                $replace_code = $comm->putItemByPattern($mem_id, $pattern_code);
+                $formated_body = str_replace($match, $replace_code, $formated_body);
+            }
+        }
+        if (!isset($addr) OR empty($addr)) {
+            error_log("Missing email address (send_mail)");
+            mail_system_error('Nem létező emailcím !\r\nTárgy: ' . $subject . '\r\nTartalom: ' . $formated_body);
+            continue;
+        }
+        send_mail_via_phpmailer($addr, $subject, $formated_body, $filename);
         $emailMember->setSent();
         logger(-1, $mem_id, LOGGER_EMAIL_SENT, $addr . ' címre, ' . $subject . ' tárgyú levél kiküldve');
     }
