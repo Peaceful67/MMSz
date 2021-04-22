@@ -1,15 +1,124 @@
 <!DOCTYPE html>
 <!--code by webdevtrick ( https://webdevtrick.com) -->
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel='stylesheet' href='design/css/bootstrap.min.css'>
-        <link rel="stylesheet" href="design/horizontal.css">
-        <link rel="stylesheet" href="design/general.css">
-
-    </head>
+    <title>nyilvántartó</title>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Dev Tagnyilvántartó, Verzió:3.0"/>
+    <meta name="author" content="Baksa Zsolt (peaceful.app@gmail.com)"/>
+    <link type="text/css" rel="stylesheet"  href="design/documents.css"/>  
+    <link type="text/css" rel="stylesheet" href="design/css/bootstrap.css"/>
+    <link type="text/css" rel="stylesheet"  href="design/navbar.css"/>
+    <link rel="stylesheet" href="design/font-awesome-4.7.0/css/font-awesome.min.css"/>
+    <link href="design/css/bootstrap4-toggle.css" rel="stylesheet"/>
+    <link type="text/css" rel="stylesheet"  href="design/horizontal.css"/>
+    <link type="text/css" rel="stylesheet" href="design/general.css"/>
+    <link type="text/css" rel="stylesheet" href="design/mobile.css"/>
+    <link rel="icon" href="images/favicon.ico" type="image/png">
+    <script>
+    function onPageLoaded() {
+        $('#loading').hide();
+    }
+    </script>
+    <script src="design/js/functions.js"></script>
+    <script src="design/js/jquery-3.6.0.slim.min.js" ></script>
+    <script src="design/js/bootstrap.bundle.min.js" ></script>
+    <script src="design/js/bootstrap4-toggle.js"></script>
+    <script src="design/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+</head>
     <body>
+        <nav class="navbar navbar-expand-md navbar-light fixed-top bg-info" role="navigation"><!-- 1 -->
+            <div class = "container"><!-- 2 -->
+              <a class="navbar-brand" href="" title="Tagnyilvántartó">Dev</a>
+              <button class="navbar-toggler navbar-toggler-right border-0" type="button" data-toggle="collapse" data-target="#navbar"><!-- 3 -->
+                <span class="navbar-toggler-icon"></span>
+              </button><!-- 3 -->
+              <div class = "collapse navbar-collapse" id="navbar"><!-- 3 -->
+                <ul class="navbar-nav mr-auto"><!-- 4 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_0" >Tagjegyzék</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="list_members" title="A tagok listázása, szerkesztése">Tagok adatai</button>
+                      <button class="btn btn-default" name="mod" value="branch_members" title="A szakág tagjainak listázása, kezelése">Szakágvezetés</button>
+                      <button class="btn btn-default" name="mod" value="new_member" title="Új tag felvétele">Új tag</button>
+                      <button class="btn btn-default" name="mod" value="add_club" title="Tag átvétele másik egyesületbe">Átigazolás</button>
+                      <button class="btn btn-default" name="mod" value="fees" title="Csoportos tagdíj fizetés">Csoportos díjfizetés</button>
+                      <button class="btn btn-default" name="mod" value="list_roles" title="Jelenlegi tisztségviselők">Tisztek</button>
+                      <button class="btn btn-default" name="mod" value="inactive" title="Sem idén, sem tavaly nem fizető aktív tagok">Inaktívak</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_3" >Törzsadatok</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="list_clubs" title="Egyesületek listázása">Egyesületek</button>
+                      <button class="btn btn-default" name="mod" value="edit_club" title="Egyesület szerkesztése">Egyesület</button>
+                      <button class="btn btn-default" name="mod" value="edit_branches" title="Szakágak szerkesztése">Szakágak</button>
+                      <button class="btn btn-default" name="mod" value="cat" title="Kategóriák szerkesztése">Kategóriák szerkesztése</button>
+                      <button class="btn btn-default" name="mod" value="cat_list" title="Kategóriák listázása">Kategóriák listázása</button>
+                      <button class="btn btn-default" name="mod" value="prices" title="Díjak szerkesztése">Díjak szerkesztése</button>
+                      <button class="btn btn-default" name="mod" value="edit_types" title="Tipusok szerkesztése">Típus listák</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_4" >Adminisztráció</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="payment" title="Befizetés könyvelése">Befizetés</button>
+                      <button class="btn btn-default" name="mod" value="bookkeeping" title="Befizetett tételek kezelése">Befizetett</button>
+                      <button class="btn btn-default" name="mod" value="help" title="Leírások kezelése">Help kezelés</button>
+                      <button class="btn btn-default" name="mod" value="options" title="Beállítások kezelése">Beállítások</button>
+                      <button class="btn btn-default" name="mod" value="maintenace" title="Integritás ellenőrzések">Karbantartás</button>
+                      <button class="btn btn-default" name="mod" value="database" title="Adatbázis rendezés">Adatbázis</button>
+                      <button class="btn btn-default" name="mod" value="szamlazz" title="Online számlázás">Számlázz.hu</button>
+                      <button class="btn btn-default" name="mod" value="fai" title="FAI kezelés">FAI kezelés</button>
+                      <button class="btn btn-default" name="mod" value="setup" title="Menü elrendezés">Menük</button>
+                      <button class="btn btn-default" name="mod" value="news_letters" title="Körlevél kezelés">Körlevelek</button>
+                      <button class="btn btn-default" name="mod" value="about" title="A program névjegye">Névjegy</button>
+                      <button class="btn btn-default" name="mod" value="storno" title="Befizetetlen számlák törlése">Számla storno</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_5" >Megtekintés</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="list_logger" title="Aktivitás listázása">Logger</button>
+                      <button class="btn btn-default" name="mod" value="card" title="Tagsági kártya lekérdezés">Tagsági kártya</button>
+                      <button class="btn btn-default" name="mod" value="statistic" title="Statisztikai lekérdezések">Statisztika</button>
+                      <button class="btn btn-default" name="mod" value="contact" title="Hiba, észrevétel a tagnyilvántartóval kapcsolatban">Kapcsolat</button>
+                      <button class="btn btn-default" name="mod" value="list_fee_members" title="Díjankénti taglista">Tagok díjanként</button>
+                      <button class="btn btn-default" name="mod" value="comp_perm" title="MMSz versenyengedély lekérdezés">Verseny engedély</button>
+                      <button class="btn btn-default" name="mod" value="congress" title="Küldöttgyűlés kezelése">Küldöttgyűlés</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_7" >Dokumentumok</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="docu_edu_base" title="Képzést támogató rendszer törzsadatai">Törzsadatok</button>
+                      <button class="btn btn-default" name="mod" value="docu_templates" title="A rendszerben használt sablonok kezelése">Sablonok</button>
+                      <button class="btn btn-default" name="mod" value="docu_admin" title="Dokumentum kezelő adminisztráció">Adminisztráció</button>
+                      <button class="btn btn-default" name="mod" value="docu_mem_pidao" title="A saját képzéseim kezelése">Képzéseim</button>
+                      <button class="btn btn-default" name="mod" value="docu_mem_pidjog" title="A saját képzettségeim kezelése">Képzettségeim</button>
+                      <button class="btn btn-default" name="mod" value="docu_files" title="Saját fájlok feltöltése kezelése">Saját fájlok</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item dropdown"><!-- 5 -->
+                    <button class="dropbtn bg-info" id="group_6" >Online gyűlés</button>
+                    <div class = "dropdown-content"><!-- 6 -->
+                      <button class="btn btn-default" name="mod" value="congress_create" title="Online gyűlés szerkesztése">Létrehozás</button>
+                      <button class="btn btn-default" name="mod" value="congress_online" title="Napirendi pontok megtárgyalása">Tárgyalás</button>
+                      <button class="btn btn-default" name="mod" value="congress_vote" title="Szavazás napirendi pontokról">Szavazás</button>
+                      <button class="btn btn-default" name="mod" value="congress_manag" title="Gyűlések áttekintése">Gyűlések</button>
+                    </div><!-- 6 -->
+                  </li><!-- 5 -->
+                  <li class="nav-item bg-info"><!-- 5 -->
+                    <button class="btn btn-info"  name="mod" value="profile"  title="Saját adataim szekesztése">Profilom</button>
+                  </li><!-- 5 -->
+                  <li class="nav-item bg-info"><!-- 5 -->
+                    <button class="btn btn-info"  name="mod" value="logout"  onClick="return confirm('Biztosan ki akarsz lépni ?');" title="Kilépés az adminisztrációs felületről">Kilépés</button>
+                  </li><!-- 5 -->
+                </ul><!-- 4 -->
+              </div><!-- 3 -->
+            </div><!-- 2 -->
+          </nav><!-- 1 -->
         <div class="container">
             <a  data-toogle="tooltip" title="KIegészítő infó">Az alap szöveg</a>
             <div class="tooltip">

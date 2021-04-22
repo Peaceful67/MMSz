@@ -20,6 +20,7 @@ $head = '<!DOCTYPE html>
     <link href="design/css/bootstrap4-toggle.css" rel="stylesheet"/>
     <link type="text/css" rel="stylesheet"  href="design/horizontal.css"/>
     <link type="text/css" rel="stylesheet" href="design/general.css"/>
+    <link type="text/css" rel="stylesheet" href="design/mobile.css"/>
     <link rel="icon" href="images/favicon.ico" type="image/png">
     <script>
     function onPageLoaded() {
@@ -125,14 +126,14 @@ if ($mod == $admin_menu["gdpr"][SETUP_MOD_ID]) {
 
 if (!$called_by_command AND $mod != $admin_menu["gdpr"][SETUP_MOD_ID]) {
     $view->newElement('<form action="/" method="post">');
-    $view->newElement('<nav class="navbar navbar-expand-md navbar-light fixed-top bg-info" role="navigation">');
+    $view->newElement('<nav class="navbar navbar-expand-lg navbar-light fixed-top bg-info" role="navigation">');
     $view->newDiv('container');
     $view->putElement('<a class="navbar-brand" href="" title="Tagnyilvántartó">' . getOptionValue(OPTIONS_NAME_COMPANY_NAME) . '</a>');
     $view->newElement('<button class="navbar-toggler navbar-toggler-right border-0" type="button" data-toggle="collapse" data-target="#navbar">');
     $view->putElement('<span class="navbar-toggler-icon"></span>');
     $view->endElement('</button>');
     $view->newDiv('collapse navbar-collapse', 'navbar');
-    $view->newElement('<ul class="navbar-nav">');
+    $view->newElement('<ul class="navbar-nav  mr-auto">');
     foreach ($main_menu_group as $group) {
 
         $selectable = false; // Van-e bármi megjeleníthető    
@@ -142,15 +143,16 @@ if (!$called_by_command AND $mod != $admin_menu["gdpr"][SETUP_MOD_ID]) {
             }
         }
         if ($selectable) {  // Van !!!
-            $view->newElement('<li class="nav-item dropdown">');
-            $view->putElement('<button class="dropbtn bg-info" id="group_' . $group[SETUP_GROUP_ID] . '" >' . $group[SETUP_GROUP_NAME] . '</button>');
-            $view->newDiv('dropdown-content');
+            $view->newElement('<li class="nav-item dropdown dropdown-hover">');
+            $view->putElement('<a class="nav-link dropdown-toggle" id="group_' . $group[SETUP_GROUP_ID] . '" role="button">' . $group[SETUP_GROUP_NAME] . '</a>');
+            $view->newElement('<div class="dropdown-menu bg-info" id="menu_' . $group[SETUP_GROUP_ID] . '" aria-labelledby="group_' . $group[SETUP_GROUP_ID] . '">');
             foreach ($admin_menu as $k => $v) { // Kirakjuk az ehhez a csoporthoz tartozó funkió gombokat
                 if (($v[SETUP_MOD_GROUP] == $group[SETUP_GROUP_ID]) && isPermitted($v[SETUP_MOD_ACCESS])) {
-                    $view->putElement('<button class="btn btn-default" name="mod" value="' . $v[SETUP_MOD_ID] . '" title="' . $v[SETUP_MOD_TITLE] . '">' . $v[SETUP_MOD_MENU] . '</button>');
+                    $view->putElement('<button class="btn btn-info dropdown-item" name="mod" value="' . $v[SETUP_MOD_ID] . '" title="' . $v[SETUP_MOD_TITLE] . '">' . $v[SETUP_MOD_MENU]
+                            . '</button>');
                 }
             }
-            $view->endDiv();
+            $view->endElement('</div>');
             $view->endElement('</li>');
         }
     }
@@ -158,7 +160,9 @@ if (!$called_by_command AND $mod != $admin_menu["gdpr"][SETUP_MOD_ID]) {
         if (($v[SETUP_MOD_GROUP] == -1) && isPermitted($v[SETUP_MOD_ACCESS]) && $v[SETUP_MOD_ENABLED] == 1) {
             $onclick = $v[SETUP_MOD_ID] == 'logout' ? ' onClick="return confirm(\'Biztosan ki akarsz lépni ?\');"' : '';
             $view->newElement('<li class="nav-item bg-info">');
-            $view->putElement('<button class="btn btn-info"  name="mod" value="' . $v[SETUP_MOD_ID] . '" ' . $onclick . ' title="' . $v[SETUP_MOD_TITLE] . '">' . $v[SETUP_MOD_MENU] . '</button>');
+            $view->putElement('<button class="btn btn-info"  name="mod" value="' . $v[SETUP_MOD_ID] . '" ' . $onclick . ' title="' . $v[SETUP_MOD_TITLE] . '">' . $v[SETUP_MOD_MENU]
+                    . '<span class="sr-only">(current)</span>'
+                    . '</button>');
             $view->endElement('</li>');
         }
     }
